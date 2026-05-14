@@ -1,0 +1,203 @@
+@page "/log"
+@attribute [Authorize]
+@inject ActivityService ActivityService
+@inject ActivityLogService LogService
+@inject ScoreService ScoreService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>@(EditId.HasValue ? "Edit Log Entry" : "Log Activity")</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">@(EditId.HasValue ? "Edit Log Entry" : "Log Activity")</MudText>
+
+@if (!EditId.HasValue && _frequent.Any())
+{
+    <MudText Typo="Typo.subtitle2" Class="mb-2">Quick Pick</MudText>
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        @foreach (var a in _frequent)
+        {
+            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined"
+                     OnClick="@(() => SelectActivity(a))">
+                @a.Name (@a.DefaultPoints pts)
+            </MudChip>
+        }
+    </div>
+}
+
+<MudPaper Class="pa-4">
+    <EditForm Model="_model" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        <MudAutocomplete T="ActivityDto" Label="Activity"
+                         Value="_selectedActivity" ValueChanged="SelectActivity"
+                         SearchFunc="SearchActivities" ToStringFunc="@(a => a?.Name ?? string.Empty)"
+                         Clearable="true" Class="mb-3"
+                         For="@(() => _selectedActivity)" />
+
+        @if (_selectedActivity is not null)
+        {
+            <MudTextField Value="@(_selectedActivity.Description ?? string.Empty)"
+                          Label="Description" ReadOnly="true" Lines="2" Class="mb-3"
+                          Placeholder="No description" />
+        }
+
+        <MudDatePicker Label="Date" @bind-Date="_model.Date" Class="mb-3" />
+        <MudTimePicker Label="Time" @bind-Time="_model.Time" Class="mb-3" />
+
+        <MudNumericField T="int" Label="Points" @bind-Value="_model.Points"
+                         Min="-100" Max="100" Class="mb-3" />
+
+        <MudTextField @bind-Value="_model.Notes" Label="Notes (optional)"
+                      Lines="2" Class="mb-4" />
+
+        <div class="d-flex gap-2">
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled"
+                       Color="Color.Primary" Disabled="_busy" Class="flex-grow-1">
+                @(_busy
+                    ? (EditId.HasValue ? "Saving..." : "Logging...")
+                    : (EditId.HasValue ? "Save Changes" : "Log Activity"))
+            </MudButton>
+            @if (EditId.HasValue)
+            {
+                <MudButton Variant="Variant.Outlined"
+                           OnClick="@(() => Navigation.NavigateTo("/log/detail"))">
+                    Cancel
+                </MudButton>
+            }
+        </div>
+    </EditForm>
+</MudPaper>
+
+@if (_scoreAfter is not null)
+{
+    <MudPaper Class="pa-4 mt-4">
+        <MudText Typo="Typo.subtitle1" Class="mb-2">Updated Scores</MudText>
+        <MudGrid>
+            <MudItem xs="4"><MudText Align="Align.Center">Today<br/><strong>@_scoreAfter.TodayTotal</strong></MudText></MudItem>
+            <MudItem xs="4"><MudText Align="Align.Center">Week<br/><strong>@_scoreAfter.WeekTotal</strong></MudText></MudItem>
+            <MudItem xs="4"><MudText Align="Align.Center">Month<br/><strong>@_scoreAfter.MonthTotal</strong></MudText></MudItem>
+        </MudGrid>
+    </MudPaper>
+}
+
+@code {
+    [SupplyParameterFromQuery] private int? EditId { get; set; }
+
+    private List<ActivityDto> _frequent = [];
+    private ActivityDto? _selectedActivity;
+    private ScoreSummaryDto? _scoreAfter;
+    private bool _busy;
+
+    private readonly LogFormModel _model = new()
+    {
+        Date = DateTime.Today,
+        Time = DateTime.Now.TimeOfDay
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (EditId.HasValue)
+            await LoadEditEntryAsync(EditId.Value);
+        else
+            _frequent = (await ActivityService.GetFrequentAsync()).ToList();
+    }
+
+    private async Task LoadEditEntryAsync(int logId)
+    {
+        var log = await LogService.GetByIdAsync(logId);
+        if (log is null)
+        {
+            Snackbar.Add("Log entry not found.", Severity.Error);
+            Navigation.NavigateTo("/log/detail");
+            return;
+        }
+
+        var all = await ActivityService.GetAllAsync();
+        _selectedActivity = all.FirstOrDefault(a => a.Id == log.ActivityId);
+        _model.Date = log.LoggedAt.Date;
+        _model.Time = log.LoggedAt.TimeOfDay;
+        _model.Points = log.PointsRecorded;
+        _model.Notes = log.Notes;
+    }
+
+    private void SelectActivity(ActivityDto? activity)
+    {
+        _selectedActivity = activity;
+        _model.Points = activity?.DefaultPoints ?? 0;
+    }
+
+    private async Task<IEnumerable<ActivityDto>> SearchActivities(string value, CancellationToken _)
+    {
+        var all = await ActivityService.GetAllAsync();
+        if (string.IsNullOrEmpty(value))
+            return all;
+        return all.Where(a => a.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (_selectedActivity is null)
+        {
+            Snackbar.Add("Please select an activity.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        var loggedAt = (_model.Date ?? DateTime.Today).Add(_model.Time ?? TimeSpan.Zero);
+
+        if (EditId.HasValue)
+        {
+            var result = await LogService.UpdateAsync(EditId.Value, new UpdateActivityLogDto
+            {
+                ActivityId = _selectedActivity.Id,
+                LoggedAt = loggedAt,
+                PointsRecorded = _model.Points,
+                Notes = _model.Notes
+            });
+            _busy = false;
+
+            if (result is null)
+            {
+                Snackbar.Add("Failed to update log entry. Please try again.", Severity.Error);
+                return;
+            }
+
+            Snackbar.Add("Log entry updated.", Severity.Success);
+            Navigation.NavigateTo("/log/detail");
+        }
+        else
+        {
+            var result = await LogService.CreateAsync(new CreateActivityLogDto
+            {
+                ActivityId = _selectedActivity.Id,
+                LoggedAt = loggedAt,
+                PointsRecorded = _model.Points,
+                Notes = _model.Notes
+            });
+            _busy = false;
+
+            if (result is null)
+            {
+                Snackbar.Add("Failed to log activity. Please try again.", Severity.Error);
+                return;
+            }
+
+            Snackbar.Add($"{_selectedActivity.Name} logged!", Severity.Success);
+            _scoreAfter = await ScoreService.GetSummaryAsync();
+
+            _selectedActivity = null;
+            _model.Notes = null;
+            _model.Points = 0;
+            _model.Date = DateTime.Today;
+            _model.Time = DateTime.Now.TimeOfDay;
+        }
+    }
+
+    private class LogFormModel
+    {
+        public DateTime? Date { get; set; }
+        public TimeSpan? Time { get; set; }
+        public int Points { get; set; }
+        public string? Notes { get; set; }
+    }
+}

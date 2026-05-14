@@ -1,0 +1,58 @@
+@page "/register"
+@inject ClientAuthService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>Register</PageTitle>
+
+<MudGrid Justify="Justify.Center" Class="mt-8">
+    <MudItem xs="12" sm="6" md="4">
+        <MudPaper Class="pa-6">
+            <MudText Typo="Typo.h5" Class="mb-4">Create Account</MudText>
+
+            <EditForm Model="model" OnValidSubmit="HandleRegister">
+                <DataAnnotationsValidator />
+                <MudTextField @bind-Value="model.DisplayName" Label="Display Name"
+                              For="@(() => model.DisplayName)" Class="mb-3" />
+                <MudTextField @bind-Value="model.Email" Label="Email" InputType="InputType.Email"
+                              For="@(() => model.Email)" Class="mb-3" />
+                <MudTextField @bind-Value="model.Password" Label="Password" InputType="InputType.Password"
+                              For="@(() => model.Password)" Class="mb-3" />
+                <MudTextField @bind-Value="model.ConfirmPassword" Label="Confirm Password" InputType="InputType.Password"
+                              For="@(() => model.ConfirmPassword)" Class="mb-4" />
+
+                @if (errors.Any())
+                {
+                    <MudAlert Severity="Severity.Error" Class="mb-3">@string.Join(" ", errors)</MudAlert>
+                }
+
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                           FullWidth="true" Disabled="busy">
+                    @(busy ? "Creating account..." : "Register")
+                </MudButton>
+            </EditForm>
+
+            <MudText Class="mt-3 text-center">
+                Already have an account? <MudLink Href="/login">Sign In</MudLink>
+            </MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private readonly RegisterRequest model = new();
+    private IEnumerable<string> errors = [];
+    private bool busy;
+
+    private async Task HandleRegister()
+    {
+        busy = true;
+        errors = [];
+        var result = await AuthService.RegisterAsync(model);
+        busy = false;
+
+        if (result.Succeeded)
+            Navigation.NavigateTo("/");
+        else
+            errors = result.Errors;
+    }
+}

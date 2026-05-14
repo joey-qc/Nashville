@@ -1,0 +1,92 @@
+@page "/reports"
+@attribute [Authorize]
+@inject ReportsService ReportsService
+@inject CategoryService CategoryService
+@using ApexCharts
+
+<PageTitle>Trends</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">Trends</MudText>
+
+<MudPaper Class="pa-4 mb-4">
+    <MudGrid>
+        <MudItem xs="12" sm="6">
+            <MudTabs @bind-ActivePanelIndex="_tabIndex" @bind-ActivePanelIndex:after="LoadData">
+                <MudTabPanel Text="Daily" />
+                <MudTabPanel Text="Weekly" />
+                <MudTabPanel Text="Monthly" />
+            </MudTabs>
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudSelect T="int?" Label="Category" @bind-Value="_categoryId" @bind-Value:after="LoadData">
+                <MudSelectItem T="int?" Value="null">
+                    <div class="d-flex align-center gap-2">
+                        <div style="width:12px;height:12px;border-radius:50%;background:#9E9E9E"></div>
+                        All
+                    </div>
+                </MudSelectItem>
+                @foreach (var cat in CategoryService.Categories)
+                {
+                    <MudSelectItem T="int?" Value="cat.Id">
+                        <div class="d-flex align-center gap-2">
+                            <div style="@($"width:12px;height:12px;border-radius:50%;background:{cat.ColorHex}")"></div>
+                            @cat.Name
+                        </div>
+                    </MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else if (!_data.Any())
+{
+    <MudText Color="MudBlazor.Color.Secondary">No data for the selected period.</MudText>
+}
+else
+{
+    <MudPaper Class="pa-4">
+        <ApexChart TItem="DailyScoreDto" Options="_chartOptions">
+            <ApexPointSeries TItem="DailyScoreDto"
+                             Items="_data"
+                             Name="Points"
+                             SeriesType="ApexCharts.SeriesType.Bar"
+                             XValue="@(d => d.Date.ToString(_tabIndex == 2 ? "MMM yyyy" : "MMM d"))"
+                             YValue="@(d => d.Total)"
+                             Color="@(_categoryId.HasValue ? CategoryService.GetColor(_categoryId.Value) : "#9E9E9E")" />
+        </ApexChart>
+    </MudPaper>
+}
+
+@code {
+    private int _tabIndex;
+    private int? _categoryId;
+    private List<DailyScoreDto> _data = [];
+    private bool _loading;
+
+    private readonly ApexCharts.ApexChartOptions<DailyScoreDto> _chartOptions = new()
+    {
+        Chart = new ApexCharts.Chart { Toolbar = new ApexCharts.Toolbar { Show = false } }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(CategoryService.GetAllAsync(), LoadData());
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _data = _tabIndex switch
+        {
+            1 => await ReportsService.GetWeeklyAsync(12, _categoryId),
+            2 => await ReportsService.GetMonthlyAsync(12, _categoryId),
+            _ => await ReportsService.GetDailyAsync(30, _categoryId)
+        };
+        _loading = false;
+    }
+}

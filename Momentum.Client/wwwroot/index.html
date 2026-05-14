@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Momentum</title>
+    <base href="/" />
+    <link rel="preload" id="webassembly" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="Momentum.Client.styles.css" rel="stylesheet" />
+    <script type="importmap"></script>
+    <style>
+        .m-splash {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #ffffff;
+            font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        .m-splash__title {
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            font-weight: 700;
+            color: #594AE2;
+            margin: 0 0 0.625rem;
+            letter-spacing: 0.04em;
+            animation: m-fadein 0.6s ease-out both;
+        }
+
+        .m-splash__tagline {
+            font-size: clamp(0.875rem, 3vw, 1.0625rem);
+            color: #757575;
+            font-weight: 300;
+            margin: 0 0 2.75rem;
+            text-align: center;
+            animation: m-fadein 0.6s ease-out 0.2s both;
+        }
+
+        .m-splash__track {
+            position: relative;
+            width: min(400px, 78vw);
+            height: 4px;
+            background-color: #ede9fb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 1.25rem;
+            animation: m-fadein 0.6s ease-out 0.3s both;
+        }
+
+        .m-splash__bar {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            background-color: #594AE2;
+            border-radius: 4px;
+            animation: m-progress 1.8s ease-in-out infinite;
+        }
+
+        .m-splash__status {
+            font-size: 0.8125rem;
+            color: #9e9e9e;
+            letter-spacing: 0.025em;
+            animation: m-fadein 0.6s ease-out 0.4s both;
+        }
+
+        @keyframes m-fadein {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes m-progress {
+            0%   { left: -40%; width: 40%; }
+            45%  { left: 25%; width: 65%; }
+            75%  { left: 95%; width: 40%; }
+            100% { left: 115%; width: 40%; }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div class="m-splash">
+            <span class="m-splash__title">Momentum</span>
+            <span class="m-splash__tagline">Building better habits, one day at a time.</span>
+            <div class="m-splash__track">
+                <div class="m-splash__bar"></div>
+            </div>
+            <span class="m-splash__status" id="m-status">Initializing...</span>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script type="module" src="_content/Blazor-ApexCharts/js/blazor-apexcharts.js"></script>
+    <script>
+        (function () {
+            var messages = ['Initializing...', 'Loading your data...', 'Almost ready...'];
+            var idx = 0;
+            var timer = setInterval(function () {
+                var el = document.getElementById('m-status');
+                if (!el) { clearInterval(timer); return; }
+                idx = (idx + 1) % messages.length;
+                el.textContent = messages[idx];
+            }, 1500);
+        }());
+    </script>
+    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+</body>
+
+</html>

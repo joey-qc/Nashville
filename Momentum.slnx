@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="Momentum.API/Momentum.API.csproj" />
+  <Project Path="Momentum.Application/Momentum.Application.csproj" />
+  <Project Path="Momentum.Client/Momentum.Client.csproj" />
+  <Project Path="Momentum.Domain/Momentum.Domain.csproj" />
+  <Project Path="Momentum.Infrastructure/Momentum.Infrastructure.csproj" />
+  <Project Path="Momentum.Shared/Momentum.Shared.csproj" />
+  <Project Path="Momentum.Tests/Momentum.Tests.csproj" />
+</Solution>

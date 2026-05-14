@@ -1,0 +1,57 @@
+@page "/login"
+@inject ClientAuthService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>Login</PageTitle>
+
+<MudGrid Justify="Justify.Center" Class="mt-8">
+    <MudItem xs="12" sm="6" md="4">
+        <MudPaper Class="pa-6">
+            <MudText Typo="Typo.h5" Class="mb-4">Sign In</MudText>
+
+            <EditForm Model="model" OnValidSubmit="HandleLogin">
+                <DataAnnotationsValidator />
+                <MudTextField @bind-Value="model.Email" Label="Email" InputType="InputType.Email"
+                              For="@(() => model.Email)" Class="mb-3" />
+                <MudTextField @bind-Value="model.Password" Label="Password" InputType="InputType.Password"
+                              For="@(() => model.Password)" Class="mb-4" />
+
+                @if (errors.Any())
+                {
+                    <MudAlert Severity="Severity.Error" Class="mb-3">@string.Join(" ", errors)</MudAlert>
+                }
+
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                           FullWidth="true" Disabled="busy">
+                    @(busy ? "Signing in..." : "Sign In")
+                </MudButton>
+            </EditForm>
+
+            <MudText Class="mt-3 text-center">
+                No account? <MudLink Href="/register">Register</MudLink>
+            </MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private readonly LoginRequest model = new();
+    private IEnumerable<string> errors = [];
+    private bool busy;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    private async Task HandleLogin()
+    {
+        busy = true;
+        errors = [];
+        var result = await AuthService.LoginAsync(model);
+        busy = false;
+
+        if (result.Succeeded)
+            Navigation.NavigateTo(ReturnUrl ?? "/");
+        else
+            errors = result.Errors;
+    }
+}

@@ -1,0 +1,272 @@
+@page "/activities"
+@attribute [Authorize]
+@inject ActivityService ActivityService
+@inject CategoryService CategoryService
+@inject ISnackbar Snackbar
+
+<PageTitle>Manage Activities</PageTitle>
+
+<div class="d-flex align-center justify-space-between mb-4">
+    <MudText Typo="Typo.h5">Manage Activities</MudText>
+    <MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary"
+               StartIcon="@Icons.Material.Filled.Add"
+               OnClick="OpenCreateForm">New Activity</MudButton>
+</div>
+
+@if (_showForm)
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">@(_editingId.HasValue ? "Edit Activity" : "New Activity")</MudText>
+        <EditForm Model="_form" OnValidSubmit="SaveActivity">
+            <DataAnnotationsValidator />
+            <MudTextField @bind-Value="_form.Name" Label="Activity Name" Class="mb-3" />
+            <MudTextField @bind-Value="_form.Description" Label="Description (optional)"
+                          Lines="2" Class="mb-3" />
+            <MudNumericField T="int" @bind-Value="_form.DefaultPoints"
+                             Label="Default Points" Min="-100" Max="100" Class="mb-3" />
+            <MudText Typo="Typo.caption" Class="mb-1">Categories (select at least one)</MudText>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                @foreach (var cat in CategoryService.Categories)
+                {
+                    var selected = _form.CategoryIds.Contains(cat.Id);
+                    <MudChip T="string"
+                             Variant="@(selected ? Variant.Filled : Variant.Outlined)"
+                             Style="@($"border-color:{cat.ColorHex};background:{(selected ? cat.ColorHex : "transparent")};color:{(selected ? "white" : cat.ColorHex)}")"
+                             OnClick="@(() => ToggleCategory(cat.Id))">@cat.Name</MudChip>
+                }
+            </div>
+            @if (_showCategoryError)
+            {
+                <MudText Color="MudBlazor.Color.Error" Typo="Typo.caption" Class="mb-2">
+                    Select at least one category.
+                </MudText>
+            }
+            <div class="d-flex gap-2">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled"
+                           Color="MudBlazor.Color.Primary" Disabled="_saving">
+                    @(_saving ? "Saving..." : "Save")
+                </MudButton>
+                <MudButton OnClick="@(() => { _showForm = false; _showCategoryError = false; })">Cancel</MudButton>
+            </div>
+        </EditForm>
+    </MudPaper>
+}
+
+@if (_conflictActivity is not null)
+{
+    <MudPaper Class="pa-4 mb-4" Style="border: 2px solid var(--mud-palette-warning)">
+        <MudText Typo="Typo.subtitle1" Class="mb-2">
+            "@_conflictActivity.Name" has @_conflictLogCount log @(_conflictLogCount == 1 ? "entry" : "entries"). What would you like to do?
+        </MudText>
+        <div class="d-flex gap-2">
+            <MudButton Variant="Variant.Outlined" Color="MudBlazor.Color.Warning"
+                       OnClick="@(() => ResolveConflict("archive"))">
+                Hide from future logging (keep history)
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Error"
+                       OnClick="@(() => ResolveConflict("cascade"))">
+                Delete activity and all history
+            </MudButton>
+            <MudButton OnClick="@(() => _conflictActivity = null)">Cancel</MudButton>
+        </div>
+    </MudPaper>
+}
+
+<MudTextField @bind-Value="_search" Placeholder="Search activities..."
+              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+              Immediate="true" Class="mb-4" />
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else
+{
+    <MudTable T="ActivityDto" Items="FilteredActivities" Hover="true" Breakpoint="Breakpoint.Sm"
+              SortLabel="Sort By">
+        <HeaderContent>
+            <MudTh>
+                <MudTableSortLabel T="ActivityDto" SortBy="@(a => a.Name)">Name</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel T="ActivityDto" SortBy="@(a => a.Categories.Select(c => c.Name).OrderBy(n => n).FirstOrDefault() ?? string.Empty)">Categories</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel T="ActivityDto" SortBy="@(a => (object)a.DefaultPoints)">Default Points</MudTableSortLabel>
+            </MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>
+                @foreach (var cat in context.Categories)
+                {
+                    <MudChip T="string" Size="MudBlazor.Size.Small"
+                             Style="@($"background:{cat.ColorHex};color:white")"
+                             Class="mr-1">@cat.Name</MudChip>
+                }
+            </MudTd>
+            <MudTd>
+                <MudText Color="@(context.DefaultPoints >= 0 ? MudBlazor.Color.Success : MudBlazor.Color.Error)">
+                    @(context.DefaultPoints > 0 ? "+" : "")@context.DefaultPoints
+                </MudText>
+            </MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="MudBlazor.Size.Small"
+                               OnClick="@(() => OpenEditForm(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="MudBlazor.Size.Small"
+                               Color="MudBlazor.Color.Error"
+                               OnClick="@(() => DeleteActivity(context))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private List<ActivityDto> _activities = [];
+    private string _search = string.Empty;
+    private bool _loading = true;
+    private bool _showForm;
+    private bool _saving;
+    private bool _showCategoryError;
+    private int? _editingId;
+    private readonly ActivityFormModel _form = new();
+
+    private ActivityDto? _conflictActivity;
+    private int _conflictLogCount;
+
+    private IEnumerable<ActivityDto> FilteredActivities =>
+        string.IsNullOrEmpty(_search)
+            ? _activities
+            : _activities.Where(a => a.Name.Contains(_search, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(
+            CategoryService.GetAllAsync(),
+            LoadActivities()
+        );
+    }
+
+    private async Task LoadActivities()
+    {
+        _loading = true;
+        _activities = (await ActivityService.GetAllAsync()).ToList();
+        _loading = false;
+    }
+
+    private void OpenCreateForm()
+    {
+        _editingId = null;
+        _form.Name = string.Empty;
+        _form.Description = null;
+        _form.DefaultPoints = 5;
+        _form.CategoryIds.Clear();
+        _showCategoryError = false;
+        _showForm = true;
+    }
+
+    private void OpenEditForm(ActivityDto activity)
+    {
+        _editingId = activity.Id;
+        _form.Name = activity.Name;
+        _form.Description = activity.Description;
+        _form.DefaultPoints = activity.DefaultPoints;
+        _form.CategoryIds = [.. activity.Categories.Select(c => c.Id)];
+        _showCategoryError = false;
+        _showForm = true;
+    }
+
+    private void ToggleCategory(int categoryId)
+    {
+        if (_form.CategoryIds.Contains(categoryId)) _form.CategoryIds.Remove(categoryId);
+        else _form.CategoryIds.Add(categoryId);
+        _showCategoryError = false;
+    }
+
+    private async Task SaveActivity()
+    {
+        if (!_form.CategoryIds.Any())
+        {
+            _showCategoryError = true;
+            return;
+        }
+
+        _saving = true;
+
+        if (_editingId.HasValue)
+        {
+            await ActivityService.UpdateAsync(_editingId.Value, new UpdateActivityDto
+            {
+                Name = _form.Name,
+                Description = _form.Description,
+                DefaultPoints = _form.DefaultPoints,
+                CategoryIds = _form.CategoryIds
+            });
+        }
+        else
+        {
+            await ActivityService.CreateAsync(new CreateActivityDto
+            {
+                Name = _form.Name,
+                Description = _form.Description,
+                DefaultPoints = _form.DefaultPoints,
+                CategoryIds = _form.CategoryIds
+            });
+        }
+
+        _saving = false;
+        _showForm = false;
+        _showCategoryError = false;
+        Snackbar.Add("Activity saved.", Severity.Success);
+        await LoadActivities();
+    }
+
+    private async Task DeleteActivity(ActivityDto activity)
+    {
+        var (success, conflict) = await ActivityService.DeleteAsync(activity.Id);
+
+        if (success)
+        {
+            Snackbar.Add($"\"{activity.Name}\" deleted.", Severity.Success);
+            await LoadActivities();
+            return;
+        }
+
+        if (conflict is not null)
+        {
+            _conflictActivity = activity;
+            _conflictLogCount = conflict.LogCount;
+        }
+    }
+
+    private async Task ResolveConflict(string action)
+    {
+        if (_conflictActivity is null) return;
+
+        var activity = _conflictActivity;
+        _conflictActivity = null;
+
+        var (success, _) = await ActivityService.DeleteAsync(activity.Id, action);
+        if (success)
+        {
+            Snackbar.Add(action == "archive"
+                ? $"\"{activity.Name}\" archived."
+                : $"\"{activity.Name}\" and all history deleted.",
+                Severity.Success);
+            await LoadActivities();
+        }
+        else
+        {
+            Snackbar.Add("Operation failed.", Severity.Error);
+        }
+    }
+
+    private class ActivityFormModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public int DefaultPoints { get; set; } = 5;
+        public List<int> CategoryIds { get; set; } = [];
+    }
+}

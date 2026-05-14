@@ -1,0 +1,103 @@
+@page "/"
+@attribute [Authorize]
+@inject ScoreService ScoreService
+@inject NavigationManager Navigation
+@using ApexCharts
+
+<PageTitle>Momentum</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1">Welcome back, @_displayName</MudText>
+<MudText Typo="Typo.subtitle1" Color="MudBlazor.Color.Secondary" Class="mb-6">@DateTime.Now.ToString("dddd, MMMM d")</MudText>
+
+<MudGrid>
+    <MudItem xs="12" sm="4">
+        <MudPaper Class="pa-4 text-center" Style="cursor:pointer" @onclick='() => Navigation.NavigateTo("/log/detail?period=today")'>
+            <MudText Typo="Typo.overline">Today</MudText>
+            <MudText Typo="Typo.h3" Color="@ScoreColor(_summary?.TodayTotal ?? 0)">@(_summary?.TodayTotal ?? 0)</MudText>
+            <MudText Typo="Typo.caption" Color="MudBlazor.Color.Secondary">pts</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="4">
+        <MudPaper Class="pa-4 text-center" Style="cursor:pointer" @onclick='() => Navigation.NavigateTo("/log/detail?period=week")'>
+            <MudText Typo="Typo.overline">This Week</MudText>
+            <MudText Typo="Typo.h3" Color="@ScoreColor(_summary?.WeekTotal ?? 0)">@(_summary?.WeekTotal ?? 0)</MudText>
+            <MudText Typo="Typo.caption" Color="MudBlazor.Color.Secondary">pts</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="4">
+        <MudPaper Class="pa-4 text-center" Style="cursor:pointer" @onclick='() => Navigation.NavigateTo("/log/detail?period=month")'>
+            <MudText Typo="Typo.overline">This Month</MudText>
+            <MudText Typo="Typo.h3" Color="@ScoreColor(_summary?.MonthTotal ?? 0)">@(_summary?.MonthTotal ?? 0)</MudText>
+            <MudText Typo="Typo.caption" Color="MudBlazor.Color.Secondary">pts</MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+<MudPaper Class="pa-4 mt-6">
+    <MudText Typo="Typo.h6" Class="mb-4">This Week vs. Last Week</MudText>
+    @if (_comparison is not null)
+    {
+        <ApexChart TItem="DayComparisonDto" Options="_chartOptions">
+            <ApexPointSeries TItem="DayComparisonDto"
+                             Items="_comparison.Days"
+                             Name="This Week"
+                             SeriesType="ApexCharts.SeriesType.Bar"
+                             XValue="@(d => d.DayLabel)"
+                             YValue="@(d => d.CurrentWeek)"
+                             Color="#2196F3" />
+            <ApexPointSeries TItem="DayComparisonDto"
+                             Items="_comparison.Days"
+                             Name="Last Week"
+                             SeriesType="ApexCharts.SeriesType.Bar"
+                             XValue="@(d => d.DayLabel)"
+                             YValue="@(d => d.LastWeek)"
+                             Color="#9E9E9E" />
+        </ApexChart>
+    }
+    else
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+</MudPaper>
+
+<MudFab Color="MudBlazor.Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+        Style="position:fixed;bottom:2rem;right:2rem;"
+        Href="/log" Label="Add Entry" />
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+
+    private ScoreSummaryDto? _summary;
+    private WeeklyComparisonDto? _comparison;
+    private string _displayName = string.Empty;
+
+    private readonly ApexCharts.ApexChartOptions<DayComparisonDto> _chartOptions = new()
+    {
+        Chart = new ApexCharts.Chart { Toolbar = new ApexCharts.Toolbar { Show = false } },
+        PlotOptions = new ApexCharts.PlotOptions
+        {
+            Bar = new ApexCharts.PlotOptionsBar { ColumnWidth = "55%" }
+        }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthState is not null)
+        {
+            var state = await AuthState;
+            _displayName = state.User.FindFirst("displayName")?.Value
+                ?? state.User.Identity?.Name
+                ?? "there";
+        }
+
+        _summary = await ScoreService.GetSummaryAsync();
+        _comparison = await ScoreService.GetWeeklyComparisonAsync();
+    }
+
+    private static MudBlazor.Color ScoreColor(int score) => score switch
+    {
+        > 0 => MudBlazor.Color.Success,
+        < 0 => MudBlazor.Color.Error,
+        _ => MudBlazor.Color.Default
+    };
+}

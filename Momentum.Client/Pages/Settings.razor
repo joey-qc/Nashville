@@ -1,0 +1,79 @@
+@page "/settings"
+@attribute [Authorize]
+@inject UserSettingsService SettingsService
+@inject ThemeService ThemeService
+@inject ISnackbar Snackbar
+
+<PageTitle>Settings</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">Settings</MudText>
+
+@if (_settings is null)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" sm="8" md="6">
+            <MudPaper Class="pa-6">
+                <MudText Typo="Typo.h6" Class="mb-4">Profile</MudText>
+
+                <MudTextField @bind-Value="_settings.Email" Label="Email"
+                              ReadOnly="true" Disabled="true" Class="mb-3" />
+                <MudTextField @bind-Value="_displayName" Label="Display Name"
+                              Class="mb-4" />
+
+                <MudText Typo="Typo.h6" Class="mb-3">Appearance</MudText>
+                <MudSelect T="string" Label="Theme" @bind-Value="_theme" Class="mb-4">
+                    <MudSelectItem Value='"light"'>Light</MudSelectItem>
+                    <MudSelectItem Value='"dark"'>Dark</MudSelectItem>
+                </MudSelect>
+
+                <MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary"
+                           OnClick="SaveSettings" Disabled="_saving">
+                    @(_saving ? "Saving..." : "Save Changes")
+                </MudButton>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private UserSettingsDto? _settings;
+    private string _displayName = string.Empty;
+    private string _theme = "light";
+    private bool _saving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _settings = await SettingsService.GetAsync();
+        if (_settings is not null)
+        {
+            _displayName = _settings.DisplayName;
+            _theme = _settings.Theme;
+        }
+    }
+
+    private async Task SaveSettings()
+    {
+        _saving = true;
+        var result = await SettingsService.UpdateAsync(new UpdateUserSettingsDto
+        {
+            DisplayName = _displayName,
+            Theme = _theme
+        });
+        _saving = false;
+
+        if (result is not null)
+        {
+            _settings = result;
+            ThemeService.Apply(_theme);
+            Snackbar.Add("Settings saved.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("Failed to save settings.", Severity.Error);
+        }
+    }
+}
