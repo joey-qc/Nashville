@@ -82,6 +82,18 @@ try
 
     var app = builder.Build();
 
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await db.Database.MigrateAsync();
+    }
+    catch (Exception ex)
+    {
+        Log.Fatal(ex, "Database migration failed");
+        throw;
+    }
+
     app.UseSerilogRequestLogging();
     app.UseCors();
     app.UseAuthentication();
