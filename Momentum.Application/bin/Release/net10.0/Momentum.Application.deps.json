@@ -1,0 +1,56 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "Momentum.Application/1.0.0": {
+        "dependencies": {
+          "Momentum.Domain": "1.0.0",
+          "Momentum.Shared": "1.0.0"
+        },
+        "runtime": {
+          "Momentum.Application.dll": {}
+        }
+      },
+      "Momentum.Domain/1.0.0": {
+        "dependencies": {
+          "Momentum.Shared": "1.0.0"
+        },
+        "runtime": {
+          "Momentum.Domain.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "Momentum.Shared/1.0.0": {
+        "runtime": {
+          "Momentum.Shared.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Momentum.Application/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Momentum.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Momentum.Shared/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

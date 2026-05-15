@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Momentum.Client")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e9d7887b2ff12d05b203523cb8e94763d0586f75")]
 [assembly: System.Reflection.AssemblyProductAttribute("Momentum.Client")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Momentum.Client")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
