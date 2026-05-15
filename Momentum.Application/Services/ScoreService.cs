@@ -108,5 +108,41 @@ public class ScoreService(IActivityLogRepository logRepo) : IScoreService
         };
     }
 
+    public async Task<IEnumerable<CategoryTotalDto>> GetCategoryTotalsAsync(string userId, string period)
+    {
+        var now = DateTime.UtcNow;
+        var (from, to) = period switch
+        {
+            "month" => (new DateTime(now.Year, now.Month, 1), now.Date.AddDays(1)),
+            "year"  => (new DateTime(now.Year, 1, 1),         now.Date.AddDays(1)),
+            _       => (now.Date.AddDays(-(int)now.DayOfWeek), now.Date.AddDays(1))
+        };
+
+        var logs = await logRepo.GetByDateRangeAsync(userId, from, to);
+        var totals = new Dictionary<int, CategoryTotalDto>();
+
+        foreach (var log in logs)
+        {
+            if (log.Activity?.Categories is null) continue;
+            foreach (var ac in log.Activity.Categories)
+            {
+                if (ac.Category is null) continue;
+                if (!totals.TryGetValue(ac.CategoryId, out var dto))
+                {
+                    dto = new CategoryTotalDto
+                    {
+                        CategoryId = ac.CategoryId,
+                        CategoryName = ac.Category.Name,
+                        ColorHex = ac.Category.ColorHex
+                    };
+                    totals[ac.CategoryId] = dto;
+                }
+                dto.Total += log.PointsRecorded;
+            }
+        }
+
+        return totals.Values.Where(d => d.Total > 0).OrderByDescending(d => d.Total);
+    }
+
     private static DateTime GetWeekStart(DateTime date) => date.AddDays(-(int)date.DayOfWeek);
 }

@@ -13,3 +13,4 @@ C:\JL\Dev\Claude\Nashville\Momentum.Domain\bin\Debug\net10.0\Momentum.Shared.dll
 C:\JL\Dev\Claude\Nashville\Momentum.Domain\bin\Debug\net10.0\Momentum.Shared.pdb
 C:\JL\Dev\Claude\Nashville\Momentum.Domain\obj\Debug\net10.0\Momentum.Domain.csproj.AssemblyReference.cache
 C:\JL\Dev\Claude\Nashville\Momentum.Domain\obj\Debug\net10.0\Momentum.C30C9682.Up2Date
+C:\JL\Dev\Claude\Nashville\Momentum.Domain\obj\Debug\net10.0\Momentum.Domain.sourcelink.json

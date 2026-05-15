@@ -1,6 +1,109 @@
 @page "/reports/balance"
 @attribute [Authorize]
+@using ApexCharts
+@inject ReportsService ReportsService
+@inject ISnackbar Snackbar
 
 <PageTitle>Balance</PageTitle>
 
 <MudText Typo="Typo.h5" Class="mb-4">Balance</MudText>
+
+<div style="width:60%" class="mb-4">
+    <MudSelect T="string" Label="Period" @bind-Value="_period" @bind-Value:after="LoadData">
+        <MudSelectItem Value='"week"'>This Week</MudSelectItem>
+        <MudSelectItem Value='"month"'>This Month</MudSelectItem>
+        <MudSelectItem Value='"year"'>This Year</MudSelectItem>
+    </MudSelect>
+</div>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else if (!_data.Any())
+{
+    <MudText Color="MudBlazor.Color.Secondary">No activity logged for this period.</MudText>
+}
+else
+{
+    <ApexChart TItem="CategoryTotalDto" Options="_chartOptions" @key="_chartKey">
+        <ApexPointSeries TItem="CategoryTotalDto"
+                         Items="_data"
+                         Name="Points"
+                         SeriesType="SeriesType.Pie"
+                         XValue="@(d => d.CategoryName)"
+                         YValue="@(d => (decimal)d.Total)"
+                         ShowDataLabels="true" />
+    </ApexChart>
+}
+
+@code {
+    private string _period = "week";
+    private List<CategoryTotalDto> _data = [];
+    private bool _loading;
+    private int _chartKey;
+    private ApexChartOptions<CategoryTotalDto> _chartOptions = new()
+    {
+        Chart = new ApexCharts.Chart { Toolbar = new Toolbar { Show = false } },
+        DataLabels = new DataLabels { Enabled = true }
+    };
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        try
+        {
+            _data = await ReportsService.GetBalanceAsync(_period);
+            _chartOptions = new ApexChartOptions<CategoryTotalDto>
+            {
+                Chart = new ApexCharts.Chart { Toolbar = new Toolbar { Show = false } },
+                Colors = _data.Select(d => d.ColorHex).ToList(),
+                DataLabels = new DataLabels
+                {
+                    Enabled = true,
+                    Formatter = "function(val, opts) { return opts.w.globals.labels[opts.seriesIndex] + ' ' + Math.round(val) + '%'; }",
+                    Style = new DataLabelsStyle
+                    {
+                        FontSize = "14px",
+                        Colors = new List<string> { "#ffffff" }
+                    },
+                    DropShadow = new DropShadow
+                    {
+                        Enabled = true,
+                        Top = 1,
+                        Left = 1,
+                        Blur = 2,
+                        Opacity = 0.6
+                    }
+                },
+                PlotOptions = new PlotOptions
+                {
+                    Pie = new PlotOptionsPie
+                    {
+                        DataLabels = new PieDataLabels
+                        {
+                            Offset = 0,
+                            MinAngleToShowLabel = 10
+                        }
+                    }
+                },
+                Legend = new Legend
+                {
+                    Show = true,
+                    ShowForSingleSeries = true
+                }
+            };
+            _chartKey++;
+        }
+        catch
+        {
+            Snackbar.Add("Failed to load balance data.", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

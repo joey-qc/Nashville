@@ -25,4 +25,7 @@ public class ReportsService(HttpClient http)
         if (categoryId.HasValue) url += $"&categoryId={categoryId.Value}";
         return await http.GetFromJsonAsync<List<DailyScoreDto>>(url) ?? [];
     }
+
+    public async Task<List<CategoryTotalDto>> GetBalanceAsync(string period = "week") =>
+        await http.GetFromJsonAsync<List<CategoryTotalDto>>($"api/reports/balance?period={period}") ?? [];
 }

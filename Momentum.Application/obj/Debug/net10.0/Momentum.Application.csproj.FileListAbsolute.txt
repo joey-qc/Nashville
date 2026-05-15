@@ -15,3 +15,4 @@ C:\JL\Dev\Claude\Nashville\Momentum.Application\obj\Debug\net10.0\Momentum.Appli
 C:\JL\Dev\Claude\Nashville\Momentum.Application\obj\Debug\net10.0\refint\Momentum.Application.dll
 C:\JL\Dev\Claude\Nashville\Momentum.Application\obj\Debug\net10.0\Momentum.Application.pdb
 C:\JL\Dev\Claude\Nashville\Momentum.Application\obj\Debug\net10.0\ref\Momentum.Application.dll
+C:\JL\Dev\Claude\Nashville\Momentum.Application\obj\Debug\net10.0\Momentum.Application.sourcelink.json

@@ -32,64 +32,49 @@ else if (!_logs.Any())
 }
 else
 {
-    <MudTable Items="_logs" Hover="true" Breakpoint="Breakpoint.Sm" SortLabel="Sort By">
-        <HeaderContent>
-            <MudTh>
-                <MudTableSortLabel T="ActivityLogDto" SortBy="@(l => l.ActivityName)">Activity</MudTableSortLabel>
-            </MudTh>
-            <MudTh>
-                <MudTableSortLabel T="ActivityLogDto" SortBy="@(l => (object)l.LoggedAt)" InitialDirection="SortDirection.Descending">Date &amp; Time</MudTableSortLabel>
-            </MudTh>
-            <MudTh>
-                <MudTableSortLabel T="ActivityLogDto" SortBy="@(l => (object)l.PointsRecorded)">Points</MudTableSortLabel>
-            </MudTh>
-            <MudTh>Notes</MudTh>
-            <MudTh></MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd>
-                @context.ActivityName
-                <div>
-                    @foreach (var cat in context.Categories)
+    @foreach (var log in _logs)
+    {
+        <MudPaper Class="pa-3 mb-2">
+            <div class="d-flex justify-space-between align-center mb-1">
+                <MudText><strong>@log.ActivityName</strong></MudText>
+                <MudText Color="@(log.PointsRecorded >= 0 ? MudBlazor.Color.Success : MudBlazor.Color.Error)">
+                    @(log.PointsRecorded > 0 ? "+" : "")@log.PointsRecorded
+                </MudText>
+            </div>
+            <div class="mb-1">
+                @foreach (var cat in log.Categories)
+                {
+                    <MudChip T="string" Size="MudBlazor.Size.Small"
+                             Style="@($"background:{cat.ColorHex};color:white")"
+                             Class="mr-1">@cat.Name</MudChip>
+                }
+            </div>
+            <div class="d-flex justify-space-between align-center">
+                <MudText Typo="Typo.caption">@log.LoggedAt.ToString("MMM d, h:mm tt")</MudText>
+                <div class="d-flex flex-nowrap align-center">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="MudBlazor.Size.Small"
+                                   OnClick="@(() => Navigation.NavigateTo($"/log?editId={log.Id}"))" />
+                    @if (_pendingDeleteId == log.Id)
                     {
-                        <MudChip T="string" Size="MudBlazor.Size.Small"
-                                 Style="@($"background:{cat.ColorHex};color:white")"
-                                 Class="mr-1">@cat.Name</MudChip>
+                        <MudIconButton Icon="@Icons.Material.Filled.Check" Size="MudBlazor.Size.Small"
+                                       Color="MudBlazor.Color.Error"
+                                       OnClick="@(() => ConfirmDelete(log.Id))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" Size="MudBlazor.Size.Small"
+                                       OnClick="@(() => _pendingDeleteId = null)" />
+                    }
+                    else
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="MudBlazor.Size.Small"
+                                       Color="MudBlazor.Color.Error"
+                                       OnClick="@(() => _pendingDeleteId = log.Id)" />
                     }
                 </div>
-            </MudTd>
-            <MudTd>@context.LoggedAt.ToString("MMM d, h:mm tt")</MudTd>
-            <MudTd>
-                <MudText Color="@(context.PointsRecorded >= 0 ? MudBlazor.Color.Success : MudBlazor.Color.Error)">
-                    @(context.PointsRecorded > 0 ? "+" : "")@context.PointsRecorded
-                </MudText>
-            </MudTd>
-            <MudTd>@context.Notes</MudTd>
-            <MudTd>
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="MudBlazor.Size.Small"
-                               OnClick="@(() => Navigation.NavigateTo($"/log?editId={context.Id}"))" />
-                @if (_pendingDeleteId == context.Id)
-                {
-                    <MudButton Size="MudBlazor.Size.Small" Color="MudBlazor.Color.Error"
-                               OnClick="@(() => ConfirmDelete(context.Id))">Confirm</MudButton>
-                    <MudButton Size="MudBlazor.Size.Small" OnClick="@(() => _pendingDeleteId = null)">Cancel</MudButton>
-                }
-                else
-                {
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="MudBlazor.Size.Small"
-                                   Color="MudBlazor.Color.Error"
-                                   OnClick="@(() => _pendingDeleteId = context.Id)" />
-                }
-            </MudTd>
-        </RowTemplate>
-        <FooterContent>
-            <MudTd colspan="5">
-                <MudText Align="MudBlazor.Align.Right">
-                    <strong>Total: @_logs.Sum(l => l.PointsRecorded) pts</strong>
-                </MudText>
-            </MudTd>
-        </FooterContent>
-    </MudTable>
+            </div>
+        </MudPaper>
+    }
+    <MudText Align="MudBlazor.Align.Right" Class="mt-2">
+        <strong>Total: @_logs.Sum(l => l.PointsRecorded) pts</strong>
+    </MudText>
 }
 
 @code {

@@ -3,6 +3,7 @@
 @inject ActivityService ActivityService
 @inject CategoryService CategoryService
 @inject ISnackbar Snackbar
+@inject IJSRuntime JS
 
 <PageTitle>Manage Activities</PageTitle>
 
@@ -113,7 +114,7 @@ else
             </MudTd>
             <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="MudBlazor.Size.Small"
-                               OnClick="@(() => OpenEditForm(context))" />
+                               OnClick="@(async () => await OpenEditForm(context))" />
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="MudBlazor.Size.Small"
                                Color="MudBlazor.Color.Error"
                                OnClick="@(() => DeleteActivity(context))" />
@@ -166,7 +167,7 @@ else
         _showForm = true;
     }
 
-    private void OpenEditForm(ActivityDto activity)
+    private async Task OpenEditForm(ActivityDto activity)
     {
         _editingId = activity.Id;
         _form.Name = activity.Name;
@@ -175,6 +176,8 @@ else
         _form.CategoryIds = [.. activity.Categories.Select(c => c.Id)];
         _showCategoryError = false;
         _showForm = true;
+        StateHasChanged();
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
     }
 
     private void ToggleCategory(int categoryId)

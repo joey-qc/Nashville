@@ -5,7 +5,7 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
   "mainAssemblyName": "Momentum.Client",
   "applicationEnvironment": "Development",
   "resources": {
-    "hash": "sha256-R9qRLmqwLQr36k7VNxxa1Mp7me2JFFCCVtvWi4BHhLY=",
+    "hash": "sha256-RqSYaA7QhK5It92GFWHFHDYOSvLSCnhd14DDumq6+08=",
     "jsModuleNative": [
       {
         "name": "dotnet.native.rjbmzc4jpg.js"
@@ -1302,8 +1302,8 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
       },
       {
         "virtualPath": "Momentum.Shared.wasm",
-        "name": "Momentum.Shared.uyay44yyv1.wasm",
-        "hash": "sha256-+t9u16lnsGKmY3g5lzxT26JYXTnyGKnRqhG5eYG3u4g=",
+        "name": "Momentum.Shared.elbi85y601.wasm",
+        "hash": "sha256-zhjn2o14VavDbCGvHPd2scL1lxiMG1Fz5wrF2vL3geI=",
         "cache": "force-cache"
       },
       {
@@ -1314,22 +1314,22 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
       },
       {
         "virtualPath": "Momentum.Client.wasm",
-        "name": "Momentum.Client.b2yrzg92uf.wasm",
-        "hash": "sha256-zceih0ZXMhiExqxljQ+DUIjmcCytD7OWqH1tX7o1+ug=",
+        "name": "Momentum.Client.lq2yvwky9e.wasm",
+        "hash": "sha256-o/4FnST/GGm+j6yMEeXcPQfFvk5u9aM7gdGYRtHDYok=",
         "cache": "force-cache"
       }
     ],
     "pdb": [
       {
         "virtualPath": "Momentum.Shared.pdb",
-        "name": "Momentum.Shared.bfb9lgo316.pdb",
-        "hash": "sha256-F1eYBqilaX4r8lkl8zZ7VGy5UdpEMH5cmtlfwHRV8Eg=",
+        "name": "Momentum.Shared.89hnygvahe.pdb",
+        "hash": "sha256-5DZDai7l1sf7F3YnSVh0saeuAJn1NGQmM3GVaiRh/Dc=",
         "cache": "force-cache"
       },
       {
         "virtualPath": "Momentum.Client.pdb",
-        "name": "Momentum.Client.98x5bxmhl6.pdb",
-        "hash": "sha256-eebn2X8Z/uMCVMJgEXr8F6bb1TudFDqOvEl++31gBjg=",
+        "name": "Momentum.Client.vmsxngfv1i.pdb",
+        "hash": "sha256-yYl7ejEJ8Mq9cREcilL0IZUk+nNX5Pz6MkqK1h7rFLE=",
         "cache": "force-cache"
       }
     ],
@@ -1345,6 +1345,10 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
     ]
   },
   "debugLevel": -1,
+  "appsettings": [
+    "../appsettings.Development.json",
+    "../appsettings.json"
+  ],
   "globalizationMode": "sharded",
   "extensions": {
     "blazor": {}

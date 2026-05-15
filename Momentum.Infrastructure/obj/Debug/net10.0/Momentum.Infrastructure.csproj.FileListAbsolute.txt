@@ -19,3 +19,4 @@ C:\JL\Dev\Claude\Nashville\Momentum.Infrastructure\obj\Debug\net10.0\refint\Mome
 C:\JL\Dev\Claude\Nashville\Momentum.Infrastructure\obj\Debug\net10.0\Momentum.Infrastructure.pdb
 C:\JL\Dev\Claude\Nashville\Momentum.Infrastructure\obj\Debug\net10.0\Momentum.Infrastructure.genruntimeconfig.cache
 C:\JL\Dev\Claude\Nashville\Momentum.Infrastructure\obj\Debug\net10.0\ref\Momentum.Infrastructure.dll
+C:\JL\Dev\Claude\Nashville\Momentum.Infrastructure\obj\Debug\net10.0\Momentum.Infrastructure.sourcelink.json

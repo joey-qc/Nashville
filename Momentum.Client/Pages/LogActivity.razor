@@ -5,6 +5,7 @@
 @inject ScoreService ScoreService
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
+@inject IJSRuntime JS
 
 <PageTitle>@(EditId.HasValue ? "Edit Log Entry" : "Log Activity")</PageTitle>
 
@@ -118,6 +119,8 @@
         _model.Time = log.LoggedAt.TimeOfDay;
         _model.Points = log.PointsRecorded;
         _model.Notes = log.Notes;
+        StateHasChanged();
+        await JS.InvokeVoidAsync("scrollTo", 0, 0);
     }
 
     private void SelectActivity(ActivityDto? activity)

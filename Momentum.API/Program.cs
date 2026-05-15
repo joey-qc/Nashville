@@ -76,7 +76,10 @@ try
 
     builder.Services.AddCors(options =>
         options.AddDefaultPolicy(policy =>
-            policy.WithOrigins("https://localhost:7202", "http://localhost:5012")
+            policy.WithOrigins(
+                      "https://localhost:7202",
+                      "http://localhost:5012",
+                      "https://nice-ground-0e421bf1e.7.azurestaticapps.net")
                   .AllowAnyMethod()
                   .AllowAnyHeader()));
 

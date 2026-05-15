@@ -56,4 +56,19 @@ public class ReportsController(IScoreService scoreService, ILogger<ReportsContro
             return StatusCode(500, "An unexpected error occurred.");
         }
     }
+
+    [HttpGet("balance")]
+    public async Task<IActionResult> GetBalance([FromQuery] string period = "week")
+    {
+        try
+        {
+            var data = await scoreService.GetCategoryTotalsAsync(UserId, period);
+            return Ok(data);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error fetching balance report for user {UserId}", UserId);
+            return StatusCode(500, "An unexpected error occurred.");
+        }
+    }
 }
