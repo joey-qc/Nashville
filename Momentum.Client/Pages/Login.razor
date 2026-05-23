@@ -1,6 +1,8 @@
 @page "/login"
 @inject ClientAuthService AuthService
 @inject NavigationManager Navigation
+@inject ColdStartService ColdStartService
+@implements IDisposable
 
 <PageTitle>Login</PageTitle>
 
@@ -21,9 +23,17 @@
                     <MudAlert Severity="Severity.Error" Class="mb-3">@string.Join(" ", errors)</MudAlert>
                 }
 
+                @if (ColdStartService.IsRetrying)
+                {
+                    <MudAlert Severity="Severity.Info" Class="mb-3">
+                        Waking up the server, please wait&hellip;
+                    </MudAlert>
+                    <MudProgressLinear Indeterminate="true" Color="Color.Info" Rounded="true" Class="mb-3" />
+                }
+
                 <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
                            FullWidth="true" Disabled="busy">
-                    @(busy ? "Signing in..." : "Sign In")
+                    @ButtonLabel
                 </MudButton>
             </EditForm>
 
@@ -42,6 +52,22 @@
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
 
+    private string ButtonLabel => busy
+        ? (ColdStartService.IsRetrying ? "Please wait..." : "Signing in...")
+        : "Sign In";
+
+    protected override void OnInitialized()
+    {
+        ColdStartService.OnChanged += HandleColdStartChanged;
+    }
+
+    private void HandleColdStartChanged()
+    {
+        // The event fires from the handler's async context — marshal back to the
+        // Blazor synchronization context before touching the render tree.
+        InvokeAsync(StateHasChanged);
+    }
+
     private async Task HandleLogin()
     {
         busy = true;
@@ -53,5 +79,10 @@
             Navigation.NavigateTo(ReturnUrl ?? "/");
         else
             errors = result.Errors;
+    }
+
+    public void Dispose()
+    {
+        ColdStartService.OnChanged -= HandleColdStartChanged;
     }
 }

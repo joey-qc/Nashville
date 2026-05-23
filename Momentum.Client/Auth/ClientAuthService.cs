@@ -14,36 +14,58 @@ public class ClientAuthService(
 {
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
     {
-        var response = await http.PostAsJsonAsync("api/auth/login", request);
-        var result = await response.Content.ReadFromJsonAsync<AuthResponse>() ?? new AuthResponse();
-
-        if (result.Succeeded && result.Token is not null)
+        try
         {
-            await authStateProvider.MarkUserAsAuthenticated(result.Token);
-            await Task.WhenAll(
-                categoryService.LoadAsync(),
-                activityService.LoadAsync(),
-                ApplyThemeAsync());
-        }
+            var response = await http.PostAsJsonAsync("api/auth/login", request);
+            var result = await response.Content.ReadFromJsonAsync<AuthResponse>() ?? new AuthResponse();
 
-        return result;
+            if (result.Succeeded && result.Token is not null)
+            {
+                await authStateProvider.MarkUserAsAuthenticated(result.Token);
+                await Task.WhenAll(
+                    categoryService.LoadAsync(),
+                    activityService.LoadAsync(),
+                    ApplyThemeAsync());
+            }
+
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            return new AuthResponse
+            {
+                Succeeded = false,
+                Errors = [ex.Message]
+            };
+        }
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
     {
-        var response = await http.PostAsJsonAsync("api/auth/register", request);
-        var result = await response.Content.ReadFromJsonAsync<AuthResponse>() ?? new AuthResponse();
-
-        if (result.Succeeded && result.Token is not null)
+        try
         {
-            await authStateProvider.MarkUserAsAuthenticated(result.Token);
-            await Task.WhenAll(
-                categoryService.LoadAsync(),
-                activityService.LoadAsync(),
-                ApplyThemeAsync());
-        }
+            var response = await http.PostAsJsonAsync("api/auth/register", request);
+            var result = await response.Content.ReadFromJsonAsync<AuthResponse>() ?? new AuthResponse();
 
-        return result;
+            if (result.Succeeded && result.Token is not null)
+            {
+                await authStateProvider.MarkUserAsAuthenticated(result.Token);
+                await Task.WhenAll(
+                    categoryService.LoadAsync(),
+                    activityService.LoadAsync(),
+                    ApplyThemeAsync());
+            }
+
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            return new AuthResponse
+            {
+                Succeeded = false,
+                Errors = [ex.Message]
+            };
+        }
     }
 
     public async Task LogoutAsync()

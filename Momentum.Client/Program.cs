@@ -12,6 +12,7 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddSingleton<TokenProvider>();
+builder.Services.AddSingleton<ColdStartService>();
 builder.Services.AddScoped<JwtAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
     sp.GetRequiredService<JwtAuthStateProvider>());
@@ -21,7 +22,8 @@ builder.Services.AddScoped(sp =>
 {
     var tokenProvider = sp.GetRequiredService<TokenProvider>();
     var authStateProvider = sp.GetRequiredService<JwtAuthStateProvider>();
-    var handler = new AuthMessageHandler(tokenProvider, authStateProvider)
+    var coldStartService = sp.GetRequiredService<ColdStartService>();
+    var handler = new AuthMessageHandler(tokenProvider, authStateProvider, coldStartService)
     {
         InnerHandler = new HttpClientHandler()
     };

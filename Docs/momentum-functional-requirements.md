@@ -28,7 +28,8 @@
 - Navigation items:
   - **Home** (Score Summary / Landing Page)
   - **Log Activity** (also accessible via the persistent plus button)
-  - **Reports** (Reporting & Analytics)
+  - **View Log** (Activity Detail View — browsable history by period)
+  - **Reports** (Reporting & Analytics — contains Trends and Balance sub-pages)
   - **Manage Activities** (Data Management)
   - **Settings**
 - A **persistent "+" (Add) button** is visible on every authenticated screen, allowing the user to quickly navigate to the Log Activity screen at any time.
@@ -162,7 +163,17 @@ When a specific category is selected, only points from activities in that catego
 - Y-axis: point totals
 - Chart updates dynamically when the user changes the aggregation or category filter.
 
-### 8.4 Data Scope
+### 8.4 Balance — Category Breakdown Report
+
+A dedicated sub-page under Reports showing how the user's points are distributed across the five wellness categories.
+
+- **Period selector:** Week, Month, or Year
+- **Chart:** Pie (or donut) chart showing each category's share of total points for the selected period
+- **Data labels:** Category name, total points, and percentage of overall total
+- Category colors match the global color scheme (Physical=green, Mental=blue, etc.)
+- Data is scoped to the logged-in user and filtered to the selected time period
+
+### 8.5 Data Scope
 - Data shown is scoped to the logged-in user only.
 - If the user has been active for less than the maximum period, only available data is shown.
 
@@ -236,8 +247,8 @@ When a new user registers, the following starter activities are automatically ad
 
 ### 11.1 Profile
 - **Display Name** — editable text field; used for the personalized welcome greeting throughout the app
-- **Email Address** — editable; used for login
-- **Password** — change password with current password confirmation
+- **Email Address** — read-only; displayed for reference but cannot be changed after registration
+- **Password** — *(planned for future release)* change password with current password confirmation
 
 ### 11.2 Appearance
 - **Theme Toggle** — switch between Light Mode and Dark Mode
@@ -256,4 +267,4 @@ When a new user registers, the following starter activities are automatically ad
 ---
 
 *Momentum — Functional Requirements Document*
-*Version 1.1 — Updated to reflect sortable columns and chip-based category selection*
+*Version 1.2 — Added View Log navigation item, Balance/Category Breakdown report section, corrected Settings profile fields*

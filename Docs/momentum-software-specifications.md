@@ -196,6 +196,7 @@ Key repositories:
 | Method | Route | Description |
 |---|---|---|
 | GET | /api/logs | Get activity logs (supports date range query params) |
+| GET | /api/logs/{id} | Get a single log entry by ID |
 | POST | /api/logs | Create a new log entry |
 | PUT | /api/logs/{id} | Update an existing log entry |
 | DELETE | /api/logs/{id} | Delete a log entry |
@@ -212,6 +213,7 @@ Key repositories:
 | GET | /api/reports/daily?days=30&categoryId= | Daily totals for the past N days, optionally filtered by category ID |
 | GET | /api/reports/weekly?weeks=52&categoryId= | Weekly totals for the past N weeks, optionally filtered by category ID |
 | GET | /api/reports/monthly?months=12&categoryId= | Monthly totals for the past N months, optionally filtered by category ID |
+| GET | /api/reports/balance?period=week\|month\|year | Category point totals for the Balance pie chart |
 
 #### User Settings
 | Method | Route | Description |
@@ -236,6 +238,13 @@ When a DELETE request is received for an activity:
 - Both services use a lazy-load pattern: `GetAllAsync()` returns the cached value or fetches if null — components do not need to manage load order.
 - The activity cache is invalidated and refreshed whenever the user adds, edits, archives, or deletes an activity in the Manage Activities screen.
 - The category cache is stable (categories are seeded and not user-editable) and only cleared on logout.
+
+### 8.2a Reports Pages
+The Reports section of the client contains two distinct pages:
+- **Trends** (`/reports`) — bar chart of daily/weekly/monthly point totals with category filter; uses `ReportsService.GetDailyAsync`, `GetWeeklyAsync`, `GetMonthlyAsync`.
+- **Balance** (`/reports/balance`) — pie chart of category point distribution for the selected period (week/month/year); uses `ReportsService.GetBalanceAsync`.
+
+Both pages use `@using ApexCharts` and must qualify conflicting MudBlazor types (see CLAUDE.md Section 7.1).
 
 ### 8.3 Routing & Authentication
 - Blazor routing is used for client-side navigation.
@@ -317,4 +326,4 @@ The following are noted for future development and should be kept in mind when m
 ---
 
 *Momentum — Software Specifications Document*
-*Version 1.2 — Updated to reflect .NET 10, database-driven categories, and current project structure*
+*Version 1.3 — Added GET /api/logs/{id} and GET /api/reports/balance endpoints; added Balance report page documentation*

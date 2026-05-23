@@ -72,6 +72,7 @@ Services/
  ActivityLogService.cs
  ActivityService.cs
  CategoryService.cs
+ ColdStartService.cs
  ReportsService.cs
  ScoreService.cs
  ThemeService.cs
