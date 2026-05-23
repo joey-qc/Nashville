@@ -8,8 +8,9 @@ public class ActivityLogService(HttpClient http)
     public async Task<List<ActivityLogDto>> GetByDateRangeAsync(DateTime from, DateTime to)
     {
         var result = await http.GetFromJsonAsync<List<ActivityLogDto>>(
-            $"api/logs?from={from:O}&to={to:O}");
-        return result ?? [];
+            $"api/logs?from={from:O}&to={to:O}") ?? [];
+
+        return result;
     }
 
     public async Task<ActivityLogDto?> GetByIdAsync(int id)

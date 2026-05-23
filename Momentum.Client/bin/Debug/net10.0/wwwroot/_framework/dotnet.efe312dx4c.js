@@ -5,7 +5,7 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
   "mainAssemblyName": "Momentum.Client",
   "applicationEnvironment": "Development",
   "resources": {
-    "hash": "sha256-phCFZ4m7o24Rfcjj3juHy0ouYzsoDFzZ3FqfnsdA5N4=",
+    "hash": "sha256-+lpaOk5b4GYkDKcyCn7SI5miCFM6611vFYrfPmL2olA=",
     "jsModuleNative": [
       {
         "name": "dotnet.native.rjbmzc4jpg.js"
@@ -1302,8 +1302,8 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
       },
       {
         "virtualPath": "Momentum.Shared.wasm",
-        "name": "Momentum.Shared.tokrl3yhjd.wasm",
-        "hash": "sha256-fSK3QTlzK+AvLlSYtFce4qUSd59RrYIZH58m4fUb350=",
+        "name": "Momentum.Shared.72zqiowvlh.wasm",
+        "hash": "sha256-AVq7EDoPObDYPruPWfG35oJ9hZRwjBDPCe/aC1pcwmc=",
         "cache": "force-cache"
       },
       {
@@ -1314,22 +1314,22 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
       },
       {
         "virtualPath": "Momentum.Client.wasm",
-        "name": "Momentum.Client.ddb4m0by86.wasm",
-        "hash": "sha256-kRgBpwQUrJt+WEdR9g1vxqECmtbrzfTeN+iukIQZJZ0=",
+        "name": "Momentum.Client.hckgpaeape.wasm",
+        "hash": "sha256-/7OWPMYayW2r26NfKWM+MfMKG23tlWH2V6NYSgLKQ14=",
         "cache": "force-cache"
       }
     ],
     "pdb": [
       {
         "virtualPath": "Momentum.Shared.pdb",
-        "name": "Momentum.Shared.5u4wsg5iwc.pdb",
-        "hash": "sha256-fYwaNsqoJv5goeZkU1dTI27O0zR4fLbXcIjG+tDIXuE=",
+        "name": "Momentum.Shared.33dh20zw1t.pdb",
+        "hash": "sha256-f877ISnVwNEz/8OWQ4+B+4cBky0+ZaRiY3/0uPeXY5g=",
         "cache": "force-cache"
       },
       {
         "virtualPath": "Momentum.Client.pdb",
-        "name": "Momentum.Client.n8l4gucm3n.pdb",
-        "hash": "sha256-h8x5iyHjTMVntV9T9eNvnAMDKxadmnnPaDSXRhKx+2s=",
+        "name": "Momentum.Client.cnqyv3z5y5.pdb",
+        "hash": "sha256-mGkQaATQ+hr2b+1IpBUZRhI0BfsBRp89ksqidLxXa+s=",
         "cache": "force-cache"
       }
     ],

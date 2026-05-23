@@ -269,3 +269,634 @@ ORDER BY [a].[LoggedAt] DESC, [a].[Id], [a0].[Id], [s].[ActivityId], [s].[Catego
 2026-05-23 16:29:07.918 -04:00 [INF] HTTP GET /api/logs responded 200 in 64.5518 ms
 2026-05-23 16:29:07.921 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - 200 null application/json; charset=utf-8 71.1621ms
 2026-05-23 16:30:03.869 -04:00 [INF] Application is shutting down...
+2026-05-23 16:55:55.834 -04:00 [INF] Executed DbCommand (24ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-23 16:55:55.898 -04:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-05-23 16:55:55.982 -04:00 [INF] Executed DbCommand (77ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_getapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session', @LockMode = 'Exclusive';
+SELECT @result
+2026-05-23 16:55:56.050 -04:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
+BEGIN
+    CREATE TABLE [__EFMigrationsHistory] (
+        [MigrationId] nvarchar(150) NOT NULL,
+        [ProductVersion] nvarchar(32) NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+END;
+2026-05-23 16:55:56.071 -04:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-23 16:55:56.076 -04:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2026-05-23 16:55:56.097 -04:00 [INF] Executed DbCommand (14ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2026-05-23 16:55:56.108 -04:00 [INF] No migrations were applied. The database is already up to date.
+2026-05-23 16:55:56.120 -04:00 [INF] Executed DbCommand (8ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_releaseapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session';
+SELECT @result
+2026-05-23 16:55:56.201 -04:00 [INF] User profile is available. Using 'C:\Users\joel\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-05-23 16:55:56.282 -04:00 [INF] Now listening on: http://localhost:5097
+2026-05-23 16:55:56.285 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-05-23 16:55:56.286 -04:00 [INF] Hosting environment: Development
+2026-05-23 16:55:56.288 -04:00 [INF] Content root path: C:\JL\Dev\Claude\Nashville\Momentum.API
+2026-05-23 16:56:16.218 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - null null
+2026-05-23 16:56:16.238 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:16.244 -04:00 [INF] HTTP OPTIONS /api/logs responded 204 in 6.4099 ms
+2026-05-23 16:56:16.250 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - 204 null null 35.3163ms
+2026-05-23 16:56:16.255 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - null null
+2026-05-23 16:56:16.259 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:16.363 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API)'
+2026-05-23 16:56:16.400 -04:00 [INF] Route matched with {action = "GetLogs", controller = "ActivityLogs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetLogs(System.Nullable`1[System.DateTime], System.Nullable`1[System.DateTime]) on controller Momentum.API.Controllers.ActivityLogsController (Momentum.API).
+2026-05-23 16:56:16.501 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/settings - null null
+2026-05-23 16:56:16.504 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:16.505 -04:00 [INF] HTTP OPTIONS /api/settings responded 204 in 1.4209 ms
+2026-05-23 16:56:16.508 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/settings - 204 null null 6.2948ms
+2026-05-23 16:56:16.511 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5097/api/settings - null null
+2026-05-23 16:56:16.515 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:16.520 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.SettingsController.GetSettings (Momentum.API)'
+2026-05-23 16:56:16.528 -04:00 [INF] Route matched with {action = "GetSettings", controller = "Settings"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetSettings() on controller Momentum.API.Controllers.SettingsController (Momentum.API).
+2026-05-23 16:56:16.831 -04:00 [INF] Executed DbCommand (23ms) [Parameters=[@p='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[DisplayName], [a].[Email], [a].[EmailConfirmed], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[Theme], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[Id] = @p
+2026-05-23 16:56:16.854 -04:00 [INF] Executed DbCommand (51ms) [Parameters=[@userId='?' (Size = 4000), @from='?' (DbType = DateTime2), @to='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a].[Id], [a].[ActivityId], [a].[CreatedAt], [a].[LoggedAt], [a].[Notes], [a].[PointsRecorded], [a].[UserId], [a0].[Id], [a0].[CreatedAt], [a0].[DefaultPoints], [a0].[Description], [a0].[IsArchived], [a0].[Name], [a0].[UpdatedAt], [a0].[UserId], [s].[ActivityId], [s].[CategoryId], [s].[Id], [s].[ColorHex], [s].[Name]
+FROM [ActivityLogs] AS [a]
+INNER JOIN [Activities] AS [a0] ON [a].[ActivityId] = [a0].[Id]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s] ON [a0].[Id] = [s].[ActivityId]
+WHERE [a].[UserId] = @userId AND [a].[LoggedAt] >= @from AND [a].[LoggedAt] < @to
+ORDER BY [a].[LoggedAt] DESC, [a].[Id], [a0].[Id], [s].[ActivityId], [s].[CategoryId]
+2026-05-23 16:56:16.910 -04:00 [INF] Executing OkObjectResult, writing value of type 'Momentum.Shared.UserSettingsDto'.
+2026-05-23 16:56:16.941 -04:00 [INF] Executed action Momentum.API.Controllers.SettingsController.GetSettings (Momentum.API) in 406.3077ms
+2026-05-23 16:56:16.943 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.SettingsController.GetSettings (Momentum.API)'
+2026-05-23 16:56:16.945 -04:00 [INF] HTTP GET /api/settings responded 200 in 430.8934 ms
+2026-05-23 16:56:16.954 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5097/api/settings - 200 null application/json; charset=utf-8 442.2711ms
+2026-05-23 16:56:16.956 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Linq.Enumerable+ListSelectIterator`2[[Momentum.Domain.Entities.ActivityLog, Momentum.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[Momentum.Shared.ActivityLogDto, Momentum.Shared, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-23 16:56:16.979 -04:00 [INF] Executed action Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API) in 575.9174ms
+2026-05-23 16:56:16.981 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API)'
+2026-05-23 16:56:16.983 -04:00 [INF] HTTP GET /api/logs responded 200 in 724.2577 ms
+2026-05-23 16:56:16.985 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - 200 null application/json; charset=utf-8 729.4871ms
+2026-05-23 16:56:23.463 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/logs/16 - null null
+2026-05-23 16:56:23.471 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:23.473 -04:00 [INF] HTTP OPTIONS /api/logs/16 responded 204 in 2.8939 ms
+2026-05-23 16:56:23.480 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/logs/16 - 204 null null 16.3248ms
+2026-05-23 16:56:23.496 -04:00 [INF] Request starting HTTP/1.1 DELETE http://localhost:5097/api/logs/16 - null null
+2026-05-23 16:56:23.504 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:23.515 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ActivityLogsController.DeleteLog (Momentum.API)'
+2026-05-23 16:56:23.525 -04:00 [INF] Route matched with {action = "DeleteLog", controller = "ActivityLogs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] DeleteLog(Int32) on controller Momentum.API.Controllers.ActivityLogsController (Momentum.API).
+2026-05-23 16:56:23.622 -04:00 [INF] Executed DbCommand (18ms) [Parameters=[@id='?' (DbType = Int32), @userId='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT [s].[Id], [s].[ActivityId], [s].[CreatedAt], [s].[LoggedAt], [s].[Notes], [s].[PointsRecorded], [s].[UserId], [s].[Id0], [s].[CreatedAt0], [s].[DefaultPoints], [s].[Description], [s].[IsArchived], [s].[Name], [s].[UpdatedAt], [s].[UserId0], [s0].[ActivityId], [s0].[CategoryId], [s0].[Id], [s0].[ColorHex], [s0].[Name]
+FROM (
+    SELECT TOP(1) [a].[Id], [a].[ActivityId], [a].[CreatedAt], [a].[LoggedAt], [a].[Notes], [a].[PointsRecorded], [a].[UserId], [a0].[Id] AS [Id0], [a0].[CreatedAt] AS [CreatedAt0], [a0].[DefaultPoints], [a0].[Description], [a0].[IsArchived], [a0].[Name], [a0].[UpdatedAt], [a0].[UserId] AS [UserId0]
+    FROM [ActivityLogs] AS [a]
+    INNER JOIN [Activities] AS [a0] ON [a].[ActivityId] = [a0].[Id]
+    WHERE [a].[Id] = @id AND [a].[UserId] = @userId
+) AS [s]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s0] ON [s].[Id0] = [s0].[ActivityId]
+ORDER BY [s].[Id], [s].[Id0], [s0].[ActivityId], [s0].[CategoryId]
+2026-05-23 16:56:23.795 -04:00 [INF] Executed DbCommand (11ms) [Parameters=[@p0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+DELETE FROM [ActivityLogs]
+OUTPUT 1
+WHERE [Id] = @p0;
+2026-05-23 16:56:23.832 -04:00 [INF] Executing StatusCodeResult, setting HTTP status code 204
+2026-05-23 16:56:23.834 -04:00 [INF] Executed action Momentum.API.Controllers.ActivityLogsController.DeleteLog (Momentum.API) in 304.9807ms
+2026-05-23 16:56:23.836 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ActivityLogsController.DeleteLog (Momentum.API)'
+2026-05-23 16:56:23.838 -04:00 [INF] HTTP DELETE /api/logs/16 responded 204 in 334.6221 ms
+2026-05-23 16:56:23.842 -04:00 [INF] Request finished HTTP/1.1 DELETE http://localhost:5097/api/logs/16 - 204 null null 346.0769ms
+2026-05-23 16:56:23.873 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - null null
+2026-05-23 16:56:23.877 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:23.878 -04:00 [INF] HTTP OPTIONS /api/logs responded 204 in 1.1474 ms
+2026-05-23 16:56:23.881 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - 204 null null 8.3222ms
+2026-05-23 16:56:23.886 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - null null
+2026-05-23 16:56:23.889 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:23.891 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API)'
+2026-05-23 16:56:23.893 -04:00 [INF] Route matched with {action = "GetLogs", controller = "ActivityLogs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetLogs(System.Nullable`1[System.DateTime], System.Nullable`1[System.DateTime]) on controller Momentum.API.Controllers.ActivityLogsController (Momentum.API).
+2026-05-23 16:56:23.913 -04:00 [INF] Executed DbCommand (1ms) [Parameters=[@userId='?' (Size = 4000), @from='?' (DbType = DateTime2), @to='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a].[Id], [a].[ActivityId], [a].[CreatedAt], [a].[LoggedAt], [a].[Notes], [a].[PointsRecorded], [a].[UserId], [a0].[Id], [a0].[CreatedAt], [a0].[DefaultPoints], [a0].[Description], [a0].[IsArchived], [a0].[Name], [a0].[UpdatedAt], [a0].[UserId], [s].[ActivityId], [s].[CategoryId], [s].[Id], [s].[ColorHex], [s].[Name]
+FROM [ActivityLogs] AS [a]
+INNER JOIN [Activities] AS [a0] ON [a].[ActivityId] = [a0].[Id]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s] ON [a0].[Id] = [s].[ActivityId]
+WHERE [a].[UserId] = @userId AND [a].[LoggedAt] >= @from AND [a].[LoggedAt] < @to
+ORDER BY [a].[LoggedAt] DESC, [a].[Id], [a0].[Id], [s].[ActivityId], [s].[CategoryId]
+2026-05-23 16:56:23.920 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Linq.Enumerable+ListSelectIterator`2[[Momentum.Domain.Entities.ActivityLog, Momentum.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[Momentum.Shared.ActivityLogDto, Momentum.Shared, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-23 16:56:23.923 -04:00 [INF] Executed action Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API) in 26.3094ms
+2026-05-23 16:56:23.927 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API)'
+2026-05-23 16:56:23.930 -04:00 [INF] HTTP GET /api/logs responded 200 in 41.3418 ms
+2026-05-23 16:56:23.937 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - 200 null application/json; charset=utf-8 50.9867ms
+2026-05-23 16:56:25.956 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/activities/frequent?count=10 - null null
+2026-05-23 16:56:25.960 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:25.962 -04:00 [INF] HTTP OPTIONS /api/activities/frequent responded 204 in 1.5298 ms
+2026-05-23 16:56:25.965 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/activities/frequent?count=10 - 204 null null 8.5275ms
+2026-05-23 16:56:25.969 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5097/api/activities/frequent?count=10 - null null
+2026-05-23 16:56:25.972 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:25.973 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ActivitiesController.GetFrequent (Momentum.API)'
+2026-05-23 16:56:25.984 -04:00 [INF] Route matched with {action = "GetFrequent", controller = "Activities"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetFrequent(Int32) on controller Momentum.API.Controllers.ActivitiesController (Momentum.API).
+2026-05-23 16:56:26.094 -04:00 [INF] Executed DbCommand (29ms) [Parameters=[@p='?' (DbType = Int32), @userId='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a2].[Id], [a2].[CreatedAt], [a2].[DefaultPoints], [a2].[Description], [a2].[IsArchived], [a2].[Name], [a2].[UpdatedAt], [a2].[UserId], [s].[ActivityId], [s].[CategoryId], [s].[Id], [s].[ColorHex], [s].[Name]
+FROM (
+    SELECT TOP(@p) [a].[Id], [a].[CreatedAt], [a].[DefaultPoints], [a].[Description], [a].[IsArchived], [a].[Name], [a].[UpdatedAt], [a].[UserId], (
+        SELECT COUNT(*)
+        FROM [ActivityLogs] AS [a0]
+        WHERE [a].[Id] = [a0].[ActivityId] AND [a0].[UserId] = @userId) AS [c]
+    FROM [Activities] AS [a]
+    WHERE [a].[UserId] = @userId AND [a].[IsArchived] = CAST(0 AS bit)
+    ORDER BY (
+        SELECT COUNT(*)
+        FROM [ActivityLogs] AS [a0]
+        WHERE [a].[Id] = [a0].[ActivityId] AND [a0].[UserId] = @userId) DESC
+) AS [a2]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s] ON [a2].[Id] = [s].[ActivityId]
+ORDER BY [a2].[c] DESC, [a2].[Id], [s].[ActivityId], [s].[CategoryId]
+2026-05-23 16:56:26.106 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Linq.Enumerable+ListSelectIterator`2[[Momentum.Domain.Entities.Activity, Momentum.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[Momentum.Shared.ActivityDto, Momentum.Shared, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-23 16:56:26.118 -04:00 [INF] Executed action Momentum.API.Controllers.ActivitiesController.GetFrequent (Momentum.API) in 131.5526ms
+2026-05-23 16:56:26.120 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ActivitiesController.GetFrequent (Momentum.API)'
+2026-05-23 16:56:26.121 -04:00 [INF] HTTP GET /api/activities/frequent responded 200 in 149.5234 ms
+2026-05-23 16:56:26.123 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5097/api/activities/frequent?count=10 - 200 null application/json; charset=utf-8 154.6113ms
+2026-05-23 16:56:27.347 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/activities - null null
+2026-05-23 16:56:27.350 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:27.352 -04:00 [INF] HTTP OPTIONS /api/activities responded 204 in 1.2573 ms
+2026-05-23 16:56:27.355 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/activities - 204 null null 8.1926ms
+2026-05-23 16:56:27.360 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5097/api/activities - null null
+2026-05-23 16:56:27.363 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:27.365 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ActivitiesController.GetActivities (Momentum.API)'
+2026-05-23 16:56:27.375 -04:00 [INF] Route matched with {action = "GetActivities", controller = "Activities"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetActivities() on controller Momentum.API.Controllers.ActivitiesController (Momentum.API).
+2026-05-23 16:56:27.414 -04:00 [INF] Executed DbCommand (16ms) [Parameters=[@userId='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a].[Id], [a].[CreatedAt], [a].[DefaultPoints], [a].[Description], [a].[IsArchived], [a].[Name], [a].[UpdatedAt], [a].[UserId], [s].[ActivityId], [s].[CategoryId], [s].[Id], [s].[ColorHex], [s].[Name]
+FROM [Activities] AS [a]
+LEFT JOIN (
+    SELECT [a0].[ActivityId], [a0].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a0]
+    INNER JOIN [Categories] AS [c] ON [a0].[CategoryId] = [c].[Id]
+) AS [s] ON [a].[Id] = [s].[ActivityId]
+WHERE [a].[UserId] = @userId AND [a].[IsArchived] = CAST(0 AS bit)
+ORDER BY [a].[Name], [a].[Id], [s].[ActivityId], [s].[CategoryId]
+2026-05-23 16:56:27.430 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Linq.Enumerable+ListSelectIterator`2[[Momentum.Domain.Entities.Activity, Momentum.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[Momentum.Shared.ActivityDto, Momentum.Shared, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-23 16:56:27.435 -04:00 [INF] Executed action Momentum.API.Controllers.ActivitiesController.GetActivities (Momentum.API) in 58.7639ms
+2026-05-23 16:56:27.439 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ActivitiesController.GetActivities (Momentum.API)'
+2026-05-23 16:56:27.442 -04:00 [INF] HTTP GET /api/activities responded 200 in 79.0238 ms
+2026-05-23 16:56:27.446 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5097/api/activities - 200 null application/json; charset=utf-8 85.6924ms
+2026-05-23 16:56:39.981 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/logs - null null
+2026-05-23 16:56:39.984 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:39.985 -04:00 [INF] HTTP OPTIONS /api/logs responded 204 in 0.9929 ms
+2026-05-23 16:56:39.987 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/logs - 204 null null 6.0647ms
+2026-05-23 16:56:39.991 -04:00 [INF] Request starting HTTP/1.1 POST http://localhost:5097/api/logs - application/json; charset=utf-8 113
+2026-05-23 16:56:39.994 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:39.996 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ActivityLogsController.CreateLog (Momentum.API)'
+2026-05-23 16:56:40.009 -04:00 [INF] Route matched with {action = "CreateLog", controller = "ActivityLogs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] CreateLog(Momentum.Shared.CreateActivityLogDto) on controller Momentum.API.Controllers.ActivityLogsController (Momentum.API).
+2026-05-23 16:56:40.117 -04:00 [INF] Executed DbCommand (6ms) [Parameters=[@p0='?' (DbType = Int32), @p1='?' (DbType = DateTime2), @p2='?' (DbType = DateTime2), @p3='?' (Size = 4000), @p4='?' (DbType = Int32), @p5='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+INSERT INTO [ActivityLogs] ([ActivityId], [CreatedAt], [LoggedAt], [Notes], [PointsRecorded], [UserId])
+OUTPUT INSERTED.[Id]
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5);
+2026-05-23 16:56:40.155 -04:00 [INF] Executed DbCommand (2ms) [Parameters=[@id='?' (DbType = Int32), @userId='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT [s].[Id], [s].[ActivityId], [s].[CreatedAt], [s].[LoggedAt], [s].[Notes], [s].[PointsRecorded], [s].[UserId], [s].[Id0], [s].[CreatedAt0], [s].[DefaultPoints], [s].[Description], [s].[IsArchived], [s].[Name], [s].[UpdatedAt], [s].[UserId0], [s0].[ActivityId], [s0].[CategoryId], [s0].[Id], [s0].[ColorHex], [s0].[Name]
+FROM (
+    SELECT TOP(1) [a].[Id], [a].[ActivityId], [a].[CreatedAt], [a].[LoggedAt], [a].[Notes], [a].[PointsRecorded], [a].[UserId], [a0].[Id] AS [Id0], [a0].[CreatedAt] AS [CreatedAt0], [a0].[DefaultPoints], [a0].[Description], [a0].[IsArchived], [a0].[Name], [a0].[UpdatedAt], [a0].[UserId] AS [UserId0]
+    FROM [ActivityLogs] AS [a]
+    INNER JOIN [Activities] AS [a0] ON [a].[ActivityId] = [a0].[Id]
+    WHERE [a].[Id] = @id AND [a].[UserId] = @userId
+) AS [s]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s0] ON [s].[Id0] = [s0].[ActivityId]
+ORDER BY [s].[Id], [s].[Id0], [s0].[ActivityId], [s0].[CategoryId]
+2026-05-23 16:56:40.161 -04:00 [INF] Executing CreatedAtActionResult, writing value of type 'Momentum.Shared.ActivityLogDto'.
+2026-05-23 16:56:40.205 -04:00 [INF] Executed action Momentum.API.Controllers.ActivityLogsController.CreateLog (Momentum.API) in 193.8014ms
+2026-05-23 16:56:40.210 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ActivityLogsController.CreateLog (Momentum.API)'
+2026-05-23 16:56:40.215 -04:00 [INF] HTTP POST /api/logs responded 201 in 220.8683 ms
+2026-05-23 16:56:40.224 -04:00 [INF] Request finished HTTP/1.1 POST http://localhost:5097/api/logs - 201 null application/json; charset=utf-8 233.372ms
+2026-05-23 16:56:40.259 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/scores/summary - null null
+2026-05-23 16:56:40.263 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:40.265 -04:00 [INF] HTTP OPTIONS /api/scores/summary responded 204 in 1.6447 ms
+2026-05-23 16:56:40.269 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/scores/summary - 204 null null 10.3266ms
+2026-05-23 16:56:40.275 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5097/api/scores/summary - null null
+2026-05-23 16:56:40.282 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:40.284 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ScoresController.GetSummary (Momentum.API)'
+2026-05-23 16:56:40.295 -04:00 [INF] Route matched with {action = "GetSummary", controller = "Scores"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetSummary() on controller Momentum.API.Controllers.ScoresController (Momentum.API).
+2026-05-23 16:56:40.303 -04:00 [INF] Executed DbCommand (2ms) [Parameters=[@userId='?' (Size = 4000), @from='?' (DbType = DateTime2), @to='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a].[Id], [a].[ActivityId], [a].[CreatedAt], [a].[LoggedAt], [a].[Notes], [a].[PointsRecorded], [a].[UserId], [a0].[Id], [a0].[CreatedAt], [a0].[DefaultPoints], [a0].[Description], [a0].[IsArchived], [a0].[Name], [a0].[UpdatedAt], [a0].[UserId], [s].[ActivityId], [s].[CategoryId], [s].[Id], [s].[ColorHex], [s].[Name]
+FROM [ActivityLogs] AS [a]
+INNER JOIN [Activities] AS [a0] ON [a].[ActivityId] = [a0].[Id]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s] ON [a0].[Id] = [s].[ActivityId]
+WHERE [a].[UserId] = @userId AND [a].[LoggedAt] >= @from AND [a].[LoggedAt] < @to
+ORDER BY [a].[LoggedAt] DESC, [a].[Id], [a0].[Id], [s].[ActivityId], [s].[CategoryId]
+2026-05-23 16:56:40.313 -04:00 [INF] Executing OkObjectResult, writing value of type 'Momentum.Shared.ScoreSummaryDto'.
+2026-05-23 16:56:40.320 -04:00 [INF] Executed action Momentum.API.Controllers.ScoresController.GetSummary (Momentum.API) in 23.037ms
+2026-05-23 16:56:40.323 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ScoresController.GetSummary (Momentum.API)'
+2026-05-23 16:56:40.328 -04:00 [INF] HTTP GET /api/scores/summary responded 200 in 45.7506 ms
+2026-05-23 16:56:40.334 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5097/api/scores/summary - 200 null application/json; charset=utf-8 59.1358ms
+2026-05-23 16:56:41.877 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - null null
+2026-05-23 16:56:41.891 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:41.894 -04:00 [INF] HTTP OPTIONS /api/logs responded 204 in 3.2562 ms
+2026-05-23 16:56:41.900 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - 204 null null 22.398ms
+2026-05-23 16:56:41.908 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - null null
+2026-05-23 16:56:41.918 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:41.921 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API)'
+2026-05-23 16:56:41.924 -04:00 [INF] Route matched with {action = "GetLogs", controller = "ActivityLogs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetLogs(System.Nullable`1[System.DateTime], System.Nullable`1[System.DateTime]) on controller Momentum.API.Controllers.ActivityLogsController (Momentum.API).
+2026-05-23 16:56:41.948 -04:00 [INF] Executed DbCommand (1ms) [Parameters=[@userId='?' (Size = 4000), @from='?' (DbType = DateTime2), @to='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a].[Id], [a].[ActivityId], [a].[CreatedAt], [a].[LoggedAt], [a].[Notes], [a].[PointsRecorded], [a].[UserId], [a0].[Id], [a0].[CreatedAt], [a0].[DefaultPoints], [a0].[Description], [a0].[IsArchived], [a0].[Name], [a0].[UpdatedAt], [a0].[UserId], [s].[ActivityId], [s].[CategoryId], [s].[Id], [s].[ColorHex], [s].[Name]
+FROM [ActivityLogs] AS [a]
+INNER JOIN [Activities] AS [a0] ON [a].[ActivityId] = [a0].[Id]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s] ON [a0].[Id] = [s].[ActivityId]
+WHERE [a].[UserId] = @userId AND [a].[LoggedAt] >= @from AND [a].[LoggedAt] < @to
+ORDER BY [a].[LoggedAt] DESC, [a].[Id], [a0].[Id], [s].[ActivityId], [s].[CategoryId]
+2026-05-23 16:56:41.951 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Linq.Enumerable+ListSelectIterator`2[[Momentum.Domain.Entities.ActivityLog, Momentum.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[Momentum.Shared.ActivityLogDto, Momentum.Shared, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-23 16:56:41.953 -04:00 [INF] Executed action Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API) in 23.8904ms
+2026-05-23 16:56:41.955 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API)'
+2026-05-23 16:56:41.956 -04:00 [INF] HTTP GET /api/logs responded 200 in 39.0463 ms
+2026-05-23 16:56:41.959 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - 200 null application/json; charset=utf-8 51.0607ms
+2026-05-23 16:56:50.232 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/logs/17 - null null
+2026-05-23 16:56:50.238 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:50.241 -04:00 [INF] HTTP OPTIONS /api/logs/17 responded 204 in 2.8665 ms
+2026-05-23 16:56:50.249 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/logs/17 - 204 null null 16.4846ms
+2026-05-23 16:56:50.263 -04:00 [INF] Request starting HTTP/1.1 DELETE http://localhost:5097/api/logs/17 - null null
+2026-05-23 16:56:50.273 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:50.275 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ActivityLogsController.DeleteLog (Momentum.API)'
+2026-05-23 16:56:50.277 -04:00 [INF] Route matched with {action = "DeleteLog", controller = "ActivityLogs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] DeleteLog(Int32) on controller Momentum.API.Controllers.ActivityLogsController (Momentum.API).
+2026-05-23 16:56:50.289 -04:00 [INF] Executed DbCommand (1ms) [Parameters=[@id='?' (DbType = Int32), @userId='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT [s].[Id], [s].[ActivityId], [s].[CreatedAt], [s].[LoggedAt], [s].[Notes], [s].[PointsRecorded], [s].[UserId], [s].[Id0], [s].[CreatedAt0], [s].[DefaultPoints], [s].[Description], [s].[IsArchived], [s].[Name], [s].[UpdatedAt], [s].[UserId0], [s0].[ActivityId], [s0].[CategoryId], [s0].[Id], [s0].[ColorHex], [s0].[Name]
+FROM (
+    SELECT TOP(1) [a].[Id], [a].[ActivityId], [a].[CreatedAt], [a].[LoggedAt], [a].[Notes], [a].[PointsRecorded], [a].[UserId], [a0].[Id] AS [Id0], [a0].[CreatedAt] AS [CreatedAt0], [a0].[DefaultPoints], [a0].[Description], [a0].[IsArchived], [a0].[Name], [a0].[UpdatedAt], [a0].[UserId] AS [UserId0]
+    FROM [ActivityLogs] AS [a]
+    INNER JOIN [Activities] AS [a0] ON [a].[ActivityId] = [a0].[Id]
+    WHERE [a].[Id] = @id AND [a].[UserId] = @userId
+) AS [s]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s0] ON [s].[Id0] = [s0].[ActivityId]
+ORDER BY [s].[Id], [s].[Id0], [s0].[ActivityId], [s0].[CategoryId]
+2026-05-23 16:56:50.299 -04:00 [INF] Executed DbCommand (4ms) [Parameters=[@p0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+DELETE FROM [ActivityLogs]
+OUTPUT 1
+WHERE [Id] = @p0;
+2026-05-23 16:56:50.303 -04:00 [INF] Executing StatusCodeResult, setting HTTP status code 204
+2026-05-23 16:56:50.304 -04:00 [INF] Executed action Momentum.API.Controllers.ActivityLogsController.DeleteLog (Momentum.API) in 20.7088ms
+2026-05-23 16:56:50.306 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ActivityLogsController.DeleteLog (Momentum.API)'
+2026-05-23 16:56:50.307 -04:00 [INF] HTTP DELETE /api/logs/17 responded 204 in 34.4714 ms
+2026-05-23 16:56:50.309 -04:00 [INF] Request finished HTTP/1.1 DELETE http://localhost:5097/api/logs/17 - 204 null null 45.9108ms
+2026-05-23 16:56:50.326 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - null null
+2026-05-23 16:56:50.329 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:50.330 -04:00 [INF] HTTP OPTIONS /api/logs responded 204 in 0.6885 ms
+2026-05-23 16:56:50.331 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - 204 null null 5.4859ms
+2026-05-23 16:56:50.337 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - null null
+2026-05-23 16:56:50.339 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:50.340 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API)'
+2026-05-23 16:56:50.342 -04:00 [INF] Route matched with {action = "GetLogs", controller = "ActivityLogs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetLogs(System.Nullable`1[System.DateTime], System.Nullable`1[System.DateTime]) on controller Momentum.API.Controllers.ActivityLogsController (Momentum.API).
+2026-05-23 16:56:50.347 -04:00 [INF] Executed DbCommand (1ms) [Parameters=[@userId='?' (Size = 4000), @from='?' (DbType = DateTime2), @to='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a].[Id], [a].[ActivityId], [a].[CreatedAt], [a].[LoggedAt], [a].[Notes], [a].[PointsRecorded], [a].[UserId], [a0].[Id], [a0].[CreatedAt], [a0].[DefaultPoints], [a0].[Description], [a0].[IsArchived], [a0].[Name], [a0].[UpdatedAt], [a0].[UserId], [s].[ActivityId], [s].[CategoryId], [s].[Id], [s].[ColorHex], [s].[Name]
+FROM [ActivityLogs] AS [a]
+INNER JOIN [Activities] AS [a0] ON [a].[ActivityId] = [a0].[Id]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s] ON [a0].[Id] = [s].[ActivityId]
+WHERE [a].[UserId] = @userId AND [a].[LoggedAt] >= @from AND [a].[LoggedAt] < @to
+ORDER BY [a].[LoggedAt] DESC, [a].[Id], [a0].[Id], [s].[ActivityId], [s].[CategoryId]
+2026-05-23 16:56:50.352 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Linq.Enumerable+ListSelectIterator`2[[Momentum.Domain.Entities.ActivityLog, Momentum.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[Momentum.Shared.ActivityLogDto, Momentum.Shared, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-23 16:56:50.353 -04:00 [INF] Executed action Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API) in 8.8558ms
+2026-05-23 16:56:50.355 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API)'
+2026-05-23 16:56:50.357 -04:00 [INF] HTTP GET /api/logs responded 200 in 17.5466 ms
+2026-05-23 16:56:50.360 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - 200 null application/json; charset=utf-8 23.0832ms
+2026-05-23 16:56:52.166 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/activities/frequent?count=10 - null null
+2026-05-23 16:56:52.177 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:52.180 -04:00 [INF] HTTP OPTIONS /api/activities/frequent responded 204 in 3.8995 ms
+2026-05-23 16:56:52.186 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/activities/frequent?count=10 - 204 null null 20.1304ms
+2026-05-23 16:56:52.195 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5097/api/activities/frequent?count=10 - null null
+2026-05-23 16:56:52.200 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:56:52.202 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ActivitiesController.GetFrequent (Momentum.API)'
+2026-05-23 16:56:52.203 -04:00 [INF] Route matched with {action = "GetFrequent", controller = "Activities"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetFrequent(Int32) on controller Momentum.API.Controllers.ActivitiesController (Momentum.API).
+2026-05-23 16:56:52.214 -04:00 [INF] Executed DbCommand (3ms) [Parameters=[@p='?' (DbType = Int32), @userId='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a2].[Id], [a2].[CreatedAt], [a2].[DefaultPoints], [a2].[Description], [a2].[IsArchived], [a2].[Name], [a2].[UpdatedAt], [a2].[UserId], [s].[ActivityId], [s].[CategoryId], [s].[Id], [s].[ColorHex], [s].[Name]
+FROM (
+    SELECT TOP(@p) [a].[Id], [a].[CreatedAt], [a].[DefaultPoints], [a].[Description], [a].[IsArchived], [a].[Name], [a].[UpdatedAt], [a].[UserId], (
+        SELECT COUNT(*)
+        FROM [ActivityLogs] AS [a0]
+        WHERE [a].[Id] = [a0].[ActivityId] AND [a0].[UserId] = @userId) AS [c]
+    FROM [Activities] AS [a]
+    WHERE [a].[UserId] = @userId AND [a].[IsArchived] = CAST(0 AS bit)
+    ORDER BY (
+        SELECT COUNT(*)
+        FROM [ActivityLogs] AS [a0]
+        WHERE [a].[Id] = [a0].[ActivityId] AND [a0].[UserId] = @userId) DESC
+) AS [a2]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s] ON [a2].[Id] = [s].[ActivityId]
+ORDER BY [a2].[c] DESC, [a2].[Id], [s].[ActivityId], [s].[CategoryId]
+2026-05-23 16:56:52.218 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Linq.Enumerable+ListSelectIterator`2[[Momentum.Domain.Entities.Activity, Momentum.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[Momentum.Shared.ActivityDto, Momentum.Shared, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-23 16:56:52.219 -04:00 [INF] Executed action Momentum.API.Controllers.ActivitiesController.GetFrequent (Momentum.API) in 12.843ms
+2026-05-23 16:56:52.221 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ActivitiesController.GetFrequent (Momentum.API)'
+2026-05-23 16:56:52.222 -04:00 [INF] HTTP GET /api/activities/frequent responded 200 in 22.7221 ms
+2026-05-23 16:56:52.225 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5097/api/activities/frequent?count=10 - 200 null application/json; charset=utf-8 29.5974ms
+2026-05-23 16:57:05.806 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/logs - null null
+2026-05-23 16:57:05.812 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:57:05.815 -04:00 [INF] HTTP OPTIONS /api/logs responded 204 in 2.4777 ms
+2026-05-23 16:57:05.819 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/logs - 204 null null 12.6565ms
+2026-05-23 16:57:05.826 -04:00 [INF] Request starting HTTP/1.1 POST http://localhost:5097/api/logs - application/json; charset=utf-8 92
+2026-05-23 16:57:05.832 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:57:05.835 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ActivityLogsController.CreateLog (Momentum.API)'
+2026-05-23 16:57:05.838 -04:00 [INF] Route matched with {action = "CreateLog", controller = "ActivityLogs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] CreateLog(Momentum.Shared.CreateActivityLogDto) on controller Momentum.API.Controllers.ActivityLogsController (Momentum.API).
+2026-05-23 16:57:05.860 -04:00 [INF] Executed DbCommand (8ms) [Parameters=[@p0='?' (DbType = Int32), @p1='?' (DbType = DateTime2), @p2='?' (DbType = DateTime2), @p3='?' (Size = 4000), @p4='?' (DbType = Int32), @p5='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+INSERT INTO [ActivityLogs] ([ActivityId], [CreatedAt], [LoggedAt], [Notes], [PointsRecorded], [UserId])
+OUTPUT INSERTED.[Id]
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5);
+2026-05-23 16:57:05.884 -04:00 [INF] Executed DbCommand (20ms) [Parameters=[@id='?' (DbType = Int32), @userId='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT [s].[Id], [s].[ActivityId], [s].[CreatedAt], [s].[LoggedAt], [s].[Notes], [s].[PointsRecorded], [s].[UserId], [s].[Id0], [s].[CreatedAt0], [s].[DefaultPoints], [s].[Description], [s].[IsArchived], [s].[Name], [s].[UpdatedAt], [s].[UserId0], [s0].[ActivityId], [s0].[CategoryId], [s0].[Id], [s0].[ColorHex], [s0].[Name]
+FROM (
+    SELECT TOP(1) [a].[Id], [a].[ActivityId], [a].[CreatedAt], [a].[LoggedAt], [a].[Notes], [a].[PointsRecorded], [a].[UserId], [a0].[Id] AS [Id0], [a0].[CreatedAt] AS [CreatedAt0], [a0].[DefaultPoints], [a0].[Description], [a0].[IsArchived], [a0].[Name], [a0].[UpdatedAt], [a0].[UserId] AS [UserId0]
+    FROM [ActivityLogs] AS [a]
+    INNER JOIN [Activities] AS [a0] ON [a].[ActivityId] = [a0].[Id]
+    WHERE [a].[Id] = @id AND [a].[UserId] = @userId
+) AS [s]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s0] ON [s].[Id0] = [s0].[ActivityId]
+ORDER BY [s].[Id], [s].[Id0], [s0].[ActivityId], [s0].[CategoryId]
+2026-05-23 16:57:05.887 -04:00 [INF] Executing CreatedAtActionResult, writing value of type 'Momentum.Shared.ActivityLogDto'.
+2026-05-23 16:57:05.890 -04:00 [INF] Executed action Momentum.API.Controllers.ActivityLogsController.CreateLog (Momentum.API) in 49.3295ms
+2026-05-23 16:57:05.894 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ActivityLogsController.CreateLog (Momentum.API)'
+2026-05-23 16:57:05.896 -04:00 [INF] HTTP POST /api/logs responded 201 in 63.8566 ms
+2026-05-23 16:57:05.901 -04:00 [INF] Request finished HTTP/1.1 POST http://localhost:5097/api/logs - 201 null application/json; charset=utf-8 74.9469ms
+2026-05-23 16:57:05.917 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/scores/summary - null null
+2026-05-23 16:57:05.925 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:57:05.927 -04:00 [INF] HTTP OPTIONS /api/scores/summary responded 204 in 2.3442 ms
+2026-05-23 16:57:05.932 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/scores/summary - 204 null null 14.8468ms
+2026-05-23 16:57:05.941 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5097/api/scores/summary - null null
+2026-05-23 16:57:05.948 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:57:05.951 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ScoresController.GetSummary (Momentum.API)'
+2026-05-23 16:57:05.953 -04:00 [INF] Route matched with {action = "GetSummary", controller = "Scores"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetSummary() on controller Momentum.API.Controllers.ScoresController (Momentum.API).
+2026-05-23 16:57:05.985 -04:00 [INF] Executed DbCommand (23ms) [Parameters=[@userId='?' (Size = 4000), @from='?' (DbType = DateTime2), @to='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a].[Id], [a].[ActivityId], [a].[CreatedAt], [a].[LoggedAt], [a].[Notes], [a].[PointsRecorded], [a].[UserId], [a0].[Id], [a0].[CreatedAt], [a0].[DefaultPoints], [a0].[Description], [a0].[IsArchived], [a0].[Name], [a0].[UpdatedAt], [a0].[UserId], [s].[ActivityId], [s].[CategoryId], [s].[Id], [s].[ColorHex], [s].[Name]
+FROM [ActivityLogs] AS [a]
+INNER JOIN [Activities] AS [a0] ON [a].[ActivityId] = [a0].[Id]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s] ON [a0].[Id] = [s].[ActivityId]
+WHERE [a].[UserId] = @userId AND [a].[LoggedAt] >= @from AND [a].[LoggedAt] < @to
+ORDER BY [a].[LoggedAt] DESC, [a].[Id], [a0].[Id], [s].[ActivityId], [s].[CategoryId]
+2026-05-23 16:57:05.991 -04:00 [INF] Executing OkObjectResult, writing value of type 'Momentum.Shared.ScoreSummaryDto'.
+2026-05-23 16:57:05.994 -04:00 [INF] Executed action Momentum.API.Controllers.ScoresController.GetSummary (Momentum.API) in 35.4672ms
+2026-05-23 16:57:05.996 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ScoresController.GetSummary (Momentum.API)'
+2026-05-23 16:57:05.999 -04:00 [INF] HTTP GET /api/scores/summary responded 200 in 51.4667 ms
+2026-05-23 16:57:06.004 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5097/api/scores/summary - 200 null application/json; charset=utf-8 63.078ms
+2026-05-23 16:57:08.149 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - null null
+2026-05-23 16:57:08.156 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:57:08.158 -04:00 [INF] HTTP OPTIONS /api/logs responded 204 in 2.3613 ms
+2026-05-23 16:57:08.161 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - 204 null null 11.3567ms
+2026-05-23 16:57:08.166 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - null null
+2026-05-23 16:57:08.169 -04:00 [INF] CORS policy execution successful.
+2026-05-23 16:57:08.170 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API)'
+2026-05-23 16:57:08.171 -04:00 [INF] Route matched with {action = "GetLogs", controller = "ActivityLogs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetLogs(System.Nullable`1[System.DateTime], System.Nullable`1[System.DateTime]) on controller Momentum.API.Controllers.ActivityLogsController (Momentum.API).
+2026-05-23 16:57:08.176 -04:00 [INF] Executed DbCommand (1ms) [Parameters=[@userId='?' (Size = 4000), @from='?' (DbType = DateTime2), @to='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a].[Id], [a].[ActivityId], [a].[CreatedAt], [a].[LoggedAt], [a].[Notes], [a].[PointsRecorded], [a].[UserId], [a0].[Id], [a0].[CreatedAt], [a0].[DefaultPoints], [a0].[Description], [a0].[IsArchived], [a0].[Name], [a0].[UpdatedAt], [a0].[UserId], [s].[ActivityId], [s].[CategoryId], [s].[Id], [s].[ColorHex], [s].[Name]
+FROM [ActivityLogs] AS [a]
+INNER JOIN [Activities] AS [a0] ON [a].[ActivityId] = [a0].[Id]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s] ON [a0].[Id] = [s].[ActivityId]
+WHERE [a].[UserId] = @userId AND [a].[LoggedAt] >= @from AND [a].[LoggedAt] < @to
+ORDER BY [a].[LoggedAt] DESC, [a].[Id], [a0].[Id], [s].[ActivityId], [s].[CategoryId]
+2026-05-23 16:57:08.180 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Linq.Enumerable+ListSelectIterator`2[[Momentum.Domain.Entities.ActivityLog, Momentum.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[Momentum.Shared.ActivityLogDto, Momentum.Shared, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-23 16:57:08.182 -04:00 [INF] Executed action Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API) in 8.0451ms
+2026-05-23 16:57:08.184 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API)'
+2026-05-23 16:57:08.185 -04:00 [INF] HTTP GET /api/logs responded 200 in 16.1709 ms
+2026-05-23 16:57:08.187 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - 200 null application/json; charset=utf-8 21.4963ms
+2026-05-23 17:00:09.453 -04:00 [INF] Application is shutting down...
+2026-05-23 17:03:11.660 -04:00 [INF] Executed DbCommand (30ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-23 17:03:11.741 -04:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-05-23 17:03:11.792 -04:00 [INF] Executed DbCommand (42ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_getapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session', @LockMode = 'Exclusive';
+SELECT @result
+2026-05-23 17:03:11.880 -04:00 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
+BEGIN
+    CREATE TABLE [__EFMigrationsHistory] (
+        [MigrationId] nvarchar(150) NOT NULL,
+        [ProductVersion] nvarchar(32) NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+END;
+2026-05-23 17:03:11.901 -04:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-23 17:03:11.910 -04:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2026-05-23 17:03:11.936 -04:00 [INF] Executed DbCommand (17ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2026-05-23 17:03:11.953 -04:00 [INF] No migrations were applied. The database is already up to date.
+2026-05-23 17:03:11.960 -04:00 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DECLARE @result int;
+EXEC @result = sp_releaseapplock @Resource = '__EFMigrationsLock', @LockOwner = 'Session';
+SELECT @result
+2026-05-23 17:03:12.037 -04:00 [INF] User profile is available. Using 'C:\Users\joel\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-05-23 17:03:12.100 -04:00 [INF] Now listening on: http://localhost:5097
+2026-05-23 17:03:12.105 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-05-23 17:03:12.107 -04:00 [INF] Hosting environment: Development
+2026-05-23 17:03:12.108 -04:00 [INF] Content root path: C:\JL\Dev\Claude\Nashville\Momentum.API
+2026-05-23 17:03:33.422 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - null null
+2026-05-23 17:03:33.459 -04:00 [INF] CORS policy execution successful.
+2026-05-23 17:03:33.465 -04:00 [INF] HTTP OPTIONS /api/logs responded 204 in 7.6305 ms
+2026-05-23 17:03:33.479 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - 204 null null 59.5701ms
+2026-05-23 17:03:33.487 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - null null
+2026-05-23 17:03:33.494 -04:00 [INF] CORS policy execution successful.
+2026-05-23 17:03:33.605 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API)'
+2026-05-23 17:03:33.648 -04:00 [INF] Route matched with {action = "GetLogs", controller = "ActivityLogs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetLogs(System.Nullable`1[System.DateTime], System.Nullable`1[System.DateTime]) on controller Momentum.API.Controllers.ActivityLogsController (Momentum.API).
+2026-05-23 17:03:33.739 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/settings - null null
+2026-05-23 17:03:33.745 -04:00 [INF] CORS policy execution successful.
+2026-05-23 17:03:33.746 -04:00 [INF] HTTP OPTIONS /api/settings responded 204 in 2.2802 ms
+2026-05-23 17:03:33.750 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/settings - 204 null null 10.3903ms
+2026-05-23 17:03:33.755 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5097/api/settings - null null
+2026-05-23 17:03:33.760 -04:00 [INF] CORS policy execution successful.
+2026-05-23 17:03:33.767 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.SettingsController.GetSettings (Momentum.API)'
+2026-05-23 17:03:33.781 -04:00 [INF] Route matched with {action = "GetSettings", controller = "Settings"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetSettings() on controller Momentum.API.Controllers.SettingsController (Momentum.API).
+2026-05-23 17:03:34.393 -04:00 [INF] Executed DbCommand (55ms) [Parameters=[@p='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[ConcurrencyStamp], [a].[DisplayName], [a].[Email], [a].[EmailConfirmed], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[SecurityStamp], [a].[Theme], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [AspNetUsers] AS [a]
+WHERE [a].[Id] = @p
+2026-05-23 17:03:34.405 -04:00 [INF] Executed DbCommand (62ms) [Parameters=[@userId='?' (Size = 4000), @from='?' (DbType = DateTime2), @to='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a].[Id], [a].[ActivityId], [a].[CreatedAt], [a].[LoggedAt], [a].[Notes], [a].[PointsRecorded], [a].[UserId], [a0].[Id], [a0].[CreatedAt], [a0].[DefaultPoints], [a0].[Description], [a0].[IsArchived], [a0].[Name], [a0].[UpdatedAt], [a0].[UserId], [s].[ActivityId], [s].[CategoryId], [s].[Id], [s].[ColorHex], [s].[Name]
+FROM [ActivityLogs] AS [a]
+INNER JOIN [Activities] AS [a0] ON [a].[ActivityId] = [a0].[Id]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s] ON [a0].[Id] = [s].[ActivityId]
+WHERE [a].[UserId] = @userId AND [a].[LoggedAt] >= @from AND [a].[LoggedAt] < @to
+ORDER BY [a].[LoggedAt] DESC, [a].[Id], [a0].[Id], [s].[ActivityId], [s].[CategoryId]
+2026-05-23 17:03:34.510 -04:00 [INF] Executing OkObjectResult, writing value of type 'Momentum.Shared.UserSettingsDto'.
+2026-05-23 17:03:34.548 -04:00 [INF] Executed action Momentum.API.Controllers.SettingsController.GetSettings (Momentum.API) in 756.7867ms
+2026-05-23 17:03:34.551 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.SettingsController.GetSettings (Momentum.API)'
+2026-05-23 17:03:34.554 -04:00 [INF] HTTP GET /api/settings responded 200 in 795.0110 ms
+2026-05-23 17:03:34.565 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5097/api/settings - 200 null application/json; charset=utf-8 809.2683ms
+2026-05-23 17:03:34.576 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Linq.Enumerable+ListSelectIterator`2[[Momentum.Domain.Entities.ActivityLog, Momentum.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[Momentum.Shared.ActivityLogDto, Momentum.Shared, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-23 17:03:34.607 -04:00 [INF] Executed action Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API) in 955.3309ms
+2026-05-23 17:03:34.610 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API)'
+2026-05-23 17:03:34.613 -04:00 [INF] HTTP GET /api/logs responded 200 in 1119.1244 ms
+2026-05-23 17:03:34.616 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - 200 null application/json; charset=utf-8 1129.1088ms
+2026-05-23 17:03:43.400 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/activities/frequent?count=10 - null null
+2026-05-23 17:03:43.403 -04:00 [INF] CORS policy execution successful.
+2026-05-23 17:03:43.405 -04:00 [INF] HTTP OPTIONS /api/activities/frequent responded 204 in 1.4078 ms
+2026-05-23 17:03:43.407 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/activities/frequent?count=10 - 204 null null 7.5398ms
+2026-05-23 17:03:43.412 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5097/api/activities/frequent?count=10 - null null
+2026-05-23 17:03:43.415 -04:00 [INF] CORS policy execution successful.
+2026-05-23 17:03:43.424 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ActivitiesController.GetFrequent (Momentum.API)'
+2026-05-23 17:03:43.435 -04:00 [INF] Route matched with {action = "GetFrequent", controller = "Activities"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetFrequent(Int32) on controller Momentum.API.Controllers.ActivitiesController (Momentum.API).
+2026-05-23 17:03:43.563 -04:00 [INF] Executed DbCommand (36ms) [Parameters=[@p='?' (DbType = Int32), @userId='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a2].[Id], [a2].[CreatedAt], [a2].[DefaultPoints], [a2].[Description], [a2].[IsArchived], [a2].[Name], [a2].[UpdatedAt], [a2].[UserId], [s].[ActivityId], [s].[CategoryId], [s].[Id], [s].[ColorHex], [s].[Name]
+FROM (
+    SELECT TOP(@p) [a].[Id], [a].[CreatedAt], [a].[DefaultPoints], [a].[Description], [a].[IsArchived], [a].[Name], [a].[UpdatedAt], [a].[UserId], (
+        SELECT COUNT(*)
+        FROM [ActivityLogs] AS [a0]
+        WHERE [a].[Id] = [a0].[ActivityId] AND [a0].[UserId] = @userId) AS [c]
+    FROM [Activities] AS [a]
+    WHERE [a].[UserId] = @userId AND [a].[IsArchived] = CAST(0 AS bit)
+    ORDER BY (
+        SELECT COUNT(*)
+        FROM [ActivityLogs] AS [a0]
+        WHERE [a].[Id] = [a0].[ActivityId] AND [a0].[UserId] = @userId) DESC
+) AS [a2]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s] ON [a2].[Id] = [s].[ActivityId]
+ORDER BY [a2].[c] DESC, [a2].[Id], [s].[ActivityId], [s].[CategoryId]
+2026-05-23 17:03:43.578 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Linq.Enumerable+ListSelectIterator`2[[Momentum.Domain.Entities.Activity, Momentum.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[Momentum.Shared.ActivityDto, Momentum.Shared, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-23 17:03:43.589 -04:00 [INF] Executed action Momentum.API.Controllers.ActivitiesController.GetFrequent (Momentum.API) in 150.1312ms
+2026-05-23 17:03:43.590 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ActivitiesController.GetFrequent (Momentum.API)'
+2026-05-23 17:03:43.592 -04:00 [INF] HTTP GET /api/activities/frequent responded 200 in 176.4271 ms
+2026-05-23 17:03:43.594 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5097/api/activities/frequent?count=10 - 200 null application/json; charset=utf-8 181.9712ms
+2026-05-23 17:03:52.674 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/logs - null null
+2026-05-23 17:03:52.678 -04:00 [INF] CORS policy execution successful.
+2026-05-23 17:03:52.679 -04:00 [INF] HTTP OPTIONS /api/logs responded 204 in 1.5720 ms
+2026-05-23 17:03:52.682 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/logs - 204 null null 7.7538ms
+2026-05-23 17:03:52.687 -04:00 [INF] Request starting HTTP/1.1 POST http://localhost:5097/api/logs - application/json; charset=utf-8 92
+2026-05-23 17:03:52.691 -04:00 [INF] CORS policy execution successful.
+2026-05-23 17:03:52.693 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ActivityLogsController.CreateLog (Momentum.API)'
+2026-05-23 17:03:52.705 -04:00 [INF] Route matched with {action = "CreateLog", controller = "ActivityLogs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] CreateLog(Momentum.Shared.CreateActivityLogDto) on controller Momentum.API.Controllers.ActivityLogsController (Momentum.API).
+2026-05-23 17:03:52.897 -04:00 [INF] Executed DbCommand (5ms) [Parameters=[@p0='?' (DbType = Int32), @p1='?' (DbType = DateTime2), @p2='?' (DbType = DateTime2), @p3='?' (Size = 4000), @p4='?' (DbType = Int32), @p5='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+INSERT INTO [ActivityLogs] ([ActivityId], [CreatedAt], [LoggedAt], [Notes], [PointsRecorded], [UserId])
+OUTPUT INSERTED.[Id]
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5);
+2026-05-23 17:03:52.992 -04:00 [INF] Executed DbCommand (17ms) [Parameters=[@id='?' (DbType = Int32), @userId='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SELECT [s].[Id], [s].[ActivityId], [s].[CreatedAt], [s].[LoggedAt], [s].[Notes], [s].[PointsRecorded], [s].[UserId], [s].[Id0], [s].[CreatedAt0], [s].[DefaultPoints], [s].[Description], [s].[IsArchived], [s].[Name], [s].[UpdatedAt], [s].[UserId0], [s0].[ActivityId], [s0].[CategoryId], [s0].[Id], [s0].[ColorHex], [s0].[Name]
+FROM (
+    SELECT TOP(1) [a].[Id], [a].[ActivityId], [a].[CreatedAt], [a].[LoggedAt], [a].[Notes], [a].[PointsRecorded], [a].[UserId], [a0].[Id] AS [Id0], [a0].[CreatedAt] AS [CreatedAt0], [a0].[DefaultPoints], [a0].[Description], [a0].[IsArchived], [a0].[Name], [a0].[UpdatedAt], [a0].[UserId] AS [UserId0]
+    FROM [ActivityLogs] AS [a]
+    INNER JOIN [Activities] AS [a0] ON [a].[ActivityId] = [a0].[Id]
+    WHERE [a].[Id] = @id AND [a].[UserId] = @userId
+) AS [s]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s0] ON [s].[Id0] = [s0].[ActivityId]
+ORDER BY [s].[Id], [s].[Id0], [s0].[ActivityId], [s0].[CategoryId]
+2026-05-23 17:03:53.003 -04:00 [INF] Executing CreatedAtActionResult, writing value of type 'Momentum.Shared.ActivityLogDto'.
+2026-05-23 17:03:53.032 -04:00 [INF] Executed action Momentum.API.Controllers.ActivityLogsController.CreateLog (Momentum.API) in 323.6894ms
+2026-05-23 17:03:53.034 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ActivityLogsController.CreateLog (Momentum.API)'
+2026-05-23 17:03:53.036 -04:00 [INF] HTTP POST /api/logs responded 201 in 345.7020 ms
+2026-05-23 17:03:53.040 -04:00 [INF] Request finished HTTP/1.1 POST http://localhost:5097/api/logs - 201 null application/json; charset=utf-8 352.8488ms
+2026-05-23 17:03:53.070 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/scores/summary - null null
+2026-05-23 17:03:53.073 -04:00 [INF] CORS policy execution successful.
+2026-05-23 17:03:53.075 -04:00 [INF] HTTP OPTIONS /api/scores/summary responded 204 in 1.2679 ms
+2026-05-23 17:03:53.079 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/scores/summary - 204 null null 8.8186ms
+2026-05-23 17:03:53.085 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5097/api/scores/summary - null null
+2026-05-23 17:03:53.089 -04:00 [INF] CORS policy execution successful.
+2026-05-23 17:03:53.091 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ScoresController.GetSummary (Momentum.API)'
+2026-05-23 17:03:53.102 -04:00 [INF] Route matched with {action = "GetSummary", controller = "Scores"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetSummary() on controller Momentum.API.Controllers.ScoresController (Momentum.API).
+2026-05-23 17:03:53.144 -04:00 [INF] Executed DbCommand (23ms) [Parameters=[@userId='?' (Size = 4000), @from='?' (DbType = DateTime2), @to='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a].[Id], [a].[ActivityId], [a].[CreatedAt], [a].[LoggedAt], [a].[Notes], [a].[PointsRecorded], [a].[UserId], [a0].[Id], [a0].[CreatedAt], [a0].[DefaultPoints], [a0].[Description], [a0].[IsArchived], [a0].[Name], [a0].[UpdatedAt], [a0].[UserId], [s].[ActivityId], [s].[CategoryId], [s].[Id], [s].[ColorHex], [s].[Name]
+FROM [ActivityLogs] AS [a]
+INNER JOIN [Activities] AS [a0] ON [a].[ActivityId] = [a0].[Id]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s] ON [a0].[Id] = [s].[ActivityId]
+WHERE [a].[UserId] = @userId AND [a].[LoggedAt] >= @from AND [a].[LoggedAt] < @to
+ORDER BY [a].[LoggedAt] DESC, [a].[Id], [a0].[Id], [s].[ActivityId], [s].[CategoryId]
+2026-05-23 17:03:53.165 -04:00 [INF] Executing OkObjectResult, writing value of type 'Momentum.Shared.ScoreSummaryDto'.
+2026-05-23 17:03:53.169 -04:00 [INF] Executed action Momentum.API.Controllers.ScoresController.GetSummary (Momentum.API) in 62.4636ms
+2026-05-23 17:03:53.171 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ScoresController.GetSummary (Momentum.API)'
+2026-05-23 17:03:53.173 -04:00 [INF] HTTP GET /api/scores/summary responded 200 in 83.6525 ms
+2026-05-23 17:03:53.175 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5097/api/scores/summary - 200 null application/json; charset=utf-8 89.8643ms
+2026-05-23 17:03:54.661 -04:00 [INF] Request starting HTTP/1.1 OPTIONS http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - null null
+2026-05-23 17:03:54.673 -04:00 [INF] CORS policy execution successful.
+2026-05-23 17:03:54.677 -04:00 [INF] HTTP OPTIONS /api/logs responded 204 in 3.9995 ms
+2026-05-23 17:03:54.685 -04:00 [INF] Request finished HTTP/1.1 OPTIONS http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - 204 null null 23.4114ms
+2026-05-23 17:03:54.698 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - null null
+2026-05-23 17:03:54.707 -04:00 [INF] CORS policy execution successful.
+2026-05-23 17:03:54.710 -04:00 [INF] Executing endpoint 'Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API)'
+2026-05-23 17:03:54.712 -04:00 [INF] Route matched with {action = "GetLogs", controller = "ActivityLogs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetLogs(System.Nullable`1[System.DateTime], System.Nullable`1[System.DateTime]) on controller Momentum.API.Controllers.ActivityLogsController (Momentum.API).
+2026-05-23 17:03:54.746 -04:00 [INF] Executed DbCommand (23ms) [Parameters=[@userId='?' (Size = 4000), @from='?' (DbType = DateTime2), @to='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [a].[Id], [a].[ActivityId], [a].[CreatedAt], [a].[LoggedAt], [a].[Notes], [a].[PointsRecorded], [a].[UserId], [a0].[Id], [a0].[CreatedAt], [a0].[DefaultPoints], [a0].[Description], [a0].[IsArchived], [a0].[Name], [a0].[UpdatedAt], [a0].[UserId], [s].[ActivityId], [s].[CategoryId], [s].[Id], [s].[ColorHex], [s].[Name]
+FROM [ActivityLogs] AS [a]
+INNER JOIN [Activities] AS [a0] ON [a].[ActivityId] = [a0].[Id]
+LEFT JOIN (
+    SELECT [a1].[ActivityId], [a1].[CategoryId], [c].[Id], [c].[ColorHex], [c].[Name]
+    FROM [ActivityCategories] AS [a1]
+    INNER JOIN [Categories] AS [c] ON [a1].[CategoryId] = [c].[Id]
+) AS [s] ON [a0].[Id] = [s].[ActivityId]
+WHERE [a].[UserId] = @userId AND [a].[LoggedAt] >= @from AND [a].[LoggedAt] < @to
+ORDER BY [a].[LoggedAt] DESC, [a].[Id], [a0].[Id], [s].[ActivityId], [s].[CategoryId]
+2026-05-23 17:03:54.750 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Linq.Enumerable+ListSelectIterator`2[[Momentum.Domain.Entities.ActivityLog, Momentum.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[Momentum.Shared.ActivityLogDto, Momentum.Shared, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-05-23 17:03:54.752 -04:00 [INF] Executed action Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API) in 35.9906ms
+2026-05-23 17:03:54.754 -04:00 [INF] Executed endpoint 'Momentum.API.Controllers.ActivityLogsController.GetLogs (Momentum.API)'
+2026-05-23 17:03:54.755 -04:00 [INF] HTTP GET /api/logs responded 200 in 48.4629 ms
+2026-05-23 17:03:54.757 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5097/api/logs?from=2026-05-23T00:00:00.0000000Z&to=2026-05-24T00:00:00.0000000Z - 200 null application/json; charset=utf-8 59.5057ms
+2026-05-23 17:05:54.685 -04:00 [INF] Application is shutting down...
