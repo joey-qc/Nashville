@@ -1,0 +1,35 @@
+name: Build and Deploy Momentum API
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Restore dependencies
+        run: dotnet restore Momentum.API/Momentum.API.csproj
+
+      - name: Build
+        run: dotnet build Momentum.API/Momentum.API.csproj -c Release --no-restore
+
+      - name: Publish
+        run: dotnet publish Momentum.API/Momentum.API.csproj -c Release -o ./publish --no-build --self-contained false
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: momentum-api
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ./publish

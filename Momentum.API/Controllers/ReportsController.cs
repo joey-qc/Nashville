@@ -57,6 +57,15 @@ public class ReportsController(IScoreService scoreService, ILogger<ReportsContro
         }
     }
 
+    // TODO: Remove this diagnostic endpoint once UTC serialization is verified in production.
+    [HttpGet("datetime-test")]
+    [AllowAnonymous]
+    public IActionResult DateTimeTest() => Ok(new
+    {
+        utcNow = DateTime.UtcNow,
+        serverTime = DateTime.Now
+    });
+
     [HttpGet("balance")]
     public async Task<IActionResult> GetBalance([FromQuery] string period = "week")
     {
