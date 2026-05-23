@@ -24,7 +24,7 @@ public class ActivityLogService(IActivityLogRepository logRepo) : IActivityLogSe
         {
             UserId = userId,
             ActivityId = dto.ActivityId,
-            LoggedAt = dto.LoggedAt,
+            LoggedAt = DateTime.SpecifyKind(dto.LoggedAt, DateTimeKind.Utc),
             PointsRecorded = dto.PointsRecorded,
             Notes = dto.Notes,
             CreatedAt = DateTime.UtcNow
@@ -43,7 +43,7 @@ public class ActivityLogService(IActivityLogRepository logRepo) : IActivityLogSe
         if (log is null) return null;
 
         log.ActivityId = dto.ActivityId;
-        log.LoggedAt = dto.LoggedAt;
+        log.LoggedAt = DateTime.SpecifyKind(dto.LoggedAt, DateTimeKind.Utc);
         log.PointsRecorded = dto.PointsRecorded;
         log.Notes = dto.Notes;
 
@@ -72,7 +72,7 @@ public class ActivityLogService(IActivityLogRepository logRepo) : IActivityLogSe
             Name = ac.Category.Name,
             ColorHex = ac.Category.ColorHex
         }).ToList() ?? [],
-        LoggedAt = l.LoggedAt,
+        LoggedAt = DateTime.SpecifyKind(l.LoggedAt, DateTimeKind.Utc),
         PointsRecorded = l.PointsRecorded,
         Notes = l.Notes
     };

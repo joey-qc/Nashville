@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Momentum.API.Converters;
 using Momentum.Application.Interfaces;
 using Momentum.Application.Services;
 using Momentum.Infrastructure.Data;
@@ -26,7 +27,9 @@ try
         .WriteTo.Console()
         .WriteTo.File("logs/momentum-.log", rollingInterval: RollingInterval.Day));
 
-    builder.Services.AddControllers();
+    builder.Services.AddControllers()
+        .AddJsonOptions(options =>
+            options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter()));
 
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("MomentumDb")));
