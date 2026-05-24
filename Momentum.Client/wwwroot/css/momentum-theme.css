@@ -1,0 +1,36 @@
+:root {
+  --bg: #050D1B;
+  --bg-2: #081427;
+  --surface: #0E2240;
+  --surface-2: #143055;
+  --surface-3: #1A3B66;
+  --border: #1F3D66;
+  --border-soft: #15294A;
+  --primary: #76E04A;
+  --primary-dim: #4FB02C;
+  --primary-glow: #76E04A30;
+  --accent: #4FB8FF;
+  --text: #F0F4F8;
+  --text-dim: #8BA0B8;
+  --text-muted: #4A6080;
+  --negative: #FF6B6B;
+  --positive: #76E04A;
+  --cat-physical: #4CAF50;
+  --cat-mental: #2196F3;
+  --cat-spiritual: #9C27B0;
+  --cat-social: #FF9800;
+  --cat-housekeeping: #FFC107;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Space Grotesk', sans-serif;
+}
