@@ -35,11 +35,11 @@
                          Clearable="true" Class="mb-3"
                          For="@(() => _selectedActivity)" />
 
-        @if (_selectedActivity is not null)
+        @if (!string.IsNullOrWhiteSpace(_selectedActivity?.Description))
         {
-            <MudTextField Value="@(_selectedActivity.Description ?? string.Empty)"
-                          Label="Description" ReadOnly="true" Lines="2" Class="mb-3"
-                          Placeholder="No description" />
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3 mt-n2">
+                @_selectedActivity.Description
+            </MudText>
         }
 
         <MudDatePicker Label="Date" @bind-Date="_model.Date" Class="mb-3" />
