@@ -115,8 +115,8 @@
 
         var all = await ActivityService.GetAllAsync();
         _selectedActivity = all.FirstOrDefault(a => a.Id == log.ActivityId);
-        _model.Date = log.LoggedAt.Date;
-        _model.Time = log.LoggedAt.TimeOfDay;
+        _model.Date = log.LoggedAt.ToLocalTime().Date;
+        _model.Time = log.LoggedAt.ToLocalTime().TimeOfDay;
         _model.Points = log.PointsRecorded;
         _model.Notes = log.Notes;
         StateHasChanged();
@@ -146,7 +146,9 @@
         }
 
         _busy = true;
-        var loggedAt = (_model.Date ?? DateTime.Today).Add(_model.Time ?? TimeSpan.Zero);
+        var loggedAt = DateTime.SpecifyKind(
+            (_model.Date ?? DateTime.Today).Add(_model.Time ?? TimeSpan.Zero),
+            DateTimeKind.Local).ToUniversalTime();
 
         if (EditId.HasValue)
         {

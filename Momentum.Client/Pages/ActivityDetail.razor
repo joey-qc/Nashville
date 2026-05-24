@@ -50,7 +50,7 @@ else
                 }
             </div>
             <div class="d-flex justify-space-between align-center">
-                <MudText Typo="Typo.caption">@log.LoggedAt.ToString("MMM d, h:mm tt")</MudText>
+                <MudText Typo="Typo.caption">@log.LoggedAt.ToLocalTime().ToString("MMM d, h:mm tt")</MudText>
                 <div class="d-flex flex-nowrap align-center">
                     <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="MudBlazor.Size.Small"
                                    OnClick="@(() => Navigation.NavigateTo($"/log?editId={log.Id}"))" />
