@@ -8,9 +8,7 @@ public class ClientAuthService(
     HttpClient http,
     JwtAuthStateProvider authStateProvider,
     ActivityService activityService,
-    CategoryService categoryService,
-    UserSettingsService settingsService,
-    ThemeService themeService)
+    CategoryService categoryService)
 {
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
     {
@@ -24,8 +22,7 @@ public class ClientAuthService(
                 await authStateProvider.MarkUserAsAuthenticated(result.Token);
                 await Task.WhenAll(
                     categoryService.LoadAsync(),
-                    activityService.LoadAsync(),
-                    ApplyThemeAsync());
+                    activityService.LoadAsync());
             }
 
             return result;
@@ -52,8 +49,7 @@ public class ClientAuthService(
                 await authStateProvider.MarkUserAsAuthenticated(result.Token);
                 await Task.WhenAll(
                     categoryService.LoadAsync(),
-                    activityService.LoadAsync(),
-                    ApplyThemeAsync());
+                    activityService.LoadAsync());
             }
 
             return result;
@@ -72,14 +68,6 @@ public class ClientAuthService(
     {
         categoryService.Invalidate();
         activityService.Invalidate();
-        themeService.Apply("light");
         await authStateProvider.MarkUserAsLoggedOut();
-    }
-
-    private async Task ApplyThemeAsync()
-    {
-        var settings = await settingsService.GetAsync();
-        if (settings is not null)
-            themeService.Apply(settings.Theme);
     }
 }

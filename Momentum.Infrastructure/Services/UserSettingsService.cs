@@ -15,8 +15,7 @@ public class UserSettingsService(UserManager<ApplicationUser> userManager) : IUs
         return new UserSettingsDto
         {
             DisplayName = user.DisplayName,
-            Email = user.Email ?? string.Empty,
-            Theme = user.Theme
+            Email = user.Email ?? string.Empty
         };
     }
 
@@ -26,14 +25,12 @@ public class UserSettingsService(UserManager<ApplicationUser> userManager) : IUs
         if (user is null) return null;
 
         user.DisplayName = dto.DisplayName;
-        user.Theme = dto.Theme;
         await userManager.UpdateAsync(user);
 
         return new UserSettingsDto
         {
             DisplayName = user.DisplayName,
-            Email = user.Email ?? string.Empty,
-            Theme = user.Theme
+            Email = user.Email ?? string.Empty
         };
     }
 }

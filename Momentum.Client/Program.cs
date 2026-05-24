@@ -38,7 +38,6 @@ builder.Services.AddAuthorizationCore();
 builder.Services.AddMudServices();
 builder.Services.AddApexCharts();
 
-builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<ActivityService>();
 builder.Services.AddScoped<ActivityLogService>();

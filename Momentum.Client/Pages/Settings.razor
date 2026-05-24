@@ -1,7 +1,6 @@
 @page "/settings"
 @attribute [Authorize]
 @inject UserSettingsService SettingsService
-@inject ThemeService ThemeService
 @inject ISnackbar Snackbar
 
 <PageTitle>Settings</PageTitle>
@@ -24,12 +23,6 @@ else
                 <MudTextField @bind-Value="_displayName" Label="Display Name"
                               Class="mb-4" />
 
-                <MudText Typo="Typo.h6" Class="mb-3">Appearance</MudText>
-                <MudSelect T="string" Label="Theme" @bind-Value="_theme" Class="mb-4">
-                    <MudSelectItem Value='"light"'>Light</MudSelectItem>
-                    <MudSelectItem Value='"dark"'>Dark</MudSelectItem>
-                </MudSelect>
-
                 <MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary"
                            OnClick="SaveSettings" Disabled="_saving">
                     @(_saving ? "Saving..." : "Save Changes")
@@ -42,17 +35,13 @@ else
 @code {
     private UserSettingsDto? _settings;
     private string _displayName = string.Empty;
-    private string _theme = "light";
     private bool _saving;
 
     protected override async Task OnInitializedAsync()
     {
         _settings = await SettingsService.GetAsync();
         if (_settings is not null)
-        {
             _displayName = _settings.DisplayName;
-            _theme = _settings.Theme;
-        }
     }
 
     private async Task SaveSettings()
@@ -60,15 +49,13 @@ else
         _saving = true;
         var result = await SettingsService.UpdateAsync(new UpdateUserSettingsDto
         {
-            DisplayName = _displayName,
-            Theme = _theme
+            DisplayName = _displayName
         });
         _saving = false;
 
         if (result is not null)
         {
             _settings = result;
-            ThemeService.Apply(_theme);
             Snackbar.Add("Settings saved.", Severity.Success);
         }
         else
