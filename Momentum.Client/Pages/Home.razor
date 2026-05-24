@@ -1,103 +1,397 @@
 @page "/"
 @attribute [Authorize]
 @inject ScoreService ScoreService
+@inject ReportsService ReportsService
+@inject ActivityLogService LogService
+@inject CategoryService CategoryService
 @inject NavigationManager Navigation
-@using ApexCharts
 
-<PageTitle>Momentum</PageTitle>
+<PageTitle>Home — Momentum</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-1">Welcome back, @_displayName</MudText>
-<MudText Typo="Typo.subtitle1" Color="MudBlazor.Color.Secondary" Class="mb-6">@DateTime.Now.ToString("dddd, MMMM d")</MudText>
+@if (_loading)
+{
+    <div class="home-loading">
+        <p class="loading-text">Loading your data…</p>
+    </div>
+}
+else
+{
+<div class="home">
 
-<MudGrid>
-    <MudItem xs="12" sm="4">
-        <MudPaper Class="pa-4 text-center" Style="cursor:pointer" @onclick='() => Navigation.NavigateTo("/log/detail?period=today")'>
-            <MudText Typo="Typo.overline">Today</MudText>
-            <MudText Typo="Typo.h3" Color="@ScoreColor(_summary?.TodayTotal ?? 0)">@(_summary?.TodayTotal ?? 0)</MudText>
-            <MudText Typo="Typo.caption" Color="MudBlazor.Color.Secondary">pts</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" sm="4">
-        <MudPaper Class="pa-4 text-center" Style="cursor:pointer" @onclick='() => Navigation.NavigateTo("/log/detail?period=week")'>
-            <MudText Typo="Typo.overline">This Week</MudText>
-            <MudText Typo="Typo.h3" Color="@ScoreColor(_summary?.WeekTotal ?? 0)">@(_summary?.WeekTotal ?? 0)</MudText>
-            <MudText Typo="Typo.caption" Color="MudBlazor.Color.Secondary">pts</MudText>
-        </MudPaper>
-    </MudItem>
-    <MudItem xs="12" sm="4">
-        <MudPaper Class="pa-4 text-center" Style="cursor:pointer" @onclick='() => Navigation.NavigateTo("/log/detail?period=month")'>
-            <MudText Typo="Typo.overline">This Month</MudText>
-            <MudText Typo="Typo.h3" Color="@ScoreColor(_summary?.MonthTotal ?? 0)">@(_summary?.MonthTotal ?? 0)</MudText>
-            <MudText Typo="Typo.caption" Color="MudBlazor.Color.Secondary">pts</MudText>
-        </MudPaper>
-    </MudItem>
-</MudGrid>
+    <!-- ══ PAGE HEADER ══ -->
+    <header class="home-header">
+        <p class="home-date">@DateLine</p>
+        <h1 class="home-welcome">Welcome back, @_displayName</h1>
+        <p class="home-subtitle">Keep going — small wins compound.</p>
+    </header>
 
-<MudPaper Class="pa-4 mt-6">
-    <MudText Typo="Typo.h6" Class="mb-4">This Week vs. Last Week</MudText>
-    @if (_comparison is not null)
-    {
-        <ApexChart TItem="DayComparisonDto" Options="_chartOptions">
-            <ApexPointSeries TItem="DayComparisonDto"
-                             Items="_comparison.Days"
-                             Name="This Week"
-                             SeriesType="ApexCharts.SeriesType.Bar"
-                             XValue="@(d => d.DayLabel)"
-                             YValue="@(d => d.CurrentWeek)"
-                             Color="#2196F3" />
-            <ApexPointSeries TItem="DayComparisonDto"
-                             Items="_comparison.Days"
-                             Name="Last Week"
-                             SeriesType="ApexCharts.SeriesType.Bar"
-                             XValue="@(d => d.DayLabel)"
-                             YValue="@(d => d.LastWeek)"
-                             Color="#9E9E9E" />
-        </ApexChart>
-    }
-    else
-    {
-        <MudProgressLinear Indeterminate="true" />
-    }
-</MudPaper>
+    <!-- ══ HERO ROW: Today's Momentum + KPI stack ══ -->
+    <div class="home-row hero-row">
 
-<MudFab Color="MudBlazor.Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-        Style="position:fixed;bottom:2rem;right:2rem;"
-        Href="/log" Label="Add Entry" />
+        <!-- Today's Momentum card -->
+        <div class="card momentum-card">
+            <div class="card-head">
+                <span class="card-label">TODAY'S MOMENTUM</span>
+            </div>
+            <div class="momentum-body">
+
+                <!-- Score ring -->
+                <div class="ring-wrap">
+                    <svg class="progress-ring" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#8DF35F"/>
+                                <stop offset="100%" stop-color="#4FB02C"/>
+                            </linearGradient>
+                        </defs>
+                        <!-- Track (background circle) -->
+                        <circle class="ring-track" cx="70" cy="70" r="52"/>
+                        <!-- Full green gradient ring -->
+                        <circle class="ring-full" cx="70" cy="70" r="52" stroke="url(#ringGrad)"/>
+                        <!-- Center: today's total -->
+                        <text x="70" y="64" class="ring-score-text" text-anchor="middle">@(_summary?.TodayTotal ?? 0)</text>
+                        <text x="70" y="82" class="ring-score-label" text-anchor="middle">TODAY</text>
+                    </svg>
+                </div>
+
+                <!-- Score + category breakdown -->
+                <div class="momentum-stats">
+                    <div class="cat-bars">
+                        @foreach (var cat in PositiveCats)
+                        {
+                            <div class="cat-bar-row">
+                                <span class="cat-bar-name">@cat.CategoryName</span>
+                                <div class="cat-bar-track">
+                                    <div class="cat-bar-fill"
+                                         style="width:@(CatPct(cat.Total).ToString("F1"))%;background:@cat.ColorHex">
+                                    </div>
+                                </div>
+                                <span class="cat-bar-pts">+@cat.Total</span>
+                            </div>
+                        }
+                        @if (HasSetbacks)
+                        {
+                            <div class="cat-bar-row">
+                                <span class="cat-bar-name">Setbacks</span>
+                                <div class="cat-bar-track">
+                                    <div class="cat-bar-fill setback-fill"
+                                         style="width:@(CatPct(SetbacksTotal).ToString("F1"))%">
+                                    </div>
+                                </div>
+                                <span class="cat-bar-pts neg">@SetbacksTotal</span>
+                            </div>
+                        }
+                        @if (!_todayByCategory.Any())
+                        {
+                            <p class="no-data-hint">No activity logged today yet.</p>
+                        }
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- KPI stack (right column) -->
+        <div class="kpi-stack">
+
+            <!-- This Week -->
+            <div class="card kpi-card" @onclick='() => Navigation.NavigateTo("/log/detail?period=week")'>
+                <div class="kpi-top">
+                    <span class="card-label">THIS WEEK</span>
+                    @if (LastWeekTotal > 0)
+                    {
+                        <span class="kpi-delta @(WeekDelta >= 0 ? "pos" : "neg")">
+                            @(WeekDelta >= 0 ? "↑" : "↓") @Math.Abs(WeekDelta)%
+                        </span>
+                    }
+                </div>
+                <div class="kpi-value">@(_summary?.WeekTotal ?? 0) <span class="kpi-unit">pts</span></div>
+                @if (WeekSparkPath.Length > 0)
+                {
+                    <svg class="sparkline" viewBox="0 0 80 28" preserveAspectRatio="none">
+                        <path d="@WeekSparkPath" class="spark-line week-spark"/>
+                    </svg>
+                }
+            </div>
+
+            <!-- This Month -->
+            <div class="card kpi-card" @onclick='() => Navigation.NavigateTo("/log/detail?period=month")'>
+                <div class="kpi-top">
+                    <span class="card-label">THIS MONTH</span>
+                    @if (_last2Months.Count >= 2 && _last2Months[0].Total > 0)
+                    {
+                        <span class="kpi-delta @(MonthDelta >= 0 ? "pos" : "neg")">
+                            @(MonthDelta >= 0 ? "↑" : "↓") @Math.Abs(MonthDelta)%
+                        </span>
+                    }
+                </div>
+                <div class="kpi-value">@(_summary?.MonthTotal ?? 0) <span class="kpi-unit">pts</span></div>
+                @if (MonthSparkPath.Length > 0)
+                {
+                    <svg class="sparkline" viewBox="0 0 80 28" preserveAspectRatio="none">
+                        <path d="@MonthSparkPath" class="spark-line month-spark"/>
+                    </svg>
+                }
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ══ SPLIT ROW: Bar chart + Activity list ══ -->
+    <div class="home-row split-row">
+
+        <!-- Weekly bar chart -->
+        <div class="card chart-card">
+            <div class="card-head">
+                <span class="card-title">This week vs. last week</span>
+                <div class="chart-legend">
+                    <span class="legend-swatch" style="background:var(--primary)"></span>
+                    <span class="legend-label">This week</span>
+                    <span class="legend-swatch" style="background:var(--text-muted)"></span>
+                    <span class="legend-label">Last week</span>
+                </div>
+            </div>
+            @if (_comparison?.Days is { Count: > 0 })
+            {
+                <svg class="bar-svg" viewBox="0 0 500 200" preserveAspectRatio="xMidYMid meet">
+                    <!-- Y-axis gridlines + labels -->
+                    @foreach (var (ty, tv) in YTicks())
+                    {
+                        <line x1="@ChL" y1="@ty.ToString("F0")" x2="490" y2="@ty.ToString("F0")"
+                              stroke="var(--border-soft)" stroke-width="1"/>
+                        <tspan x="34" y="@ty.ToString("F0")" class="chart-y-label"
+                               dominant-baseline="central" text-anchor="end">@tv</tspan>
+                    }
+                    <!-- Bars + x-labels -->
+                    @for (int idx = 0; idx < _comparison.Days.Count; idx++)
+                    {
+                        var day = _comparison.Days[idx];
+                        var cx  = BarX(idx, true).ToString("F1");
+                        var lx  = BarX(idx, false).ToString("F1");
+                        var ch  = BarH(day.CurrentWeek).ToString("F1");
+                        var lh  = BarH(day.LastWeek).ToString("F1");
+                        var cy  = BarY(day.CurrentWeek).ToString("F1");
+                        var ly  = BarY(day.LastWeek).ToString("F1");
+                        var lbx = LabelX(idx).ToString("F1");
+                        <rect x="@cx" y="@cy" width="@BarW" height="@ch" fill="var(--primary)" rx="3"/>
+                        <rect x="@lx" y="@ly" width="@BarW" height="@lh" fill="var(--text-muted)" rx="3"/>
+                        <tspan x="@lbx" y="193" class="chart-x-label" text-anchor="middle">@day.DayLabel</tspan>
+                    }
+                </svg>
+            }
+            else
+            {
+                <p class="no-data-hint">No comparison data available.</p>
+            }
+        </div>
+
+        <!-- Today's activity list -->
+        <div class="card activity-card">
+            <div class="card-head">
+                <div>
+                    <span class="card-title">Today's activity</span>
+                    <p class="card-sub">@_todayLogs.Count @(_todayLogs.Count == 1 ? "entry" : "entries") · @(_summary?.TodayTotal ?? 0) pts</p>
+                </div>
+                <a href="/log/detail?period=today" class="view-all-link">View all →</a>
+            </div>
+            <div class="activity-list">
+                @if (_todayLogs.Any())
+                {
+                    @foreach (var log in _todayLogs.OrderByDescending(l => l.LoggedAt).Take(5))
+                    {
+                        var bc = log.Categories.Count > 0 ? log.Categories[0].ColorHex : "#4A6080";
+                        <div class="activity-row">
+                            <div class="activity-badge" style="background:@(bc)1A;border:1px solid @(bc)44">
+                                <svg viewBox="0 0 12 12" width="10" height="10">
+                                    <circle cx="6" cy="6" r="4" fill="@bc"/>
+                                </svg>
+                            </div>
+                            <div class="activity-info">
+                                <span class="activity-name" title="@log.ActivityName">@log.ActivityName</span>
+                                <span class="activity-time">@log.LoggedAt.ToLocalTime().ToString("h:mm tt")</span>
+                            </div>
+                            <div class="activity-cats">
+                                @foreach (var cat in log.Categories.Take(2))
+                                {
+                                    <span class="cat-tag" style="background:@(cat.ColorHex)1A;color:@cat.ColorHex">@cat.Name</span>
+                                }
+                            </div>
+                            <span class="pts-pill @(log.PointsRecorded >= 0 ? "pos" : "neg")">
+                                @(log.PointsRecorded > 0 ? "+" : "")@log.PointsRecorded
+                            </span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-activity">
+                        <p class="no-data-hint">No entries today yet.</p>
+                        <a href="/log" class="log-first-link">+ Log your first activity</a>
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+
+</div>
+}
 
 @code {
     [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
 
-    private ScoreSummaryDto? _summary;
-    private WeeklyComparisonDto? _comparison;
-    private string _displayName = string.Empty;
+    /* Bar chart SVG geometry */
+    private const double ChL = 40;   // left x of chart area
+    private const double ChT = 15;   // top y
+    private const double ChB = 170;  // bottom y of bars
+    private const double ChH = 155;  // chart height (ChB - ChT)
+    private const double ChW = 450;  // chart width  (490 - ChL)
+    private const double BarW = 14;  // individual bar pixel width
 
-    private readonly ApexCharts.ApexChartOptions<DayComparisonDto> _chartOptions = new()
+    /* ── State ───────────────────────────────────────────────── */
+    private ScoreSummaryDto?         _summary;
+    private WeeklyComparisonDto?     _comparison;
+    private List<CategoryTotalDto>   _todayByCategory = [];
+    private List<ActivityLogDto>     _todayLogs       = [];
+    private List<DailyScoreDto>      _last30Days      = [];
+    private List<DailyScoreDto>      _last2Months     = [];
+    private string _displayName = "there";
+    private bool   _loading     = true;
+
+    /* ── Computed: header ─────────────────────────────────────── */
+    private string DateLine =>
+        DateTime.Now.ToString("dddd").ToUpper() + " · " +
+        DateTime.Now.ToString("MMMM d").ToUpper();
+
+    /* ── Computed: category bars ──────────────────────────────── */
+    private int    CatBarMax      => _todayByCategory.Count > 0 ? Math.Max(1, _todayByCategory.Max(c => Math.Abs(c.Total))) : 1;
+    private double CatPct(int v)  => Math.Min(100, Math.Abs(v) * 100.0 / CatBarMax);
+    private IEnumerable<CategoryTotalDto> PositiveCats => _todayByCategory.Where(c => c.Total > 0).OrderByDescending(c => c.Total);
+    private int    SetbacksTotal  => _todayByCategory.Where(c => c.Total < 0).Sum(c => c.Total);
+    private bool   HasSetbacks    => SetbacksTotal < 0;
+
+    /* ── Computed: week/month deltas ──────────────────────────── */
+    private int LastWeekTotal => _comparison?.Days.Sum(d => d.LastWeek) ?? 0;
+
+    private int WeekDelta
     {
-        Chart = new ApexCharts.Chart { Toolbar = new ApexCharts.Toolbar { Show = false } },
-        PlotOptions = new ApexCharts.PlotOptions
+        get
         {
-            Bar = new ApexCharts.PlotOptionsBar { ColumnWidth = "55%" }
+            var last = LastWeekTotal;
+            return last == 0 ? 0 : (int)Math.Round((_summary?.WeekTotal - last ?? 0) * 100.0 / last);
         }
-    };
+    }
 
+    private int MonthDelta
+    {
+        get
+        {
+            if (_last2Months.Count < 2) return 0;
+            var last = _last2Months[0].Total;
+            return last == 0 ? 0 : (int)Math.Round((_summary?.MonthTotal - last ?? 0) * 100.0 / last);
+        }
+    }
+
+    /* ── Computed: sparklines ─────────────────────────────────── */
+    private string WeekSparkPath  => MakeSpark(_comparison?.Days.Select(d => d.CurrentWeek).ToList() ?? []);
+    private string MonthSparkPath => MakeSpark(_last30Days.Select(d => d.Total).ToList());
+
+    private static string MakeSpark(IList<int> vals, double w = 80, double h = 28)
+    {
+        if (vals.Count < 2) return "";
+        var max   = Math.Max(1, vals.Max());
+        var min   = Math.Min(0, vals.Min());
+        var range = Math.Max(1, max - min);
+        var sb    = new System.Text.StringBuilder();
+        for (int i = 0; i < vals.Count; i++)
+        {
+            var x = i * w / (vals.Count - 1);
+            var y = h - (vals[i] - min) * h / range;
+            sb.Append(i == 0 ? $"M {x:F1} {y:F1}" : $" L {x:F1} {y:F1}");
+        }
+        return sb.ToString();
+    }
+
+    /* ── Computed: bar chart geometry ─────────────────────────── */
+    private double BarChartMax
+    {
+        get
+        {
+            var days = _comparison?.Days;
+            if (days is null || days.Count == 0) return 10;
+            var raw = days.Max(d => Math.Max(d.CurrentWeek, d.LastWeek));
+            return Math.Max(5, Math.Ceiling(raw * 1.2 / 5) * 5);
+        }
+    }
+
+    private double BarX(int i, bool isCurrent)
+    {
+        var gw        = ChW / 7;
+        var gStart    = ChL + i * gw;
+        var barsTotal = 2 * BarW + 4;
+        var bStart    = gStart + (gw - barsTotal) / 2;
+        return isCurrent ? bStart : bStart + BarW + 4;
+    }
+    private double BarH(int v) => Math.Max(0, v * ChH / BarChartMax);
+    private double BarY(int v) => ChB - BarH(v);
+    private double LabelX(int i) => ChL + i * (ChW / 7) + ChW / 14;
+
+    private IEnumerable<(double y, int val)> YTicks()
+    {
+        for (int i = 0; i <= 4; i++)
+            yield return (ChB - i * ChH / 4, (int)(i * BarChartMax / 4));
+    }
+
+    /* ── Data loading ─────────────────────────────────────────── */
     protected override async Task OnInitializedAsync()
     {
         if (AuthState is not null)
         {
             var state = await AuthState;
             _displayName = state.User.FindFirst("displayName")?.Value
-                ?? state.User.Identity?.Name
-                ?? "there";
+                        ?? state.User.Identity?.Name
+                        ?? "there";
         }
 
-        _summary = await ScoreService.GetSummaryAsync();
-        _comparison = await ScoreService.GetWeeklyComparisonAsync();
-    }
+        var cats     = await CategoryService.GetAllAsync();
+        var todayUtc = DateTime.UtcNow.Date;
 
-    private static MudBlazor.Color ScoreColor(int score) => score switch
-    {
-        > 0 => MudBlazor.Color.Success,
-        < 0 => MudBlazor.Color.Error,
-        _ => MudBlazor.Color.Default
-    };
+        var tSummary  = ScoreService.GetSummaryAsync();
+        var tCompare  = ScoreService.GetWeeklyComparisonAsync();
+        var tLogs     = LogService.GetByDateRangeAsync(todayUtc, todayUtc.AddDays(1));
+        var tDaily    = ReportsService.GetDailyAsync(31);
+        var tMonthly  = ReportsService.GetMonthlyAsync(2);
+
+        await Task.WhenAll(tSummary, tCompare, tLogs, tDaily, tMonthly);
+
+        _summary     = tSummary.Result;
+        _comparison  = tCompare.Result;
+        _todayLogs   = tLogs.Result;
+        _last30Days  = tDaily.Result.TakeLast(30).ToList();
+        _last2Months = tMonthly.Result;
+
+        // Build today's category breakdown directly from today's logs.
+        // Note: DailyScoreDto.ByCategory is never populated by the reports API (only Date+Total
+        // are filled), so we derive category totals from the logs we already fetched above.
+        _todayByCategory = _todayLogs
+            .SelectMany(log => log.Categories.Select(cat => new
+            {
+                cat.Id,
+                cat.Name,
+                cat.ColorHex,
+                Points = log.PointsRecorded
+            }))
+            .GroupBy(x => new { x.Id, x.Name, x.ColorHex })
+            .Select(g => new CategoryTotalDto
+            {
+                CategoryId   = g.Key.Id,
+                CategoryName = g.Key.Name,
+                ColorHex     = g.Key.ColorHex,
+                Total        = g.Sum(x => x.Points)
+            })
+            .Where(c => c.Total != 0)
+            .ToList();
+
+        _loading = false;
+    }
 }
