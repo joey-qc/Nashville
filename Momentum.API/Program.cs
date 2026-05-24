@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Momentum.API.Converters;
@@ -32,7 +33,12 @@ try
             options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter()));
 
     builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("MomentumDb")));
+        options.UseSqlServer(
+            builder.Configuration.GetConnectionString("MomentumDb"),
+            sqlOptions => sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorNumbersToAdd: null)));
 
     builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
@@ -88,16 +94,43 @@ try
 
     var app = builder.Build();
 
-    try
+    // Azure SQL Serverless auto-pauses when idle and returns error 40613 on the
+    // first connection attempt. Retry the migration to allow the database time to
+    // resume. If all retries fail, log and continue so the process stays alive —
+    // individual requests will surface the error rather than killing the whole app.
+    const int migrationMaxRetries = 5;
+    const int migrationRetryDelaySeconds = 10;
+    for (var attempt = 1; attempt <= migrationMaxRetries; attempt++)
     {
-        using var scope = app.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await db.Database.MigrateAsync();
-    }
-    catch (Exception ex)
-    {
-        Log.Fatal(ex, "Database migration failed");
-        throw;
+        try
+        {
+            using var scope = app.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await db.Database.MigrateAsync();
+            break; // success — exit the retry loop
+        }
+        catch (SqlException ex) when (ex.Number == 40613)
+        {
+            if (attempt == migrationMaxRetries)
+            {
+                Log.Error(ex,
+                    "Database migration failed after {MaxRetries} attempts — " +
+                    "database unavailable (40613). App will start; requests may fail until the database resumes",
+                    migrationMaxRetries);
+                break;
+            }
+            Log.Warning(
+                "Database unavailable (40613) on migration attempt {Attempt}/{MaxRetries}. " +
+                "Retrying in {Delay}s...",
+                attempt, migrationMaxRetries, migrationRetryDelaySeconds);
+            await Task.Delay(TimeSpan.FromSeconds(migrationRetryDelaySeconds));
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Database migration failed on attempt {Attempt}/{MaxRetries}",
+                attempt, migrationMaxRetries);
+            throw;
+        }
     }
 
     app.UseSerilogRequestLogging();
