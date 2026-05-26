@@ -317,3 +317,10 @@ Momentum is intended to become:
 - a multidimensional life tracking platform
 - a reflective personal operating system
 - an emotionally reinforcing behavioral UX experience
+
+## Remaining MudBlazor / Legacy UI Work
+
+- Login page
+- Register page
+- Final snackbar/toast replacement or confirmation that MudBlazor snackbar remains intentionally retained
+- Remove MudBlazor package after all remaining references are eliminated

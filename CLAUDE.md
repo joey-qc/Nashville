@@ -22,13 +22,12 @@ Momentum is moving away from MudBlazor toward fully custom Razor markup, plain H
 - Use plain HTML elements (`<button>`, `<input>`, `<textarea>`, `<select>`, etc.) styled with scoped CSS classes.
 - Use CSS variables from `Momentum.Client/wwwroot/css/momentum-theme.css` — never hardcode colors, radii, or spacing.
 - Use inline SVG for all icons and charts — no icon font or third-party icon library.
-- **Do NOT introduce any new MudBlazor components.** MudBlazor may only remain on pages not yet converted (Settings, Login, Register).
-- The one permitted MudBlazor exception on converted pages is `ISnackbar` / `MudSnackbar` for toast notifications — until a custom global toast is implemented.
+- **Do NOT introduce any new MudBlazor components.** All pages are now fully converted.
+- The one permitted MudBlazor exception is `ISnackbar` / `MudSnackbar` for toast notifications — until a custom global toast is implemented, after which the MudBlazor NuGet package should be removed entirely.
 - **Bootstrap must NEVER be used or referenced** anywhere in the project — not in markup, not in CSS, not in NuGet packages.
-- Once all pages are converted, remove the MudBlazor NuGet package entirely.
 
-**Converted pages (custom HTML/CSS only):** Home, Add Entry (`/log`), View Log (`/log/detail`), Trends (`/reports`), Balance (`/reports/balance`), Manage Activities (`/activities`).
-**Legacy pages (MudBlazor still present):** Settings, Login, Register.
+**Converted pages (custom HTML/CSS only):** Home, Add Entry (`/log`), View Log (`/log/detail`), Trends (`/reports`), Balance (`/reports/balance`), Manage Activities (`/activities`), Settings (`/settings`), Login (`/login`), Register (`/register`).
+**Legacy pages (MudBlazor still present):** None — all pages converted. `ISnackbar`/`MudSnackbar` remains only for toast notifications.
 
 ### 3.2 Charting — Custom SVG
 - All charts (bar, line, donut, sparkline) are implemented as **custom inline SVG** rendered directly in Razor components.

@@ -155,7 +155,10 @@
         <div class="modal-card" @onclick:stopPropagation="true">
 
             <div class="modal-header">
-                <h2 class="modal-title">@(_editingId.HasValue ? "Edit Activity" : "New Activity")</h2>
+                <div class="modal-title-group">
+                    <span class="modal-kicker">@(_editingId.HasValue ? "EDITING" : "LIBRARY")</span>
+                    <h2 class="modal-title">@(_editingId.HasValue ? (_editingActivity?.Name ?? "Activity") : "New Activity")</h2>
+                </div>
                 <button class="modal-close-btn" type="button" @onclick="CloseForm" aria-label="Close">
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none"
                          stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -190,62 +193,76 @@
                     <textarea class="field-textarea"
                               placeholder="What does this activity involve?"
                               maxlength="500"
-                              rows="2"
+                              rows="3"
                               value="@_form.Description"
                               @oninput="@(e => _form.Description = e.Value?.ToString())"></textarea>
                 </div>
 
-                <!-- Categories -->
-                <div class="field-group">
-                    <label class="field-label">
-                        CATEGORIES&nbsp;<span class="field-hint-inline">— select at least one</span>
-                    </label>
-                    <div class="cat-toggle-row">
-                        @foreach (var cat in _categories)
+                <!-- Default Points + Categories — side by side -->
+                <div class="form-split-row">
+
+                    <!-- Default Points -->
+                    <div class="field-group">
+                        <label class="field-label">DEFAULT POINTS</label>
+                        <div class="pts-spinner">
+                            <button type="button" class="pts-btn" @onclick="DecrementPoints">−</button>
+                            <div class="pts-value-wrap @(_form.DefaultPoints > 0 ? "pos" : _form.DefaultPoints < 0 ? "neg" : "")">
+                                <span class="pts-num">@(_form.DefaultPoints > 0 ? "+" : "")@_form.DefaultPoints</span>
+                                <span class="pts-sub">PER ENTRY</span>
+                            </div>
+                            <button type="button" class="pts-btn" @onclick="IncrementPoints">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Categories -->
+                    <div class="field-group">
+                        <label class="field-label">
+                            CATEGORIES&nbsp;<span class="field-hint-inline">— select at least one</span>
+                        </label>
+                        <div class="cat-toggle-row">
+                            @foreach (var cat in _categories)
+                            {
+                                var selected = _form.CategoryIds.Contains(cat.Id);
+                                <button type="button"
+                                        class="cat-toggle-btn @(selected ? "cat-selected" : "")"
+                                        style="@(selected ? $"border-color:{cat.ColorHex};background:{cat.ColorHex};color:rgba(0,0,0,0.78)" : $"border-color:{cat.ColorHex}55;color:{cat.ColorHex}CC")"
+                                        @onclick="@(() => ToggleCategory(cat.Id))">
+                                    <span class="cat-toggle-dot" style="background:@(selected ? "rgba(0,0,0,0.22)" : cat.ColorHex)"></span>
+                                    @cat.Name
+                                </button>
+                            }
+                        </div>
+                        @if (_showCategoryError)
                         {
-                            var selected = _form.CategoryIds.Contains(cat.Id);
-                            <button type="button"
-                                    class="cat-toggle-btn @(selected ? "cat-selected" : "")"
-                                    style="@(selected ? $"border-color:{cat.ColorHex};background:{cat.ColorHex}22;color:{cat.ColorHex}" : "")"
-                                    @onclick="@(() => ToggleCategory(cat.Id))">
-                                <span class="cat-toggle-dot" style="background:@cat.ColorHex"></span>
-                                @cat.Name
-                            </button>
+                            <p class="field-error">Select at least one category.</p>
                         }
                     </div>
-                    @if (_showCategoryError)
-                    {
-                        <p class="field-error">Select at least one category.</p>
-                    }
-                </div>
 
-                <!-- Default Points -->
-                <div class="field-group">
-                    <label class="field-label">DEFAULT POINTS</label>
-                    <div class="pts-spinner">
-                        <button type="button" class="pts-btn" @onclick="DecrementPoints">−</button>
-                        <span class="pts-value @(_form.DefaultPoints > 0 ? "pos" : _form.DefaultPoints < 0 ? "neg" : "")">
-                            @(_form.DefaultPoints > 0 ? "+" : "")@_form.DefaultPoints
-                        </span>
-                        <button type="button" class="pts-btn" @onclick="IncrementPoints">+</button>
-                    </div>
                 </div>
 
                 <!-- Action buttons -->
-                <div class="modal-actions">
+                <div class="modal-footer">
+                    <div class="modal-footer-left">
+                        <button type="submit" class="btn-save" disabled="@_saving">
+                            @(_saving ? "Saving…" : (_editingId.HasValue ? "Save changes" : "Create activity"))
+                        </button>
+                        <button type="button" class="btn-text-cancel" @onclick="CloseForm">CANCEL</button>
+                    </div>
                     @if (_editingId.HasValue)
                     {
-                        <button type="button" class="btn-delete-act" disabled="@_saving"
+                        <button type="button" class="btn-text-delete" disabled="@_saving"
                                 @onclick="DeleteFromForm">
-                            Delete
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none"
+                                 stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                <path d="M10 11v6M14 11v6"/>
+                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                            </svg>
+                            DELETE ACTIVITY
                         </button>
                     }
-                    <div class="modal-primary-btns">
-                        <button type="button" class="btn-form-cancel" @onclick="CloseForm">Cancel</button>
-                        <button type="submit" class="btn-submit" disabled="@_saving">
-                            @(_saving ? "Saving…" : "Save")
-                        </button>
-                    </div>
                 </div>
 
             </form>

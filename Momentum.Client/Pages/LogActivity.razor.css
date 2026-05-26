@@ -588,54 +588,57 @@
 /* ── Action buttons ──────────────────────────────────────── */
 .action-row {
     display: flex;
-    gap: 10px;
+    align-items: center;
+    gap: 16px;
     margin-top: 6px;
 }
 
 .btn-submit {
-    flex: 1;
-    padding: 13px 24px;
+    padding: 11px 26px;
     background: var(--primary);
     color: #071a07;
     border: none;
     border-radius: var(--radius-sm);
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 700;
     cursor: pointer;
-    transition: background 0.15s ease;
+    white-space: nowrap;
+    box-shadow: 0 0 16px rgba(118, 224, 74, 0.18), 0 2px 6px rgba(0, 0, 0, 0.28);
+    transition: background 0.15s ease, box-shadow 0.15s ease;
     -webkit-appearance: none;
     appearance: none;
 }
 
 .btn-submit:hover:not(:disabled) {
     background: var(--primary-dim);
+    box-shadow: 0 0 22px rgba(118, 224, 74, 0.28), 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .btn-submit:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    box-shadow: none;
 }
 
-.btn-cancel {
-    padding: 13px 20px;
+.btn-text-cancel {
     background: transparent;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text-dim);
+    border: none;
+    color: var(--text-muted);
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.875rem;
-    font-weight: 500;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
     cursor: pointer;
+    padding: 4px 0;
     white-space: nowrap;
-    transition: background 0.12s ease, color 0.12s ease;
+    transition: color 0.12s ease;
     -webkit-appearance: none;
     appearance: none;
 }
 
-.btn-cancel:hover {
-    background: var(--surface-2);
-    color: var(--text);
+.btn-text-cancel:hover {
+    color: var(--text-dim);
 }
 
 /* ── Mobile adjustments ──────────────────────────────────── */

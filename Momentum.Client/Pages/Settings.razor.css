@@ -1,0 +1,293 @@
+/* ═══════════════════════════════════════════════════════════
+   Settings page
+═══════════════════════════════════════════════════════════ */
+
+.settings-page {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    max-width: 640px;
+}
+
+/* ── Page header ─────────────────────────────────────────── */
+.settings-header {
+    margin-bottom: 4px;
+}
+
+.kicker {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--primary);
+    margin-bottom: 8px;
+}
+
+.settings-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 10px;
+    line-height: 1.1;
+}
+
+.settings-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ── Loading ─────────────────────────────────────────────── */
+.settings-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+}
+
+.loading-text {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0;
+    animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50%       { opacity: 1; }
+}
+
+/* ── Profile card ────────────────────────────────────────── */
+.settings-card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+/* Card top: title/desc + avatar */
+.card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 28px 28px 24px;
+}
+
+.card-intro {
+    flex: 1;
+    min-width: 0;
+}
+
+.card-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 6px;
+}
+
+.card-desc {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* ── Profile avatar ──────────────────────────────────────── */
+.profile-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #4A9FFF 0%, #B894FF 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 24px rgba(74, 159, 255, 0.22);
+}
+
+.avatar-initial {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+/* ── Divider ─────────────────────────────────────────────── */
+.card-divider {
+    border: none;
+    border-top: 1px solid var(--border-soft);
+    margin: 0;
+}
+
+/* ── Card body ───────────────────────────────────────────── */
+.card-body {
+    padding: 24px 28px;
+}
+
+/* ── Field groups ────────────────────────────────────────── */
+.field-group {
+    margin-bottom: 22px;
+}
+
+.field-group:last-child {
+    margin-bottom: 0;
+}
+
+.field-label {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+/* ── Read-only email field ───────────────────────────────── */
+.readonly-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    min-height: 46px;
+}
+
+.readonly-value {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.verified-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--primary);
+    background: var(--primary-glow);
+    color: var(--primary);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.field-helper {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 7px 0 0;
+    line-height: 1.45;
+}
+
+/* ── Display Name input ──────────────────────────────────── */
+.field-input {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.field-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.field-input::placeholder {
+    color: var(--text-muted);
+}
+
+/* ── Card footer / save action ───────────────────────────── */
+.card-footer {
+    padding: 20px 28px;
+}
+
+.btn-save {
+    padding: 11px 24px;
+    background: var(--primary);
+    color: #071a07;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 0 16px rgba(118, 224, 74, 0.18), 0 2px 6px rgba(0, 0, 0, 0.28);
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.btn-save:hover:not(:disabled) {
+    background: var(--primary-dim);
+    box-shadow: 0 0 22px rgba(118, 224, 74, 0.28), 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.btn-save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* ── Mobile ──────────────────────────────────────────────── */
+@media (max-width: 540px) {
+    .settings-page {
+        gap: 20px;
+    }
+
+    .settings-title {
+        font-size: 1.7rem;
+    }
+
+    .card-top {
+        padding: 22px 20px 18px;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .card-footer {
+        padding: 16px 20px;
+    }
+
+    .profile-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 13px;
+    }
+
+    .avatar-initial {
+        font-size: 1.25rem;
+    }
+
+    .btn-save {
+        width: 100%;
+        text-align: center;
+    }
+}

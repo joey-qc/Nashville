@@ -5,32 +5,82 @@
 
 <PageTitle>Settings</PageTitle>
 
-<MudText Typo="Typo.h5" Class="mb-4">Settings</MudText>
+<div class="settings-page">
 
-@if (_settings is null)
-{
-    <MudProgressLinear Indeterminate="true" />
-}
-else
-{
-    <MudGrid>
-        <MudItem xs="12" sm="8" md="6">
-            <MudPaper Class="pa-6">
-                <MudText Typo="Typo.h6" Class="mb-4">Profile</MudText>
+    <!-- ═══ Page header ═══ -->
+    <header class="settings-header">
+        <span class="kicker">ACCOUNT</span>
+        <h1 class="settings-title">Settings</h1>
+        <p class="settings-subtitle">Manage your profile and how Momentum knows you.</p>
+    </header>
 
-                <MudTextField @bind-Value="_settings.Email" Label="Email"
-                              ReadOnly="true" Disabled="true" Class="mb-3" />
-                <MudTextField @bind-Value="_displayName" Label="Display Name"
-                              Class="mb-4" />
+    <!-- ═══ Loading state ═══ -->
+    @if (_settings is null)
+    {
+        <div class="settings-loading">
+            <p class="loading-text">Loading…</p>
+        </div>
+    }
+    else
+    {
+        <!-- ═══ Profile card ═══ -->
+        <div class="settings-card">
 
-                <MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary"
-                           OnClick="SaveSettings" Disabled="_saving">
-                    @(_saving ? "Saving..." : "Save Changes")
-                </MudButton>
-            </MudPaper>
-        </MudItem>
-    </MudGrid>
-}
+            <!-- Card header: title + avatar -->
+            <div class="card-top">
+                <div class="card-intro">
+                    <h2 class="card-title">Profile</h2>
+                    <p class="card-desc">Your identity inside Momentum.</p>
+                </div>
+                <div class="profile-avatar">
+                    <span class="avatar-initial">
+                        @char.ToUpper((_displayName.Length > 0 ? _displayName[0] : _settings.Email[0]))
+                    </span>
+                </div>
+            </div>
+
+            <hr class="card-divider" />
+
+            <!-- Fields -->
+            <div class="card-body">
+
+                <!-- Email (read-only) -->
+                <div class="field-group">
+                    <label class="field-label">EMAIL</label>
+                    <div class="readonly-field">
+                        <span class="readonly-value">@_settings.Email</span>
+                        <span class="verified-badge">VERIFIED</span>
+                    </div>
+                    <p class="field-helper">Email is tied to your account and can't be edited here.</p>
+                </div>
+
+                <!-- Display Name -->
+                <div class="field-group">
+                    <label class="field-label" for="setting-display-name">DISPLAY NAME</label>
+                    <input id="setting-display-name"
+                           type="text"
+                           class="field-input"
+                           placeholder="Your name"
+                           maxlength="100"
+                           value="@_displayName"
+                           @oninput="@(e => _displayName = e.Value?.ToString() ?? "")" />
+                </div>
+
+            </div>
+
+            <hr class="card-divider" />
+
+            <!-- Save action -->
+            <div class="card-footer">
+                <button type="button" class="btn-save" disabled="@_saving" @onclick="SaveSettings">
+                    @(_saving ? "Saving…" : "Save changes")
+                </button>
+            </div>
+
+        </div>
+    }
+
+</div>
 
 @code {
     private UserSettingsDto? _settings;

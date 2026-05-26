@@ -4,57 +4,185 @@
 @inject ColdStartService ColdStartService
 @implements IDisposable
 
-<PageTitle>Login</PageTitle>
+<PageTitle>Sign in — Momentum</PageTitle>
 
-<MudGrid Justify="Justify.Center" Class="mt-8">
-    <MudItem xs="12" sm="6" md="4">
-        <MudPaper Class="pa-6">
-            <MudText Typo="Typo.h5" Class="mb-4">Sign In</MudText>
+<div class="auth-page">
 
-            <EditForm Model="model" OnValidSubmit="HandleLogin">
-                <DataAnnotationsValidator />
-                <MudTextField @bind-Value="model.Email" Label="Email" InputType="InputType.Email"
-                              For="@(() => model.Email)" Class="mb-3" />
-                <MudTextField @bind-Value="model.Password" Label="Password" InputType="InputType.Password"
-                              For="@(() => model.Password)" Class="mb-4" />
+    <!-- ═══ Brand ═══ -->
+    <div class="auth-brand">
+        <div class="auth-logo-wrap">
+            <svg viewBox="0 0 32 28" width="24" height="21" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M16 2L30 26H2L16 2Z" fill="white" opacity="0.95"/>
+                <path d="M9 26L16 14L23 26Z" fill="white" opacity="0.65"/>
+            </svg>
+        </div>
+        <div class="auth-brand-text">
+            <span class="auth-brand-name">Momentum</span>
+            <span class="auth-brand-sub">DAILY WELLNESS</span>
+        </div>
+    </div>
 
-                @if (errors.Any())
+    <!-- ═══ Auth card ═══ -->
+    <div class="auth-card">
+
+        <div class="auth-card-header">
+            <span class="auth-eyebrow">WELCOME BACK</span>
+            <h1 class="auth-title">Sign in</h1>
+            <p class="auth-subtitle">Pick up where you left off. Your streaks miss you.</p>
+        </div>
+
+        <!-- Error banner -->
+        @if (errors.Any())
+        {
+            <div class="auth-alert auth-alert-error">
+                @string.Join(" ", errors)
+            </div>
+        }
+
+        <!-- Cold-start banner -->
+        @if (ColdStartService.IsRetrying)
+        {
+            <div class="auth-alert auth-alert-info">
+                <span>Waking up the server, please wait&hellip;</span>
+                <div class="cold-start-bar"></div>
+            </div>
+        }
+
+        <form @onsubmit="HandleLogin" @onsubmit:preventDefault>
+
+            <!-- Email -->
+            <div class="auth-field">
+                <label class="auth-field-label" for="login-email">EMAIL</label>
+                <input id="login-email"
+                       type="email"
+                       class="auth-field-input"
+                       placeholder="you@example.com"
+                       autocomplete="email"
+                       value="@model.Email"
+                       @oninput="@(e => model.Email = e.Value?.ToString() ?? "")" />
+            </div>
+
+            <!-- Password -->
+            <div class="auth-field">
+                <label class="auth-field-label" for="login-password">PASSWORD</label>
+                <div class="auth-field-inner">
+                    <input id="login-password"
+                           type="@(_showPassword ? "text" : "password")"
+                           class="auth-field-input"
+                           placeholder="••••••••"
+                           autocomplete="current-password"
+                           value="@model.Password"
+                           @oninput="@(e => model.Password = e.Value?.ToString() ?? "")" />
+                    <button type="button" class="pw-toggle" @onclick="TogglePassword"
+                            aria-label="@(_showPassword ? "Hide password" : "Show password")">
+                        @if (_showPassword)
+                        {
+                            <!-- Eye-off icon -->
+                            <svg viewBox="0 0 24 24" width="17" height="17" fill="none"
+                                 stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
+                        }
+                        else
+                        {
+                            <!-- Eye icon -->
+                            <svg viewBox="0 0 24 24" width="17" height="17" fill="none"
+                                 stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        }
+                    </button>
+                </div>
+            </div>
+
+            <!-- Remember me + forgot password -->
+            <div class="auth-meta-row">
+                <label class="auth-check-label">
+                    <input type="checkbox" class="auth-check" @bind="_rememberMe" />
+                    <span class="auth-check-box" aria-hidden="true">
+                        <svg viewBox="0 0 12 10" width="11" height="9" fill="none"
+                             stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="1.5 5 4.5 8 10.5 2"/>
+                        </svg>
+                    </span>
+                    <span>Keep me signed in</span>
+                </label>
+                <a href="#" class="auth-link" @onclick:preventDefault>Forgot password?</a>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="auth-submit" disabled="@busy">
+                @if (busy)
                 {
-                    <MudAlert Severity="Severity.Error" Class="mb-3">@string.Join(" ", errors)</MudAlert>
+                    @(ColdStartService.IsRetrying ? "Please wait…" : "Signing in…")
                 }
-
-                @if (ColdStartService.IsRetrying)
+                else
                 {
-                    <MudAlert Severity="Severity.Info" Class="mb-3">
-                        Waking up the server, please wait&hellip;
-                    </MudAlert>
-                    <MudProgressLinear Indeterminate="true" Color="Color.Info" Rounded="true" Class="mb-3" />
+                    <span>Sign in</span>
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+                         stroke="currentColor" stroke-width="2.5"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
                 }
+            </button>
 
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
-                           FullWidth="true" Disabled="busy">
-                    @ButtonLabel
-                </MudButton>
-            </EditForm>
+        </form>
 
-            <MudText Class="mt-3 text-center">
-                No account? <MudLink Href="/register">Register</MudLink>
-            </MudText>
-        </MudPaper>
-    </MudItem>
-</MudGrid>
+        <!-- OR CONTINUE WITH divider -->
+        <div class="auth-divider">
+            <span class="auth-divider-line"></span>
+            <span class="auth-divider-text">OR CONTINUE WITH</span>
+            <span class="auth-divider-line"></span>
+        </div>
+
+        <!-- Social buttons (UI only — not yet implemented) -->
+        <div class="auth-social-row">
+            <button type="button" class="auth-social-btn" disabled title="Coming soon">
+                <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Google
+            </button>
+            <button type="button" class="auth-social-btn" disabled title="Coming soon">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+                Apple
+            </button>
+        </div>
+
+        <!-- Bottom nav -->
+        <p class="auth-bottom-nav">
+            No account? <a href="/register" class="auth-link">Create one</a>
+        </p>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="auth-footer">
+        Securely tracking momentum since 2025
+        &nbsp;·&nbsp;<a href="#" class="auth-footer-link" @onclick:preventDefault>Privacy</a>
+        &nbsp;·&nbsp;<a href="#" class="auth-footer-link" @onclick:preventDefault>Terms</a>
+    </footer>
+
+</div>
 
 @code {
     private readonly LoginRequest model = new();
     private IEnumerable<string> errors = [];
     private bool busy;
+    private bool _showPassword;
+    private bool _rememberMe;
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
-
-    private string ButtonLabel => busy
-        ? (ColdStartService.IsRetrying ? "Please wait..." : "Signing in...")
-        : "Sign In";
 
     protected override void OnInitialized()
     {
@@ -62,14 +190,18 @@
     }
 
     private void HandleColdStartChanged()
-    {
-        // The event fires from the handler's async context — marshal back to the
-        // Blazor synchronization context before touching the render tree.
-        InvokeAsync(StateHasChanged);
-    }
+        => InvokeAsync(StateHasChanged);
+
+    private void TogglePassword() => _showPassword = !_showPassword;
 
     private async Task HandleLogin()
     {
+        if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Password))
+        {
+            errors = ["Please enter your email and password."];
+            return;
+        }
+
         busy = true;
         errors = [];
         var result = await AuthService.LoginAsync(model);
@@ -82,7 +214,5 @@
     }
 
     public void Dispose()
-    {
-        ColdStartService.OnChanged -= HandleColdStartChanged;
-    }
+        => ColdStartService.OnChanged -= HandleColdStartChanged;
 }
