@@ -27,12 +27,12 @@
 - A persistent navigation menu (sidebar or top bar) is accessible from all authenticated screens.
 - Navigation items:
   - **Home** (Score Summary / Landing Page)
-  - **Log Activity** (also accessible via the persistent plus button)
+  - **Add Entry** (also accessible via the persistent plus button)
   - **View Log** (Activity Detail View — browsable history by period)
   - **Reports** (Reporting & Analytics — contains Trends and Balance sub-pages)
   - **Manage Activities** (Data Management)
   - **Settings**
-- A **persistent "+" (Add) button** is visible on every authenticated screen, allowing the user to quickly navigate to the Log Activity screen at any time.
+- A **persistent "+" (Add Entry) button** is visible on every authenticated screen, allowing the user to quickly navigate to the Add Entry screen at any time.
 
 ---
 
@@ -42,11 +42,11 @@ Activities belong to one or more of the following five categories. Category colo
 
 | Category | Color |
 |---|---|
-| Physical | Green |
-| Mental | Blue |
-| Spiritual | Purple |
-| Social | Orange |
-| Housekeeping | Yellow |
+| Physical | Bright Green |
+| Mental | Sky Blue |
+| Spiritual | Soft Purple |
+| Social | Amber |
+| Housekeeping | Salmon |
 | All (used in reporting filters) | Medium Gray |
 
 ---
@@ -251,8 +251,7 @@ When a new user registers, the following starter activities are automatically ad
 - **Password** — *(planned for future release)* change password with current password confirmation
 
 ### 11.2 Appearance
-- **Theme Toggle** — switch between Light Mode and Dark Mode
-- Theme preference is saved to the user's account and persists across sessions and devices
+- The application uses **permanent dark mode**. There is no theme toggle — light mode is not available.
 
 ---
 
@@ -267,4 +266,4 @@ When a new user registers, the following starter activities are automatically ad
 ---
 
 *Momentum — Functional Requirements Document*
-*Version 1.2 — Added View Log navigation item, Balance/Category Breakdown report section, corrected Settings profile fields*
+*Version 1.3 — Updated navigation label to "Add Entry"; updated category color names to new palette; replaced theme toggle with permanent dark mode note*

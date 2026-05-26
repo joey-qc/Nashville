@@ -2,91 +2,449 @@
 @attribute [Authorize]
 @inject ReportsService ReportsService
 @inject CategoryService CategoryService
-@using ApexCharts
 
 <PageTitle>Trends</PageTitle>
 
-<MudText Typo="Typo.h5" Class="mb-4">Trends</MudText>
+<div class="trends-page">
 
-<MudPaper Class="pa-4 mb-4">
-    <MudGrid>
-        <MudItem xs="12" sm="6">
-            <MudTabs @bind-ActivePanelIndex="_tabIndex" @bind-ActivePanelIndex:after="LoadData">
-                <MudTabPanel Text="Daily" />
-                <MudTabPanel Text="Weekly" />
-                <MudTabPanel Text="Monthly" />
-            </MudTabs>
-        </MudItem>
-        <MudItem xs="12" sm="6">
-            <MudSelect T="int?" Label="Category" @bind-Value="_categoryId" @bind-Value:after="LoadData">
-                <MudSelectItem T="int?" Value="null">
-                    <div class="d-flex align-center gap-2">
-                        <div style="width:12px;height:12px;border-radius:50%;background:#9E9E9E"></div>
-                        All
-                    </div>
-                </MudSelectItem>
-                @foreach (var cat in CategoryService.Categories)
+    <!-- ═══ Header ═══ -->
+    <div class="trends-header">
+        <div class="trends-title-row">
+            <div class="trends-title-group">
+                <h1 class="trends-title">Trends</h1>
+                <span class="trends-period-label">@PeriodLabel</span>
+            </div>
+            @if (!_loading)
+            {
+                var pct   = _improvementPct;
+                var pctUp = pct >= 0;
+                <div class="improvement-pill @(pctUp ? "pos" : "neg")">
+                    @if (pctUp)
+                    {
+                        <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
+                            <path d="M7 14l5-5 5 5z" fill="currentColor"/>
+                        </svg>
+                    }
+                    else
+                    {
+                        <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
+                            <path d="M7 10l5 5 5-5z" fill="currentColor"/>
+                        </svg>
+                    }
+                    @(pctUp ? "+" : "")@pct %
+                </div>
+            }
+        </div>
+
+        @if (!_loading && _data.Any())
+        {
+            var best = _data.MaxBy(d => d.Total)!;
+            <p class="trends-stats">
+                <span class="stat-green @(CurrentPeriodTotal < 0 ? "neg" : "")">@CurrentPeriodTotal</span> pts total
+                · avg <span class="stat-green @(AvgPts < 0 ? "neg" : "")">@AvgPts</span> @AvgUnit
+                · best period @PeriodXLabel(best) <span class="stat-green">(@best.Total)</span>
+            </p>
+        }
+    </div>
+
+    <!-- ═══ Controls: tabs + category filter ═══ -->
+    <div class="controls-row">
+        <div class="view-tabs">
+            <button type="button" class="tab-btn @(_tabIndex == 0 ? "active" : "")" @onclick="@(() => SetTab(0))">Daily</button>
+            <button type="button" class="tab-btn @(_tabIndex == 1 ? "active" : "")" @onclick="@(() => SetTab(1))">Weekly</button>
+            <button type="button" class="tab-btn @(_tabIndex == 2 ? "active" : "")" @onclick="@(() => SetTab(2))">Monthly</button>
+        </div>
+        <div class="cat-filter">
+            <button type="button"
+                    class="cat-chip @(_categoryId == null ? "active all" : "")"
+                    @onclick="@(() => SetCategory(null))">
+                <span class="chip-dot" style="background:#9E9E9E"></span>All
+            </button>
+            @foreach (var cat in _categories)
+            {
+                var isActive = _categoryId == cat.Id;
+                <button type="button"
+                        class="cat-chip @(isActive ? "active" : "")"
+                        style="@(isActive ? $"background:{cat.ColorHex}26;border-color:{cat.ColorHex};color:{cat.ColorHex}" : "")"
+                        @onclick="@(() => SetCategory(cat.Id))">
+                    <span class="chip-dot" style="background:@cat.ColorHex"></span>@cat.Name
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- ═══ Bar chart card ═══ -->
+    <div class="chart-card">
+        @if (_loading)
+        {
+            <div class="chart-state"><p class="loading-text">Loading…</p></div>
+        }
+        else if (!_data.Any())
+        {
+            <div class="chart-state"><p class="empty-text">No data for the selected period.</p></div>
+        }
+        else
+        {
+            var chart = BuildChart();
+            <svg class="bar-svg" viewBox="0 0 700 300" preserveAspectRatio="xMidYMid meet"
+                 xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Trends bar chart">
+                @(new MarkupString(BuildSvgContent(chart)))
+            </svg>
+        }
+    </div>
+
+    <!-- ═══ Bottom row: breakdown + top periods ═══ -->
+    @if (!_loading && _data.Any())
+    {
+        var catTotals = BuildCategoryTotals();
+        var grandTot  = catTotals.Sum(c => c.Total);
+        var topList   = _data.OrderByDescending(d => d.Total).Take(5).ToList();
+        var topMax    = topList.FirstOrDefault()?.Total ?? 1;
+
+        <div class="bottom-row">
+
+            <!-- Category breakdown -->
+            <div class="bc-card">
+                <p class="bc-title">Category breakdown</p>
+                <p class="bc-sub">Share of total points across @PeriodLabel.ToLower()</p>
+
+                @if (grandTot > 0)
                 {
-                    <MudSelectItem T="int?" Value="cat.Id">
-                        <div class="d-flex align-center gap-2">
-                            <div style="@($"width:12px;height:12px;border-radius:50%;background:{cat.ColorHex}")"></div>
-                            @cat.Name
-                        </div>
-                    </MudSelectItem>
-                }
-            </MudSelect>
-        </MudItem>
-    </MudGrid>
-</MudPaper>
+                    <!-- Proportional color bar -->
+                    <div class="stack-bar">
+                        @foreach (var ct in catTotals)
+                        {
+                            var wPct = (ct.Total * 100.0 / grandTot).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+                            <div class="stack-seg" style="width:@wPct%;background:@ct.ColorHex"></div>
+                        }
+                    </div>
 
-@if (_loading)
-{
-    <MudProgressLinear Indeterminate="true" />
-}
-else if (!_data.Any())
-{
-    <MudText Color="MudBlazor.Color.Secondary">No data for the selected period.</MudText>
-}
-else
-{
-    <MudPaper Class="pa-4">
-        <ApexChart TItem="DailyScoreDto" Options="_chartOptions">
-            <ApexPointSeries TItem="DailyScoreDto"
-                             Items="_data"
-                             Name="Points"
-                             SeriesType="ApexCharts.SeriesType.Bar"
-                             XValue="@(d => d.Date.ToString(_tabIndex == 2 ? "MMM yyyy" : "MMM d"))"
-                             YValue="@(d => d.Total)"
-                             Color="@(_categoryId.HasValue ? CategoryService.GetColor(_categoryId.Value) : "#9E9E9E")" />
-        </ApexChart>
-    </MudPaper>
-}
+                    <!-- Category rows -->
+                    <div class="bc-list">
+                        @foreach (var ct in catTotals)
+                        {
+                            var pv = (int)Math.Round(ct.Total * 100.0 / grandTot);
+                            <div class="bc-row">
+                                <span class="bc-dot" style="background:@ct.ColorHex"></span>
+                                <span class="bc-name">@ct.Name</span>
+                                <span class="bc-pct">@pv%</span>
+                                <span class="bc-pts">@ct.Total pts</span>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="empty-text">No category data.</p>
+                }
+            </div>
+
+            <!-- Top periods -->
+            <div class="top-card">
+                <p class="tc-title">@TopCardTitle</p>
+                <p class="tc-sub">Highest scoring</p>
+                <div class="tc-list">
+                    @for (int rank = 0; rank < topList.Count; rank++)
+                    {
+                        var tp   = topList[rank];
+                        var bPct = (tp.Total * 100.0 / topMax).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+                        <div class="tc-row">
+                            <span class="tc-rank">#@(rank + 1)</span>
+                            <span class="tc-label">@PeriodXLabel(tp)</span>
+                            <div class="tc-bar-track">
+                                <div class="tc-bar-fill" style="width:@bPct%"></div>
+                            </div>
+                            <span class="tc-score">@tp.Total</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+    }
+
+</div>
 
 @code {
     private int _tabIndex;
     private int? _categoryId;
     private List<DailyScoreDto> _data = [];
-    private bool _loading;
+    private List<CategoryDto> _categories = [];
+    private bool _loading = true;
+    private int  _improvementPct;
 
-    private readonly ApexCharts.ApexChartOptions<DailyScoreDto> _chartOptions = new()
+    // ── Computed text ────────────────────────────────────────
+    private string PeriodLabel  => _tabIndex switch { 1 => "Last 8 weeks", 2 => "Last 6 months", _ => "Last 14 days" };
+    private string AvgUnit      => _tabIndex switch { 1 => "per week", 2 => "per month", _ => "per day" };
+    private string TopCardTitle => _tabIndex == 0 ? "Top days" : "Top periods";
+
+    private int GrandTotal => _data.Sum(d => d.Total);
+    private int AvgPts     => _data.Count == 0 ? 0 : (int)Math.Round(GrandTotal / (double)_data.Count);
+
+    // Points for the single current period (today / this week / this month)
+    private int CurrentPeriodTotal
     {
-        Chart = new ApexCharts.Chart { Toolbar = new ApexCharts.Toolbar { Show = false } }
+        get
+        {
+            var now   = DateTime.UtcNow;
+            var today = DateOnly.FromDateTime(now.Date);
+            return _tabIndex switch
+            {
+                1 => _data.FirstOrDefault(d =>
+                         d.Date == DateOnly.FromDateTime(now.Date.AddDays(-(int)now.DayOfWeek)))?.Total ?? 0,
+                2 => _data.FirstOrDefault(d =>
+                         d.Date == DateOnly.FromDateTime(new DateTime(now.Year, now.Month, 1)))?.Total ?? 0,
+                _ => _data.FirstOrDefault(d => d.Date == today)?.Total ?? 0
+            };
+        }
+    }
+
+    private string PeriodXLabel(DailyScoreDto d) => _tabIndex switch
+    {
+        1 => $"W{System.Globalization.ISOWeek.GetWeekOfYear(d.Date.ToDateTime(TimeOnly.MinValue))}",
+        2 => d.Date.ToString("MMM"),
+        _ => d.Date.ToString("MMM d")
     };
 
+    // ── Lifecycle ────────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
-        await Task.WhenAll(CategoryService.GetAllAsync(), LoadData());
+        Task<IReadOnlyList<CategoryDto>> tCats = CategoryService.GetAllAsync();
+        Task tData = LoadData();
+        await Task.WhenAll(tCats, tData);
+        _categories = (await tCats).ToList();
     }
+
+    private async Task SetTab(int idx)      { _tabIndex   = idx; await LoadData(); }
+    private async Task SetCategory(int? id) { _categoryId = id;  await LoadData(); }
 
     private async Task LoadData()
     {
         _loading = true;
+        StateHasChanged();
+
         _data = _tabIndex switch
         {
-            1 => await ReportsService.GetWeeklyAsync(12, _categoryId),
-            2 => await ReportsService.GetMonthlyAsync(12, _categoryId),
-            _ => await ReportsService.GetDailyAsync(30, _categoryId)
+            1 => await ReportsService.GetWeeklyAsync(8,  _categoryId),
+            2 => await ReportsService.GetMonthlyAsync(6, _categoryId),
+            _ => await ReportsService.GetDailyAsync(14,  _categoryId)
         };
+
+        ComputeImprovementFromData();
         _loading = false;
+    }
+
+    // Use the last two buckets from the already-loaded data.
+    // Data is ordered ascending by date, so _data[^1] = current period, _data[^2] = previous.
+    private void ComputeImprovementFromData()
+    {
+        if (_data.Count < 2)
+        {
+            _improvementPct = 0;
+            return;
+        }
+
+        var current  = _data[^1].Total;
+        var previous = _data[^2].Total;
+
+        // No cap/clamp — show actual percentage regardless of magnitude.
+        // If previous is 0, avoid divide-by-zero and show 0%.
+        _improvementPct = previous == 0
+            ? 0
+            : (int)Math.Round((current - previous) * 100.0 / previous);
+    }
+
+    // Canonical display order: Physical(1) → Mental(2) → Spiritual(3) → Social(4) → Housekeeping(5)
+    private static readonly int[] CanonicalCatOrder = [1, 2, 3, 4, 5];
+
+    // ── Category breakdown totals ────────────────────────────
+    private record CatTotal(int Id, string Name, string ColorHex, int Total);
+
+    private List<CatTotal> BuildCategoryTotals()
+    {
+        if (_categoryId.HasValue)
+        {
+            var cat = _categories.FirstOrDefault(c => c.Id == _categoryId.Value);
+            if (cat is null) return [];
+            return [new CatTotal(cat.Id, cat.Name, cat.ColorHex, GrandTotal)];
+        }
+
+        // Aggregate ByCategory across all periods
+        var agg = new Dictionary<int, int>();
+        foreach (var d in _data)
+            foreach (var (catId, pts) in d.ByCategory)
+            {
+                agg.TryGetValue(catId, out var cur);
+                agg[catId] = cur + pts;
+            }
+
+        return agg
+            .Select(kvp =>
+            {
+                var cat = _categories.FirstOrDefault(c => c.Id == kvp.Key);
+                return cat is null ? null : new CatTotal(cat.Id, cat.Name, cat.ColorHex, kvp.Value);
+            })
+            .Where(x => x?.Total > 0)
+            // Fixed canonical order, not sorted by points
+            .OrderBy(x => { var i = Array.IndexOf(CanonicalCatOrder, x!.Id); return i < 0 ? 999 : i; })
+            .Select(x => x!)
+            .ToList();
+    }
+
+    // ── SVG chart (inline via MarkupString to avoid Razor <text> restrictions) ──
+    private record ChartGridline(string Y, string YTxt, string Label);
+    private record StackSeg(string Color, string X, string Y, string W, string H);
+    private record ChartBar(string SolidColor,
+                            string X, string W, string TopY, string H,
+                            string LabelX, string Label,
+                            List<StackSeg> Segs,
+                            int Value, double TopYD, double HeightD);
+    private record ChartData(List<ChartBar> Bars, List<ChartGridline> Gridlines);
+
+    private static string Fmt(double v) =>
+        v.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+
+    private ChartData BuildChart()
+    {
+        const double svgW = 700, svgH = 300;
+        const double mL = 48, mR = 16, mT = 20, mB = 36;
+        const double chartW = svgW - mL - mR;   // 636
+        const double chartH = svgH - mT - mB;   // 244
+        const double bottom = svgH - mB;         // 264
+
+        var n = _data.Count;
+        if (n == 0) return new ChartData([], []);
+
+        var maxVal  = _data.Max(d => d.Total);
+        if (maxVal <= 0) maxVal = 10;
+        var gridMax = NiceMax(maxVal);
+
+        // Four horizontal gridlines (0%, 25%, 50%, 75%, 100%)
+        var gridlines = new List<ChartGridline>();
+        for (int gi = 0; gi <= 4; gi++)
+        {
+            var val = gridMax * gi / 4;
+            var gy  = bottom - val * chartH / gridMax;
+            gridlines.Add(new ChartGridline(Fmt(gy), Fmt(gy + 4),
+                val == 0 ? "0" : val.ToString()));
+        }
+
+        // Category color map; stacking uses CanonicalCatOrder
+        var catColors  = _categories.ToDictionary(c => c.Id, c => c.ColorHex);
+        var solidColor = _categoryId.HasValue
+            ? (_categories.FirstOrDefault(c => c.Id == _categoryId.Value)?.ColorHex ?? "#76E04A")
+            : "#76E04A";
+
+        var itemW = chartW / n;
+        var barW  = Math.Max(4, Math.Min(itemW * 0.62, 56));
+
+        var bars = new List<ChartBar>();
+        for (int i = 0; i < n; i++)
+        {
+            var d = _data[i];
+            var cx    = mL + (i + 0.5) * itemW;
+            var bLeft = cx - barW / 2;
+
+            // Cap bar height to plot area so bars never overflow the card
+            var totalH = d.Total > 0 ? Math.Min(d.Total * chartH / gridMax, chartH) : 0;
+            var topY   = bottom - totalH;
+
+            // Stacked segments: scale proportionally to totalH so combined height == totalH.
+            // (ByCategory sums can exceed Total when activities span multiple categories.)
+            var catEntries = CanonicalCatOrder
+                .Where(catId => d.ByCategory.TryGetValue(catId, out var p) && p > 0)
+                .Select(catId => (catId, pts: d.ByCategory[catId]))
+                .ToList();
+            var totalCatPts = catEntries.Sum(e => e.pts);
+
+            double stackY = bottom;
+            var segs = new List<StackSeg>();
+            foreach (var (catId, pts) in catEntries)
+            {
+                var segH = totalCatPts > 0 ? totalH * pts / totalCatPts : 0;
+                if (segH < 0.5) continue;
+                stackY -= segH;
+                segs.Add(new StackSeg(
+                    catColors.GetValueOrDefault(catId, "#76E04A"),
+                    Fmt(bLeft), Fmt(stackY), Fmt(barW), Fmt(segH)));
+            }
+
+            bars.Add(new ChartBar(solidColor,
+                Fmt(bLeft), Fmt(barW), Fmt(topY), Fmt(totalH),
+                Fmt(cx), PeriodXLabel(d), segs,
+                d.Total, topY, totalH));
+        }
+
+        return new ChartData(bars, gridlines);
+    }
+
+    // Builds SVG inner markup as a string (avoids Razor <text> tag conflict in loops)
+    private string BuildSvgContent(ChartData chart)
+    {
+        // Inline styles used instead of CSS classes — MarkupString bypasses Blazor scoped CSS
+        const string yLabelStyle = "font-size:9px;font-family:'DM Sans',sans-serif;fill:var(--text-muted)";
+        const string xLabelStyle = "font-size:9px;font-family:'DM Sans',sans-serif;fill:var(--text-muted)";
+
+        var sb = new System.Text.StringBuilder();
+
+        // Gridlines + Y labels
+        foreach (var gl in chart.Gridlines)
+        {
+            sb.Append($"<line x1=\"48\" y1=\"{gl.Y}\" x2=\"684\" y2=\"{gl.Y}\" stroke=\"var(--border-soft)\" stroke-width=\"1\"/>");
+            sb.Append($"<text x=\"44\" y=\"{gl.YTxt}\" style=\"{yLabelStyle}\" text-anchor=\"end\">{gl.Label}</text>");
+        }
+
+        // Bars + value labels + X labels
+        const string valInsideStyle = "font-size:11px;font-family:'DM Sans',sans-serif;fill:white;font-weight:600";
+        const string valAboveStyle  = "font-size:11px;font-family:'DM Sans',sans-serif;fill:var(--text-muted);font-weight:600";
+
+        foreach (var bar in chart.Bars)
+        {
+            if (_categoryId.HasValue)
+            {
+                if (bar.H != "0.0")
+                    sb.Append($"<rect x=\"{bar.X}\" y=\"{bar.TopY}\" width=\"{bar.W}\" height=\"{bar.H}\" fill=\"{bar.SolidColor}\" rx=\"2\"/>");
+            }
+            else
+            {
+                foreach (var seg in bar.Segs)
+                    sb.Append($"<rect x=\"{seg.X}\" y=\"{seg.Y}\" width=\"{seg.W}\" height=\"{seg.H}\" fill=\"{seg.Color}\" rx=\"1\"/>");
+            }
+
+            // Value label: inside (white) if bar is tall enough, above (muted) if short
+            if (bar.Value > 0)
+            {
+                if (bar.HeightD > 20)
+                {
+                    var labelY = Fmt(bar.TopYD + 15);
+                    sb.Append($"<text x=\"{bar.LabelX}\" y=\"{labelY}\" style=\"{valInsideStyle}\" text-anchor=\"middle\">{bar.Value}</text>");
+                }
+                else if (bar.HeightD > 0)
+                {
+                    var labelY = Fmt(bar.TopYD - 4);
+                    sb.Append($"<text x=\"{bar.LabelX}\" y=\"{labelY}\" style=\"{valAboveStyle}\" text-anchor=\"middle\">{bar.Value}</text>");
+                }
+            }
+
+            sb.Append($"<text x=\"{bar.LabelX}\" y=\"290\" style=\"{xLabelStyle}\" text-anchor=\"middle\">{bar.Label}</text>");
+        }
+
+        return sb.ToString();
+    }
+
+    private static int NiceMax(int raw)
+    {
+        if (raw <= 10)  return 10;
+        if (raw <= 25)  return 25;
+        if (raw <= 50)  return 50;
+        if (raw <= 75)  return 75;
+        if (raw <= 100) return 100;
+        if (raw <= 150) return 150;
+        if (raw <= 200) return 200;
+        if (raw <= 300) return 300;
+        if (raw <= 400) return 400;
+        if (raw <= 500) return 500;
+        if (raw <= 750) return 750;
+        return (int)(Math.Ceiling(raw / 250.0) * 250);
     }
 }

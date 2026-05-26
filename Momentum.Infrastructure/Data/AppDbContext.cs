@@ -39,11 +39,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<Category>().HasData(
-            new Category { Id = 1, Name = "Physical",     ColorHex = "#4CAF50" },
-            new Category { Id = 2, Name = "Mental",       ColorHex = "#2196F3" },
-            new Category { Id = 3, Name = "Spiritual",    ColorHex = "#9C27B0" },
-            new Category { Id = 4, Name = "Social",       ColorHex = "#FF9800" },
-            new Category { Id = 5, Name = "Housekeeping", ColorHex = "#FFC107" }
+            new Category { Id = 1, Name = "Physical",     ColorHex = "#76E04A" },
+            new Category { Id = 2, Name = "Mental",       ColorHex = "#5BC8FF" },
+            new Category { Id = 3, Name = "Spiritual",    ColorHex = "#B894FF" },
+            new Category { Id = 4, Name = "Social",       ColorHex = "#F7B500" },
+            new Category { Id = 5, Name = "Housekeeping", ColorHex = "#FF9472" }
         );
     }
 }

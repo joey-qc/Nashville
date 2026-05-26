@@ -350,6 +350,112 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
+   Mobile — sidebar as overlay drawer (< 768px)
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+
+    /* Slide sidebar off-screen; switch from width-transition to transform-transition */
+    .sidebar {
+        transform: translateX(-280px);
+        transition: transform 0.28s ease;
+        width: 280px !important; /* always full-width on mobile */
+    }
+
+    /* Open: slide in, add shadow to separate from content */
+    .app-shell.mobile-open .sidebar {
+        transform: translateX(0);
+        box-shadow: 8px 0 40px rgba(0, 0, 0, 0.55);
+    }
+
+    /* Collapsed class must NOT shrink or hide sidebar items on mobile */
+    .app-shell.collapsed .sidebar {
+        width: 280px !important;
+        transform: translateX(-280px); /* keep hidden unless mobile-open */
+    }
+
+    .app-shell.collapsed.mobile-open .sidebar {
+        transform: translateX(0); /* show when toggled open */
+    }
+
+    /* Restore labels/text hidden by collapsed rules */
+    .app-shell.collapsed .brand-text {
+        display: flex !important;
+    }
+
+    .app-shell.collapsed .nav-label,
+    .app-shell.collapsed .user-name,
+    .app-shell.collapsed .logout-label {
+        display: block !important;
+    }
+
+    /* Restore nav-item layout to full form */
+    .app-shell.collapsed .nav-item {
+        justify-content: flex-start !important;
+        padding: 10px 12px !important;
+        gap: 12px !important;
+    }
+
+    .app-shell.collapsed .nav-child {
+        padding-left: 44px !important;
+    }
+
+    /* Restore brand padding */
+    .app-shell.collapsed .sidebar-brand {
+        justify-content: flex-start !important;
+        padding: 22px 16px 18px !important;
+    }
+
+    /* Restore sidebar footer layout */
+    .app-shell.collapsed .sidebar-footer {
+        flex-direction: row !important;
+        padding: 10px 8px !important;
+        gap: 4px !important;
+        align-items: center !important;
+    }
+
+    .app-shell.collapsed .user-display {
+        justify-content: flex-start !important;
+        padding: 6px 8px !important;
+    }
+
+    .app-shell.collapsed .logout-btn {
+        justify-content: flex-start !important;
+        padding: 8px 10px !important;
+        width: auto !important;
+    }
+
+    /* Main wrapper: full width — sidebar overlays, never pushes content */
+    .main-wrapper,
+    .app-shell.collapsed .main-wrapper {
+        margin-left: 0 !important;
+        transition: none;
+    }
+
+    /* Tighter padding on small screens */
+    .topbar {
+        padding: 0 16px;
+    }
+
+    .page-content {
+        padding: 20px 16px;
+    }
+
+    /* Semi-transparent overlay behind the open drawer */
+    .mobile-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 199; /* just below sidebar z-index 200 */
+        animation: overlay-in 0.2s ease both;
+    }
+
+    @keyframes overlay-in {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
    Auth shell (login / register — no sidebar)
 ═══════════════════════════════════════════════════════════ */
 .auth-shell {

@@ -20,10 +20,10 @@ The application is structured as a **Visual Studio Solution** containing multipl
 |---|---|
 | Blazor WebAssembly (.NET 10) | SPA frontend running in the browser |
 | MudBlazor 9.4+ | UI component library (replaces Bootstrap entirely — do NOT include Bootstrap) |
-| ApexCharts.Blazor 6.1+ | Charting and graphing library for all data visualizations |
+| Custom inline SVG | All charts (bar, line, donut, sparkline) rendered as inline SVG in Razor components |
 | C# | Primary programming language |
 
-> **Important:** MudBlazor is the sole UI component library. Bootstrap must NOT be included in scaffolding or referenced anywhere in the project.
+> **Important:** MudBlazor is the sole UI component library. Bootstrap must NOT be included in scaffolding or referenced anywhere in the project. All data visualizations use custom SVG — do not introduce ApexCharts.Blazor or any other charting library.
 
 ### 3.2 Backend
 
@@ -81,14 +81,13 @@ Represents a wellness category. Seeded at migration time — not user-editable.
 ```
 - Id       : int (PK) — Physical=1, Mental=2, Spiritual=3, Social=4, Housekeeping=5
 - Name     : string
-- ColorHex : string  (hex color code, e.g. "#4CAF50")
+- ColorHex : string  (hex color code, e.g. "#76E04A")
 ```
 
 #### ApplicationUser
 Extends ASP.NET Core Identity's `IdentityUser`. Uses `AddIdentityCore` (not `AddIdentity`) to avoid cookie auth scheme conflict with JWT.
 ```
 - DisplayName : string
-- Theme : string  ("light" or "dark")
 ```
 
 #### Activity
@@ -242,19 +241,19 @@ When a DELETE request is received for an activity:
 ### 8.2a Reports Pages
 The Reports section of the client contains two distinct pages:
 - **Trends** (`/reports`) — bar chart of daily/weekly/monthly point totals with category filter; uses `ReportsService.GetDailyAsync`, `GetWeeklyAsync`, `GetMonthlyAsync`.
-- **Balance** (`/reports/balance`) — pie chart of category point distribution for the selected period (week/month/year); uses `ReportsService.GetBalanceAsync`.
+- **Balance** (`/reports/balance`) — donut chart of category point distribution for the selected period (week/month/year); uses `ReportsService.GetBalanceAsync`.
 
-Both pages use `@using ApexCharts` and must qualify conflicting MudBlazor types (see CLAUDE.md Section 7.1).
+Both pages render charts as **custom inline SVG** — no charting library is imported.
 
 ### 8.3 Routing & Authentication
 - Blazor routing is used for client-side navigation.
 - All routes except `/login` and `/register` are protected with an `[Authorize]` attribute.
 - Unauthenticated users are redirected to `/login`.
 
-### 8.4 Theme Support
-- MudBlazor's built-in theming is used for light and dark mode.
-- The user's theme preference is loaded from their settings on login and applied application-wide.
-- Theme changes in Settings are saved to the server and applied immediately without requiring a page reload.
+### 8.4 Theme
+- The application uses **permanent dark mode** via MudBlazor's built-in theming system.
+- There is no theme toggle or per-user theme preference — `ApplicationUser` does not store a `Theme` field.
+- The dark `MudThemeProvider` palette is configured once at the application level.
 
 ---
 
@@ -326,4 +325,4 @@ The following are noted for future development and should be kept in mind when m
 ---
 
 *Momentum — Software Specifications Document*
-*Version 1.3 — Added GET /api/logs/{id} and GET /api/reports/balance endpoints; added Balance report page documentation*
+*Version 1.4 — Replaced ApexCharts with custom inline SVG charting; removed Theme from ApplicationUser; updated category color example; permanent dark mode noted; removed @using ApexCharts from report pages*

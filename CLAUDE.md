@@ -15,16 +15,25 @@ This file defines the coding conventions, architectural patterns, design rules, 
 
 ## 3. Technology Rules
 
-### 3.1 UI Components — MudBlazor ONLY
-- **MudBlazor** is the sole UI component library.
-- **Bootstrap must NEVER be used or referenced** anywhere in the project — not in markup, not in CSS, not in NuGet packages.
-- Always use MudBlazor equivalents: `MudButton`, `MudTextField`, `MudSelect`, `MudCheckBox`, `MudSnackbar`, `MudDialog`, `MudChip`, etc.
-- Use MudBlazor's built-in theming system for light/dark mode — never implement custom theme switching logic.
+### 3.1 UI Components — Custom HTML/CSS (MudBlazor being phased out)
+Momentum is moving away from MudBlazor toward fully custom Razor markup, plain HTML/CSS, shared design tokens (`momentum-theme.css`), and inline SVG.
 
-### 3.2 Charting — ApexCharts.Blazor ONLY
-- **ApexCharts.Blazor** is the sole charting and graphing library.
-- Never use Chart.js, Plotly, or any other charting library.
-- All charts (bar, line, pie, donut) must be implemented using ApexCharts Blazor components.
+**For all new code and any page being modified or converted:**
+- Use plain HTML elements (`<button>`, `<input>`, `<textarea>`, `<select>`, etc.) styled with scoped CSS classes.
+- Use CSS variables from `Momentum.Client/wwwroot/css/momentum-theme.css` — never hardcode colors, radii, or spacing.
+- Use inline SVG for all icons and charts — no icon font or third-party icon library.
+- **Do NOT introduce any new MudBlazor components.** MudBlazor may only remain on pages not yet converted (Settings, Login, Register).
+- The one permitted MudBlazor exception on converted pages is `ISnackbar` / `MudSnackbar` for toast notifications — until a custom global toast is implemented.
+- **Bootstrap must NEVER be used or referenced** anywhere in the project — not in markup, not in CSS, not in NuGet packages.
+- Once all pages are converted, remove the MudBlazor NuGet package entirely.
+
+**Converted pages (custom HTML/CSS only):** Home, Add Entry (`/log`), View Log (`/log/detail`), Trends (`/reports`), Balance (`/reports/balance`), Manage Activities (`/activities`).
+**Legacy pages (MudBlazor still present):** Settings, Login, Register.
+
+### 3.2 Charting — Custom SVG
+- All charts (bar, line, donut, sparkline) are implemented as **custom inline SVG** rendered directly in Razor components.
+- ApexCharts.Blazor, Chart.js, Plotly, and all third-party charting libraries must NOT be used — the `Blazor-ApexCharts` NuGet package is a leftover reference that should be removed.
+- Chart data is fetched via `ReportsService` and `ScoreService`; rendering is done with SVG markup and C# computed layout values.
 
 ### 3.3 Backend Framework
 - **ASP.NET Core Web API (.NET 10)**
@@ -57,11 +66,11 @@ These colors are the single source of truth for category representation througho
 
 | Category | Color | Hex |
 |---|---|---|
-| Physical | Green | #4CAF50 |
-| Mental | Blue | #2196F3 |
-| Spiritual | Purple | #9C27B0 |
-| Social | Orange | #FF9800 |
-| Housekeeping | Yellow | #FFC107 |
+| Physical | Bright Green | #76E04A |
+| Mental | Sky Blue | #5BC8FF |
+| Spiritual | Soft Purple | #B894FF |
+| Social | Amber | #F7B500 |
+| Housekeeping | Salmon | #FF9472 |
 | All (reporting filter) | Medium Gray | #9E9E9E |
 
 - Category colors are stored in the `Categories` database table and returned via `CategoryDto.ColorHex`. Never hardcode hex values inline in components — always read the color from the `CategoryDto` returned by the API or the client `CategoryService`.
@@ -134,11 +143,9 @@ These colors are the single source of truth for category representation througho
 - All API calls from the client go through service classes in `Momentum.Client/Services/` — never call `HttpClient` directly from a page or component.
 - Protected routes use `[Authorize]` attribute or `<AuthorizeView>` component — never implement manual auth checks in page code.
 
-### 7.1 MudBlazor / ApexCharts Namespace Conflict
-`MudBlazor` and `ApexCharts` both define `Color`, `Size`, and `Align`. To prevent ambiguity:
-- **`@using ApexCharts`** must appear only in `Home.razor` and `Reports.razor` — never in `_Imports.razor`.
-- In any page that has `@using ApexCharts`, qualify all MudBlazor conflicting types explicitly: `MudBlazor.Color.*`, `MudBlazor.Size.*`, `MudBlazor.Align.*`.
-- All other pages use unqualified `Color`, `Size`, `Align` which resolve to MudBlazor by default.
+### 7.1 MudBlazor Type Aliases
+- All pages use unqualified `Color`, `Size`, and `Align` which resolve to MudBlazor by default via `_Imports.razor`.
+- ApexCharts is no longer used; there is no namespace conflict to resolve.
 
 ---
 
@@ -205,4 +212,4 @@ Note: negative default points are intentional — they track detrimental habits.
 ---
 
 *Momentum — CLAUDE.md Skills File*
-*Version 1.2 — Read this file before every code generation or modification task*
+*Version 1.4 — Updated category colors to new palette; replaced ApexCharts with custom SVG charting; removed ApexCharts namespace conflict rules; replaced MudBlazor-only rule with phased-migration directive*

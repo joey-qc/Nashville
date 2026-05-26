@@ -1,109 +1,341 @@
 @page "/reports/balance"
 @attribute [Authorize]
-@using ApexCharts
 @inject ReportsService ReportsService
-@inject ISnackbar Snackbar
+@inject CategoryService CategoryService
+@inject ActivityLogService LogService
 
 <PageTitle>Balance</PageTitle>
 
-<MudText Typo="Typo.h5" Class="mb-4">Balance</MudText>
+<div class="balance-page">
 
-<div style="width:60%" class="mb-4">
-    <MudSelect T="string" Label="Period" @bind-Value="_period" @bind-Value:after="LoadData">
-        <MudSelectItem Value='"week"'>This Week</MudSelectItem>
-        <MudSelectItem Value='"month"'>This Month</MudSelectItem>
-        <MudSelectItem Value='"year"'>This Year</MudSelectItem>
-    </MudSelect>
+    @* ═══ Header ═══ *@
+    <div class="bal-header">
+        <div class="bal-header-left">
+            <p class="bal-kicker">REPORTS · BALANCE</p>
+            <h1 class="bal-title">How balanced are you?</h1>
+            <p class="bal-sub">A look at where your momentum came from this @PeriodWord.</p>
+        </div>
+
+        <div class="period-pill">
+            <span class="period-label">Period</span>
+            <select class="period-select" @onchange="OnPeriodChanged">
+                <option value="week"  selected="@(_period == "week")">This Week</option>
+                <option value="month" selected="@(_period == "month")">This Month</option>
+                <option value="year"  selected="@(_period == "year")">This Year</option>
+            </select>
+            <svg class="period-chevron" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                <path d="M7 10l5 5 5-5z" fill="currentColor"/>
+            </svg>
+        </div>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="bal-state">
+            <p class="loading-text">Loading…</p>
+        </div>
+    }
+    else if (_balance.Count == 0)
+    {
+        <div class="bal-state">
+            <p class="empty-text">No activity logged for this @PeriodWord.</p>
+        </div>
+    }
+    else
+    {
+        // Pre-compute all locals before entering markup — Razor scoping requirement
+        var dominant = _balance[0];
+        var domPct   = GrandTotal > 0 ? (int)Math.Round(dominant.Total * 100.0 / GrandTotal) : 0;
+        var weakest  = _balance.Count > 1 ? _balance[^1] : null;
+        var secondWk = _balance.Count > 2 ? _balance[^2] : null;
+        var days     = DayScores;
+        var bestDays = days.Take(2).ToList();
+        var worstDay = days.Count > 2 ? days[^1] : null;
+
+        @* ═══ Main card: donut + category list ═══ *@
+        <div class="main-card">
+
+            <div class="donut-wrap">
+                <svg class="donut-svg" viewBox="0 0 160 160"
+                     xmlns="http://www.w3.org/2000/svg"
+                     role="img" aria-label="Category balance ring chart">
+                    <circle cx="80" cy="80" r="56" fill="none"
+                            stroke="var(--surface-3)" stroke-width="18"/>
+                    @(new MarkupString(BuildDonutArcs()))
+                    <text x="80" y="71" text-anchor="middle"
+                          style="font-size:9px;font-family:'DM Sans',sans-serif;fill:var(--text-muted);letter-spacing:0.04em">Total</text>
+                    <text x="80" y="93" text-anchor="middle"
+                          style="font-size:27px;font-weight:700;font-family:'Space Grotesk',sans-serif;fill:var(--text)">@GrandTotal</text>
+                    <text x="80" y="108" text-anchor="middle"
+                          style="font-size:8px;font-weight:600;letter-spacing:0.12em;font-family:'DM Sans',sans-serif;fill:var(--text-muted)">PTS</text>
+                </svg>
+            </div>
+
+            <div class="cat-list">
+                @foreach (var cat in _balance)
+                {
+                    var pct     = GrandTotal > 0 ? (int)Math.Round(cat.Total * 100.0 / GrandTotal) : 0;
+                    var fillPct = GrandTotal > 0 ? Math.Min(100.0, cat.Total * 100.0 / GrandTotal) : 0.0;
+                    var fillStr = fillPct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+                    <div class="cat-row">
+                        <span class="cat-dot" style="background:@cat.ColorHex"></span>
+                        <div class="cat-info">
+                            <span class="cat-name">@cat.CategoryName</span>
+                            <span class="cat-pts-sub">@cat.Total pts</span>
+                        </div>
+                        <span class="cat-pct">@pct%</span>
+                        <div class="cat-bar-track">
+                            <div class="cat-bar-fill" style="width:@fillStr%;background:@cat.ColorHex"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+        </div>
+
+        @* ═══ Insight callout ═══ *@
+        <div class="insight-card">
+            <div class="insight-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5"
+                          stroke-linecap="round" fill="none"/>
+                </svg>
+            </div>
+            <div class="insight-body">
+                <p class="insight-headline">Your @dominant.CategoryName.ToLower() category is dominating (@domPct%).</p>
+                <p class="insight-sub">
+                    @if (secondWk is not null && weakest is not null && weakest.CategoryId != dominant.CategoryId)
+                    {
+                        @($"Adding two {secondWk.CategoryName} or {weakest.CategoryName} entries this {PeriodWord} would bring you closer to an even balance.")
+                    }
+                    else if (weakest is not null && weakest.CategoryId != dominant.CategoryId)
+                    {
+                        @($"Adding more {weakest.CategoryName} entries this {PeriodWord} would bring you closer to an even balance.")
+                    }
+                </p>
+            </div>
+        </div>
+
+        @* ═══ Bottom row: trend + best/worst ═══ *@
+        <div class="bottom-row">
+
+            @* Category trend sparklines *@
+            <div class="trend-card">
+                <div class="trend-head">
+                    <span class="trend-title">Category trend</span>
+                    <span class="trend-period">Last 8 weeks</span>
+                </div>
+                <div class="trend-list">
+                    @foreach (var cat in _categories)
+                    {
+                        var sparkVals = _sparkData.TryGetValue(cat.Id, out var sv) ? sv : new List<int>();
+                        var total8w   = sparkVals.Sum();
+                        var linePath  = BuildSparkPath(sparkVals);
+                        var areaPath  = BuildSparkArea(sparkVals);
+                        <div class="trend-row">
+                            <span class="trend-dot" style="background:@cat.ColorHex"></span>
+                            <span class="trend-name">@cat.Name</span>
+                            <div class="trend-spark-wrap">
+                                @if (linePath.Length > 0)
+                                {
+                                    <svg class="trend-spark" viewBox="0 0 100 24" preserveAspectRatio="none">
+                                        <path d="@areaPath" fill="@cat.ColorHex" fill-opacity="0.15"/>
+                                        <path d="@linePath" fill="none" stroke="@cat.ColorHex"
+                                              stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <div class="trend-spark-empty"></div>
+                                }
+                            </div>
+                            <span class="trend-total">@total8w</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @* Best & worst days *@
+            <div class="bwd-card">
+                <div class="bwd-head">
+                    <span class="bwd-title">Best &amp; worst days</span>
+                    <span class="bwd-period">@PeriodCapitalized</span>
+                </div>
+                <div class="bwd-list">
+                    @if (days.Count == 0)
+                    {
+                        <p class="bwd-empty">No entries logged this @PeriodWord.</p>
+                    }
+                    @foreach (var day in bestDays)
+                    {
+                        <div class="bwd-row">
+                            <div class="bwd-badge good">
+                                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                                    <path d="M7 14l5-5 5 5z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="bwd-info">
+                                <span class="bwd-day">@day.DayName</span>
+                                <span class="bwd-act">@day.TopActivity</span>
+                            </div>
+                            <span class="bwd-pts good">+@day.Total</span>
+                        </div>
+                    }
+                    @if (worstDay is not null)
+                    {
+                        <div class="bwd-row">
+                            <div class="bwd-badge bad">
+                                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                                    <path d="M7 10l5 5 5-5z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="bwd-info">
+                                <span class="bwd-day">@worstDay.DayName</span>
+                                <span class="bwd-act">@worstDay.TopActivity</span>
+                            </div>
+                            <span class="bwd-pts @(worstDay.Total >= 0 ? "good" : "bad")">
+                                @(worstDay.Total > 0 ? "+" : "")@worstDay.Total
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+    }
+
 </div>
 
-@if (_loading)
-{
-    <MudProgressLinear Indeterminate="true" />
-}
-else if (!_data.Any())
-{
-    <MudText Color="MudBlazor.Color.Secondary">No activity logged for this period.</MudText>
-}
-else
-{
-    <ApexChart TItem="CategoryTotalDto" Options="_chartOptions" @key="_chartKey">
-        <ApexPointSeries TItem="CategoryTotalDto"
-                         Items="_data"
-                         Name="Points"
-                         SeriesType="SeriesType.Pie"
-                         XValue="@(d => d.CategoryName)"
-                         YValue="@(d => (decimal)d.Total)"
-                         ShowDataLabels="true" />
-    </ApexChart>
-}
-
 @code {
-    private string _period = "week";
-    private List<CategoryTotalDto> _data = [];
-    private bool _loading;
-    private int _chartKey;
-    private ApexChartOptions<CategoryTotalDto> _chartOptions = new()
-    {
-        Chart = new ApexCharts.Chart { Toolbar = new Toolbar { Show = false } },
-        DataLabels = new DataLabels { Enabled = true }
-    };
+    private string                     _period     = "week";
+    private List<CategoryTotalDto>     _balance    = [];
+    private List<CategoryDto>          _categories = [];
+    private Dictionary<int, List<int>> _sparkData  = [];
+    private List<ActivityLogDto>       _periodLogs = [];
+    private bool _loading = true;
 
-    protected override async Task OnInitializedAsync() => await LoadData();
+    // ── Computed ──────────────────────────────────────────────
+    private string PeriodWord        => _period switch { "month" => "month", "year" => "year", _ => "week" };
+    private string PeriodCapitalized => _period switch { "month" => "This month", "year" => "This year", _ => "This week" };
+    private int    GrandTotal        => _balance.Sum(b => b.Total);
+
+    private record DayInfo(DateOnly Date, string DayName, int Total, string TopActivity);
+
+    private List<DayInfo> DayScores => _periodLogs
+        .GroupBy(l => DateOnly.FromDateTime(l.LoggedAt.ToLocalTime()))
+        .Select(g =>
+        {
+            var topLog = g.OrderByDescending(l => l.PointsRecorded).First();
+            return new DayInfo(
+                g.Key,
+                g.Key.ToDateTime(TimeOnly.MinValue).ToString("dddd"),
+                g.Sum(l => l.PointsRecorded),
+                topLog.ActivityName ?? "");
+        })
+        .OrderByDescending(d => d.Total)
+        .ToList();
+
+    // ── Lifecycle ─────────────────────────────────────────────
+    protected override async Task OnInitializedAsync()
+    {
+        _categories = (await CategoryService.GetAllAsync())
+            .OrderBy(c => c.Id)
+            .ToList();
+        await LoadData();
+    }
+
+    private async Task OnPeriodChanged(ChangeEventArgs e)
+    {
+        _period = e.Value?.ToString() ?? "week";
+        await LoadData();
+    }
 
     private async Task LoadData()
     {
         _loading = true;
-        try
+        StateHasChanged();
+
+        var tBalance = ReportsService.GetBalanceAsync(_period);
+        var tLogs    = LogService.GetByDateRangeAsync(GetPeriodFrom(), DateTime.UtcNow);
+
+        // One sparkline call per category — all in parallel
+        var tSparks = _categories.Select(c => ReportsService.GetWeeklyAsync(8, c.Id)).ToList();
+
+        var allTasks = new List<Task> { tBalance, tLogs };
+        allTasks.AddRange(tSparks.Cast<Task>());
+        await Task.WhenAll(allTasks);
+
+        _balance    = tBalance.Result.OrderByDescending(b => b.Total).ToList();
+        _periodLogs = tLogs.Result;
+
+        _sparkData = [];
+        for (int i = 0; i < _categories.Count; i++)
+            _sparkData[_categories[i].Id] = tSparks[i].Result.Select(d => d.Total).ToList();
+
+        _loading = false;
+    }
+
+    private DateTime GetPeriodFrom()
+    {
+        var now = DateTime.UtcNow;
+        return _period switch
         {
-            _data = await ReportsService.GetBalanceAsync(_period);
-            _chartOptions = new ApexChartOptions<CategoryTotalDto>
-            {
-                Chart = new ApexCharts.Chart { Toolbar = new Toolbar { Show = false } },
-                Colors = _data.Select(d => d.ColorHex).ToList(),
-                DataLabels = new DataLabels
-                {
-                    Enabled = true,
-                    Formatter = "function(val, opts) { return opts.w.globals.labels[opts.seriesIndex] + ' ' + Math.round(val) + '%'; }",
-                    Style = new DataLabelsStyle
-                    {
-                        FontSize = "14px",
-                        Colors = new List<string> { "#ffffff" }
-                    },
-                    DropShadow = new DropShadow
-                    {
-                        Enabled = true,
-                        Top = 1,
-                        Left = 1,
-                        Blur = 2,
-                        Opacity = 0.6
-                    }
-                },
-                PlotOptions = new PlotOptions
-                {
-                    Pie = new PlotOptionsPie
-                    {
-                        DataLabels = new PieDataLabels
-                        {
-                            Offset = 0,
-                            MinAngleToShowLabel = 10
-                        }
-                    }
-                },
-                Legend = new Legend
-                {
-                    Show = true,
-                    ShowForSingleSeries = true
-                }
-            };
-            _chartKey++;
-        }
-        catch
+            "month" => new DateTime(now.Year, now.Month, 1),
+            "year"  => new DateTime(now.Year, 1, 1),
+            _       => now.Date.AddDays(-(int)now.DayOfWeek)   // Sunday of current week
+        };
+    }
+
+    // ── Donut SVG ─────────────────────────────────────────────
+    private string BuildDonutArcs()
+    {
+        const double cx = 80, cy = 80, r = 56, strokeW = 18, gap = 3.0;
+        var circ  = 2.0 * Math.PI * r;   // ≈ 351.86
+        var total = (double)GrandTotal;
+        if (total <= 0) return "";
+
+        var ic = System.Globalization.CultureInfo.InvariantCulture;
+        var sb = new System.Text.StringBuilder();
+        double cumPts = 0;
+
+        foreach (var cat in _balance)
         {
-            Snackbar.Add("Failed to load balance data.", Severity.Error);
+            if (cat.Total <= 0) continue;
+            double segLen     = Math.Max(0, cat.Total * circ / total - gap);
+            double startAngle = cumPts / total * 360.0 - 90.0;
+            sb.Append($"<circle cx=\"{cx}\" cy=\"{cy}\" r=\"{r}\" fill=\"none\"" +
+                      $" stroke=\"{cat.ColorHex}\" stroke-width=\"{strokeW}\"" +
+                      $" stroke-dasharray=\"{segLen.ToString("F2", ic)} {circ.ToString("F2", ic)}\"" +
+                      $" transform=\"rotate({startAngle.ToString("F2", ic)} {cx} {cy})\"/>");
+            cumPts += cat.Total;
         }
-        finally
+
+        return sb.ToString();
+    }
+
+    // ── Sparklines ────────────────────────────────────────────
+    private static string BuildSparkPath(IList<int> vals, double w = 100, double h = 24)
+    {
+        if (vals.Count < 2) return "";
+        var max   = Math.Max(1, vals.Max());
+        var min   = Math.Min(0, vals.Min());
+        var range = Math.Max(1, max - min);
+        var ic    = System.Globalization.CultureInfo.InvariantCulture;
+        var sb    = new System.Text.StringBuilder();
+        for (int i = 0; i < vals.Count; i++)
         {
-            _loading = false;
+            var x = (i * w / (vals.Count - 1)).ToString("F1", ic);
+            var y = (h - (vals[i] - min) * (h - 2) / range).ToString("F1", ic);
+            sb.Append(i == 0 ? $"M {x} {y}" : $" L {x} {y}");
         }
+        return sb.ToString();
+    }
+
+    private static string BuildSparkArea(IList<int> vals, double w = 100, double h = 24)
+    {
+        var line = BuildSparkPath(vals, w, h);
+        if (line.Length == 0) return "";
+        var ic = System.Globalization.CultureInfo.InvariantCulture;
+        return $"{line} L {w.ToString("F1", ic)} {h.ToString("F1", ic)} L 0 {h.ToString("F1", ic)} Z";
     }
 }

@@ -7,87 +7,253 @@
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
 
-<PageTitle>@(EditId.HasValue ? "Edit Log Entry" : "Log Activity")</PageTitle>
+<PageTitle>@(EditId.HasValue ? "Edit Log Entry" : "Add Entry")</PageTitle>
 
-<MudText Typo="Typo.h5" Class="mb-4">@(EditId.HasValue ? "Edit Log Entry" : "Log Activity")</MudText>
+<div class="log-page">
 
-@if (!EditId.HasValue && _frequent.Any())
-{
-    <MudText Typo="Typo.subtitle2" Class="mb-2">Quick Pick</MudText>
-    <div class="d-flex flex-wrap gap-2 mb-4">
-        @foreach (var a in _frequent)
-        {
-            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined"
-                     OnClick="@(() => SelectActivity(a))">
-                @a.Name (@a.DefaultPoints pts)
-            </MudChip>
-        }
-    </div>
-}
-
-<MudPaper Class="pa-4">
-    <EditForm Model="_model" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-
-        <MudAutocomplete T="ActivityDto" Label="Activity"
-                         Value="_selectedActivity" ValueChanged="SelectActivity"
-                         SearchFunc="SearchActivities" ToStringFunc="@(a => a?.Name ?? string.Empty)"
-                         Clearable="true" Class="mb-3"
-                         For="@(() => _selectedActivity)" />
-
-        @if (!string.IsNullOrWhiteSpace(_selectedActivity?.Description))
-        {
-            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3 mt-n2">
-                @_selectedActivity.Description
-            </MudText>
-        }
-
-        <MudDatePicker Label="Date" @bind-Date="_model.Date" Class="mb-3" />
-        <MudTimePicker Label="Time" @bind-Time="_model.Time" Class="mb-3" />
-
-        <MudNumericField T="int" Label="Points" @bind-Value="_model.Points"
-                         Min="-100" Max="100" Class="mb-3" />
-
-        <MudTextField @bind-Value="_model.Notes" Label="Notes (optional)"
-                      Lines="2" Class="mb-4" />
-
-        <div class="d-flex gap-2">
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled"
-                       Color="Color.Primary" Disabled="_busy" Class="flex-grow-1">
-                @(_busy
-                    ? (EditId.HasValue ? "Saving..." : "Logging...")
-                    : (EditId.HasValue ? "Save Changes" : "Log Activity"))
-            </MudButton>
-            @if (EditId.HasValue)
+    <!-- ══ Page header ══ -->
+    <header class="log-header">
+        <div class="log-title-wrap">
+            <div>
+                <h1 class="log-title">@(EditId.HasValue ? "Edit Log Entry" : "Add Entry")</h1>
+                @if (!EditId.HasValue && _todaySummary is not null)
+                {
+                    <p class="log-subtitle">
+                        Today so far:&nbsp;<strong class="pts-highlight">@_todaySummary.TodayTotal pts</strong>
+                        &nbsp;·&nbsp;@_todayEntryCount @(_todayEntryCount == 1 ? "entry" : "entries")
+                    </p>
+                }
+            </div>
+            @if (!EditId.HasValue && _todaySummary is not null)
             {
-                <MudButton Variant="Variant.Outlined"
-                           OnClick="@(() => Navigation.NavigateTo("/log/detail"))">
-                    Cancel
-                </MudButton>
+                var afterTotal = _todaySummary.TodayTotal + _model.Points;
+                <div class="after-pill @(_model.Points < 0 ? "neg" : "")">
+                    After this entry&nbsp;<strong>@(afterTotal >= 0 ? "+" : "")@afterTotal pts</strong>
+                </div>
             }
         </div>
-    </EditForm>
-</MudPaper>
+    </header>
 
-@if (_scoreAfter is not null)
-{
-    <MudPaper Class="pa-4 mt-4">
-        <MudText Typo="Typo.subtitle1" Class="mb-2">Updated Scores</MudText>
-        <MudGrid>
-            <MudItem xs="4"><MudText Align="Align.Center">Today<br/><strong>@_scoreAfter.TodayTotal</strong></MudText></MudItem>
-            <MudItem xs="4"><MudText Align="Align.Center">Week<br/><strong>@_scoreAfter.WeekTotal</strong></MudText></MudItem>
-            <MudItem xs="4"><MudText Align="Align.Center">Month<br/><strong>@_scoreAfter.MonthTotal</strong></MudText></MudItem>
-        </MudGrid>
-    </MudPaper>
-}
+    <!-- ══ Quick Pick (add mode only) ══ -->
+    @if (!EditId.HasValue && _frequent.Any())
+    {
+        <div class="card qp-card">
+            <div class="qp-head">
+                <span class="section-title">Quick Pick</span>
+                <span class="qp-count">@_frequent.Count shortcuts</span>
+            </div>
+            <div class="qp-grid">
+                @foreach (var a in _frequent)
+                {
+                    <div class="qp-tile @(_selectedActivity?.Id == a.Id ? "selected" : "")"
+                         @onclick="@(() => ToggleQuickPick(a))">
+                        <div class="qp-badge" style="background:@BadgeBg(a);color:@BadgeColor(a)">
+                            @char.ToUpper(a.Name[0])
+                        </div>
+                        <div class="qp-info">
+                            <span class="qp-name">@a.Name</span>
+                            <div class="qp-cats">
+                                @foreach (var cat in a.Categories)
+                                {
+                                    <span class="cat-dot" style="background:@cat.ColorHex" title="@cat.Name"></span>
+                                }
+                            </div>
+                        </div>
+                        <span class="qp-pts @(a.DefaultPoints >= 0 ? "pos" : "neg")">
+                            @(a.DefaultPoints > 0 ? "+" : "")@a.DefaultPoints
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- ══ Entry details card ══ -->
+    <div class="card entry-card">
+        <h2 class="entry-card-title">Entry details</h2>
+
+        <!-- Dropdown backdrop — closes dropdown when clicking outside -->
+        @if (_dropdownOpen)
+        {
+            <div class="dropdown-backdrop" @onclick="CloseDropdown"></div>
+        }
+
+        <form @onsubmit="HandleSubmit" @onsubmit:preventDefault>
+
+            <!-- ── Activity ── -->
+            <div class="field-group">
+                <label class="field-label">ACTIVITY</label>
+                <div class="custom-select @(_dropdownOpen ? "open" : "")">
+
+                    <!-- Trigger button -->
+                    <button type="button" class="select-trigger" @onclick="ToggleDropdown">
+                        @if (_selectedActivity is not null)
+                        {
+                            <div class="trigger-badge"
+                                 style="background:@BadgeBg(_selectedActivity);color:@BadgeColor(_selectedActivity)">
+                                @char.ToUpper(_selectedActivity.Name[0])
+                            </div>
+                            <span class="trigger-name">@_selectedActivity.Name</span>
+                            @if (_selectedActivity.Categories.Any())
+                            {
+                                <span class="trigger-chip"
+                                      style="background:@(_selectedActivity.Categories[0].ColorHex)22;color:@_selectedActivity.Categories[0].ColorHex">
+                                    @_selectedActivity.Categories[0].Name
+                                </span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="trigger-placeholder">Choose an activity…</span>
+                        }
+                        <svg class="select-chevron @(_dropdownOpen ? "open" : "")"
+                             viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                            <path d="M7 10l5 5 5-5z" fill="currentColor"/>
+                        </svg>
+                    </button>
+
+                    <!-- Dropdown panel -->
+                    @if (_dropdownOpen)
+                    {
+                        <div class="select-dropdown">
+                            <input type="text" class="select-search"
+                                   value="@_searchText"
+                                   @oninput="@(e => _searchText = e.Value?.ToString() ?? "")"
+                                   placeholder="Search activities…"
+                                   autocomplete="off" />
+                            <div class="select-list">
+                                @foreach (var a in FilteredActivities)
+                                {
+                                    <button type="button"
+                                            class="select-option @(_selectedActivity?.Id == a.Id ? "active" : "")"
+                                            @onclick="@(() => SelectAndClose(a))">
+                                        <div class="option-badge"
+                                             style="background:@BadgeBg(a);color:@BadgeColor(a)">
+                                            @char.ToUpper(a.Name[0])
+                                        </div>
+                                        <span class="option-name">@a.Name</span>
+                                        <div class="option-cats">
+                                            @foreach (var cat in a.Categories)
+                                            {
+                                                <span class="cat-dot" style="background:@cat.ColorHex" title="@cat.Name"></span>
+                                            }
+                                        </div>
+                                        <span class="option-pts @(a.DefaultPoints >= 0 ? "pos" : "neg")">
+                                            @(a.DefaultPoints > 0 ? "+" : "")@a.DefaultPoints
+                                        </span>
+                                    </button>
+                                }
+                                @if (!FilteredActivities.Any())
+                                {
+                                    <p class="option-empty">No activities found</p>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(_selectedActivity?.Description))
+                {
+                    <p class="activity-desc">@_selectedActivity.Description</p>
+                }
+            </div>
+
+            <!-- ── Date + Time ── -->
+            <div class="field-row">
+                <div class="field-group">
+                    <label class="field-label">DATE</label>
+                    <input type="date" class="field-input"
+                           value="@DateValue" @onchange="OnDateChange" />
+                    <div class="shortcut-chips">
+                        <button type="button" class="chip @(IsToday ? "active" : "")"
+                                @onclick="SetToday">Today</button>
+                        <button type="button" class="chip @(IsYesterday ? "active" : "")"
+                                @onclick="SetYesterday">Yesterday</button>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label class="field-label">TIME</label>
+                    <input type="time" class="field-input"
+                           value="@TimeValue" @onchange="OnTimeChange" />
+                    <div class="shortcut-chips">
+                        <button type="button" class="chip" @onclick="SetNow">Now</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Points ── -->
+            <div class="field-group">
+                <div class="field-label-row">
+                    <label class="field-label">POINTS</label>
+                    @if (_selectedActivity is not null)
+                    {
+                        <span class="field-hint">
+                            Default for this activity:
+                            @(_selectedActivity.DefaultPoints > 0 ? "+" : "")@_selectedActivity.DefaultPoints
+                        </span>
+                    }
+                </div>
+                <div class="pts-spinner">
+                    <button type="button" class="pts-btn" @onclick="DecrementPoints">−</button>
+                    <span class="pts-value @(_model.Points > 0 ? "pos" : _model.Points < 0 ? "neg" : "")">
+                        @(_model.Points > 0 ? "+" : "")@_model.Points
+                    </span>
+                    <button type="button" class="pts-btn" @onclick="IncrementPoints">+</button>
+                </div>
+                <div class="shortcut-chips">
+                    <button type="button" class="chip"
+                            @onclick="ResetPoints"
+                            disabled="@(_selectedActivity is null)">Reset to default</button>
+                    <button type="button" class="chip" @onclick="ZeroPoints">Zero</button>
+                </div>
+            </div>
+
+            <!-- ── Notes ── -->
+            <div class="field-group">
+                <div class="field-label-row">
+                    <label class="field-label">NOTES</label>
+                    <span class="field-hint">Optional · @(_model.Notes?.Length ?? 0)/240</span>
+                </div>
+                <textarea class="field-textarea"
+                          maxlength="240"
+                          rows="3"
+                          placeholder="How did it feel? Anything to remember?"
+                          value="@_model.Notes"
+                          @oninput="@(e => _model.Notes = e.Value?.ToString())"></textarea>
+            </div>
+
+            <!-- ── Action buttons ── -->
+            <div class="action-row">
+                <button type="submit" class="btn-submit" disabled="@_busy">
+                    @if (_busy)
+                    {
+                        @(EditId.HasValue ? "Saving…" : "Logging…")
+                    }
+                    else
+                    {
+                        @(EditId.HasValue ? "Save Changes" : "+ Log Activity")
+                    }
+                </button>
+                <button type="button" class="btn-cancel" @onclick="CancelEntry">Cancel</button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
 
 @code {
     [SupplyParameterFromQuery] private int? EditId { get; set; }
 
-    private List<ActivityDto> _frequent = [];
-    private ActivityDto? _selectedActivity;
-    private ScoreSummaryDto? _scoreAfter;
-    private bool _busy;
+    /* ── State ───────────────────────────────────────────────── */
+    private List<ActivityDto>    _frequent        = [];
+    private List<ActivityDto>    _allActivities   = [];
+    private ActivityDto?         _selectedActivity;
+    private ScoreSummaryDto?     _todaySummary;
+    private int                  _todayEntryCount;
+    private bool                 _dropdownOpen;
+    private string               _searchText      = "";
+    private bool                 _busy;
 
     private readonly LogFormModel _model = new()
     {
@@ -95,12 +261,51 @@
         Time = DateTime.Now.TimeOfDay
     };
 
+    /* ── Computed ────────────────────────────────────────────── */
+    private IEnumerable<ActivityDto> FilteredActivities =>
+        string.IsNullOrWhiteSpace(_searchText)
+            ? _allActivities
+            : _allActivities.Where(a => a.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
+
+    private string DateValue => _model.Date?.ToString("yyyy-MM-dd") ?? "";
+    private string TimeValue => _model.Time.HasValue
+        ? $"{(int)_model.Time.Value.TotalHours:D2}:{_model.Time.Value.Minutes:D2}"
+        : "";
+
+    private bool IsToday     => _model.Date?.Date == DateTime.Today;
+    private bool IsYesterday => _model.Date?.Date == DateTime.Today.AddDays(-1);
+
+    private static string BadgeBg(ActivityDto a) =>
+        a.Categories.Count > 0 ? $"{a.Categories[0].ColorHex}26" : "#4A608026";
+    private static string BadgeColor(ActivityDto a) =>
+        a.Categories.Count > 0 ? a.Categories[0].ColorHex : "#4A6080";
+
+    /* ── Lifecycle ───────────────────────────────────────────── */
     protected override async Task OnInitializedAsync()
     {
-        if (EditId.HasValue)
-            await LoadEditEntryAsync(EditId.Value);
+        if (!EditId.HasValue)
+        {
+            // Add mode: load everything in parallel
+            var tAll      = ActivityService.GetAllAsync();
+            var tFrequent = ActivityService.GetFrequentAsync(6);
+            var tSummary  = ScoreService.GetSummaryAsync();
+            var todayUtc  = DateTime.UtcNow.Date;
+            var tLogs     = LogService.GetByDateRangeAsync(todayUtc, todayUtc.AddDays(1));
+
+            await Task.WhenAll(tAll, tFrequent, tSummary, tLogs);
+
+            _allActivities   = tAll.Result.Where(a => !a.IsArchived).ToList();
+            _frequent        = tFrequent.Result.ToList();
+            _todaySummary    = tSummary.Result;
+            _todayEntryCount = tLogs.Result.Count;
+        }
         else
-            _frequent = (await ActivityService.GetFrequentAsync()).ToList();
+        {
+            // Edit mode: just need the activity list then load the log
+            var all = await ActivityService.GetAllAsync();
+            _allActivities = all.Where(a => !a.IsArchived).ToList();
+            await LoadEditEntryAsync(EditId.Value);
+        }
     }
 
     private async Task LoadEditEntryAsync(int logId)
@@ -113,30 +318,90 @@
             return;
         }
 
-        var all = await ActivityService.GetAllAsync();
-        _selectedActivity = all.FirstOrDefault(a => a.Id == log.ActivityId);
-        _model.Date = log.LoggedAt.ToLocalTime().Date;
-        _model.Time = log.LoggedAt.ToLocalTime().TimeOfDay;
-        _model.Points = log.PointsRecorded;
-        _model.Notes = log.Notes;
+        _selectedActivity = _allActivities.FirstOrDefault(a => a.Id == log.ActivityId);
+        _model.Date       = log.LoggedAt.ToLocalTime().Date;
+        _model.Time       = log.LoggedAt.ToLocalTime().TimeOfDay;
+        _model.Points     = log.PointsRecorded;
+        _model.Notes      = log.Notes;
         StateHasChanged();
         await JS.InvokeVoidAsync("scrollTo", 0, 0);
     }
 
+    /* ── Activity selection ──────────────────────────────────── */
     private void SelectActivity(ActivityDto? activity)
     {
         _selectedActivity = activity;
-        _model.Points = activity?.DefaultPoints ?? 0;
+        _model.Points     = activity?.DefaultPoints ?? 0;
     }
 
-    private async Task<IEnumerable<ActivityDto>> SearchActivities(string value, CancellationToken _)
+    // Tapping an already-selected quick-pick tile deselects it and clears the form.
+    private void ToggleQuickPick(ActivityDto a)
     {
-        var all = await ActivityService.GetAllAsync();
-        if (string.IsNullOrEmpty(value))
-            return all;
-        return all.Where(a => a.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
+        if (_selectedActivity?.Id == a.Id)
+        {
+            _selectedActivity = null;
+            _model.Points     = 0;
+            _model.Notes      = null;
+        }
+        else
+        {
+            SelectActivity(a);
+        }
     }
 
+    private void SelectAndClose(ActivityDto a)
+    {
+        SelectActivity(a);
+        _dropdownOpen = false;
+        _searchText   = "";
+    }
+
+    // Cancel: edit mode returns to log detail; add mode clears form and goes home.
+    private void CancelEntry()
+    {
+        if (EditId.HasValue)
+        {
+            Navigation.NavigateTo("/log/detail");
+        }
+        else
+        {
+            _selectedActivity = null;
+            _model.Points     = 0;
+            _model.Notes      = null;
+            _model.Date       = DateTime.Today;
+            _model.Time       = DateTime.Now.TimeOfDay;
+            Navigation.NavigateTo("/");
+        }
+    }
+
+    /* ── Dropdown ────────────────────────────────────────────── */
+    private void ToggleDropdown() => _dropdownOpen = !_dropdownOpen;
+    private void CloseDropdown()  => _dropdownOpen = false;
+
+    /* ── Date / Time shortcuts ───────────────────────────────── */
+    private void SetToday()     => _model.Date = DateTime.Today;
+    private void SetYesterday() => _model.Date = DateTime.Today.AddDays(-1);
+    private void SetNow()       => _model.Time = DateTime.Now.TimeOfDay;
+
+    private void OnDateChange(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var d))
+            _model.Date = d;
+    }
+
+    private void OnTimeChange(ChangeEventArgs e)
+    {
+        if (TimeSpan.TryParse(e.Value?.ToString(), out var t))
+            _model.Time = t;
+    }
+
+    /* ── Points ──────────────────────────────────────────────── */
+    private void IncrementPoints() { if (_model.Points < 100) _model.Points++; }
+    private void DecrementPoints() { if (_model.Points > -100) _model.Points--; }
+    private void ResetPoints()     => _model.Points = _selectedActivity?.DefaultPoints ?? 0;
+    private void ZeroPoints()      => _model.Points = 0;
+
+    /* ── Submit ──────────────────────────────────────────────── */
     private async Task HandleSubmit()
     {
         if (_selectedActivity is null)
@@ -154,10 +419,10 @@
         {
             var result = await LogService.UpdateAsync(EditId.Value, new UpdateActivityLogDto
             {
-                ActivityId = _selectedActivity.Id,
-                LoggedAt = loggedAt,
+                ActivityId     = _selectedActivity.Id,
+                LoggedAt       = loggedAt,
                 PointsRecorded = _model.Points,
-                Notes = _model.Notes
+                Notes          = _model.Notes
             });
             _busy = false;
 
@@ -174,10 +439,10 @@
         {
             var result = await LogService.CreateAsync(new CreateActivityLogDto
             {
-                ActivityId = _selectedActivity.Id,
-                LoggedAt = loggedAt,
+                ActivityId     = _selectedActivity.Id,
+                LoggedAt       = loggedAt,
                 PointsRecorded = _model.Points,
-                Notes = _model.Notes
+                Notes          = _model.Notes
             });
             _busy = false;
 
@@ -188,21 +453,25 @@
             }
 
             Snackbar.Add($"{_selectedActivity.Name} logged!", Severity.Success);
-            _scoreAfter = await ScoreService.GetSummaryAsync();
 
+            // Refresh today's summary so subtitle and after-pill update
+            _todaySummary = await ScoreService.GetSummaryAsync();
+            _todayEntryCount++;
+
+            // Reset form for next entry
             _selectedActivity = null;
-            _model.Notes = null;
-            _model.Points = 0;
-            _model.Date = DateTime.Today;
-            _model.Time = DateTime.Now.TimeOfDay;
+            _model.Notes      = null;
+            _model.Points     = 0;
+            _model.Date       = DateTime.Today;
+            _model.Time       = DateTime.Now.TimeOfDay;
         }
     }
 
     private class LogFormModel
     {
-        public DateTime? Date { get; set; }
-        public TimeSpan? Time { get; set; }
-        public int Points { get; set; }
-        public string? Notes { get; set; }
+        public DateTime? Date   { get; set; }
+        public TimeSpan? Time   { get; set; }
+        public int       Points { get; set; }
+        public string?   Notes  { get; set; }
     }
 }

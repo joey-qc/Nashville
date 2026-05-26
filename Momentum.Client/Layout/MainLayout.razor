@@ -6,7 +6,7 @@
 <AuthorizeView>
 
     <Authorized Context="authContext">
-        <div class="app-shell @(_collapsed ? "collapsed" : "")">
+        <div class="app-shell @(_collapsed ? "collapsed" : "") @(_mobileOpen ? "mobile-open" : "")">
 
             <!-- ═══ Sidebar ═══ -->
             <aside class="sidebar">
@@ -119,6 +119,12 @@
 
             </aside>
 
+            <!-- ═══ Mobile overlay — tap to close sidebar ═══ -->
+            @if (_mobileOpen)
+            {
+                <div class="mobile-overlay" @onclick="CloseMobileSidebar" aria-hidden="true"></div>
+            }
+
             <!-- ═══ Main area ═══ -->
             <div class="main-wrapper">
 
@@ -152,6 +158,7 @@
 
 @code {
     private bool _collapsed;
+    private bool _mobileOpen;
     private bool _reportsExpanded = true;
 
     protected override void OnInitialized()
@@ -162,12 +169,26 @@
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-        => InvokeAsync(StateHasChanged);
+    {
+        _mobileOpen = false;   // always close mobile drawer on navigation
+        InvokeAsync(StateHasChanged);
+    }
 
     public void Dispose()
         => Navigation.LocationChanged -= OnLocationChanged;
 
-    private void ToggleSidebar() => _collapsed = !_collapsed;
+    // Toggles both booleans — CSS media queries decide which one has visible effect
+    // at the current viewport: _collapsed drives desktop icon-collapse,
+    // _mobileOpen drives the mobile overlay drawer.
+    private void ToggleSidebar()
+    {
+        _collapsed = !_collapsed;
+        _mobileOpen = !_mobileOpen;
+    }
+
+    // Called by the mobile overlay tap — only closes the mobile drawer.
+    private void CloseMobileSidebar() => _mobileOpen = false;
+
     private void ToggleReports() => _reportsExpanded = !_reportsExpanded;
 
     private string GetPath()

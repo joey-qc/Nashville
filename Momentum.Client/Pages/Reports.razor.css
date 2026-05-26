@@ -1,0 +1,403 @@
+/* ═══════════════════════════════════════════════════════════
+   Trends / Reports page
+═══════════════════════════════════════════════════════════ */
+.trends-page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 1100px;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+.trends-header {
+    margin-bottom: 4px;
+}
+
+.trends-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.trends-title-group {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+}
+
+.trends-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.trends-period-label {
+    font-size: 1rem;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+/* Improvement pill */
+.improvement-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    flex-shrink: 0;
+}
+
+.improvement-pill.pos {
+    background: var(--primary-glow);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+}
+
+.improvement-pill.neg {
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid var(--negative);
+    color: var(--negative);
+}
+
+/* Stats line */
+.trends-stats {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin: 0;
+}
+
+/* Numeric values on the stats line get primary green; negatives go red */
+.stat-green {
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.stat-green.neg {
+    color: var(--negative);
+}
+
+/* ── Controls row ────────────────────────────────────────── */
+.controls-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+/* View tabs */
+.view-tabs {
+    display: flex;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 20px;
+    padding: 3px;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.tab-btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 5px 16px;
+    border-radius: 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    -webkit-appearance: none;
+    appearance: none;
+    white-space: nowrap;
+}
+
+.tab-btn:hover {
+    color: var(--text);
+}
+
+.tab-btn.active {
+    background: var(--surface-3);
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* Category chips */
+.cat-filter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.cat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+    -webkit-appearance: none;
+    appearance: none;
+    white-space: nowrap;
+}
+
+.cat-chip:hover {
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.cat-chip.active.all {
+    background: var(--surface-2);
+    border-color: var(--border-soft);
+    color: var(--text);
+}
+
+.chip-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+/* ── Chart card ──────────────────────────────────────────── */
+.chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    padding: 20px 16px 12px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.bar-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+.chart-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-height: 200px;
+}
+
+/* ── Loading / empty text ────────────────────────────────── */
+.loading-text {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0;
+    animation: pulse 1.6s ease-in-out infinite;
+}
+
+.empty-text {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin: 0;
+    text-align: center;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50%       { opacity: 1; }
+}
+
+/* ── Bottom row ──────────────────────────────────────────── */
+.bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 20px;
+    align-items: start;
+}
+
+/* ── Category breakdown card ─────────────────────────────── */
+.bc-card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    padding: 20px;
+}
+
+.bc-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0 0 4px;
+}
+
+.bc-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin: 0 0 16px;
+}
+
+/* Proportional stacked bar */
+.stack-bar {
+    display: flex;
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 18px;
+    gap: 0;
+    background: var(--surface-2); /* fallback if no segments fill 100% */
+}
+
+.stack-seg {
+    flex-shrink: 0;
+    height: 100%;
+    /* no transition — width is set inline and shouldn't animate on load */
+}
+
+/* Category list */
+.bc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bc-row {
+    display: grid;
+    grid-template-columns: 10px 1fr 44px 64px;
+    align-items: center;
+    gap: 10px;
+}
+
+.bc-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+.bc-name {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.bc-pct {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text);
+    text-align: right;
+}
+
+.bc-pts {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-align: right;
+}
+
+/* ── Top periods card ────────────────────────────────────── */
+.top-card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    padding: 20px;
+}
+
+.tc-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0 0 4px;
+}
+
+.tc-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin: 0 0 16px;
+}
+
+.tc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tc-row {
+    display: grid;
+    grid-template-columns: 24px 36px 1fr 40px;
+    align-items: center;
+    gap: 8px;
+}
+
+.tc-rank {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.tc-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+.tc-bar-track {
+    height: 6px;
+    background: var(--surface-2);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.tc-bar-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+.tc-score {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* ── Mobile ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .trends-title {
+        font-size: 1.3rem;
+    }
+
+    .trends-period-label {
+        font-size: 0.88rem;
+    }
+
+    .controls-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .bottom-row {
+        grid-template-columns: 1fr;
+    }
+}

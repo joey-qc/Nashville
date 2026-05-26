@@ -86,24 +86,27 @@ public class ScoreService(IActivityLogRepository logRepo) : IScoreService
                 .OrderBy(g => g.Key)
                 .Select(g => new DailyScoreDto
                 {
-                    Date = DateOnly.FromDateTime(g.Key),
-                    Total = g.Sum(l => l.PointsRecorded)
+                    Date       = DateOnly.FromDateTime(g.Key),
+                    Total      = g.Sum(l => l.PointsRecorded),
+                    ByCategory = BuildByCategory(g, categoryId)
                 }),
             "month" => filtered
                 .GroupBy(l => new DateTime(l.LoggedAt.Year, l.LoggedAt.Month, 1))
                 .OrderBy(g => g.Key)
                 .Select(g => new DailyScoreDto
                 {
-                    Date = DateOnly.FromDateTime(g.Key),
-                    Total = g.Sum(l => l.PointsRecorded)
+                    Date       = DateOnly.FromDateTime(g.Key),
+                    Total      = g.Sum(l => l.PointsRecorded),
+                    ByCategory = BuildByCategory(g, categoryId)
                 }),
             _ => filtered
                 .GroupBy(l => l.LoggedAt.Date)
                 .OrderBy(g => g.Key)
                 .Select(g => new DailyScoreDto
                 {
-                    Date = DateOnly.FromDateTime(g.Key),
-                    Total = g.Sum(l => l.PointsRecorded)
+                    Date       = DateOnly.FromDateTime(g.Key),
+                    Total      = g.Sum(l => l.PointsRecorded),
+                    ByCategory = BuildByCategory(g, categoryId)
                 })
         };
     }
@@ -145,4 +148,18 @@ public class ScoreService(IActivityLogRepository logRepo) : IScoreService
     }
 
     private static DateTime GetWeekStart(DateTime date) => date.AddDays(-(int)date.DayOfWeek);
+
+    // When no category filter is applied, compute points per category for each period bucket
+    // so the client can render stacked bars. When a category is filtered, ByCategory is empty.
+    private static Dictionary<int, int> BuildByCategory(
+        IEnumerable<Momentum.Domain.Entities.ActivityLog> group, int? categoryId)
+    {
+        if (categoryId.HasValue) return [];
+        return group
+            .SelectMany(l => (l.Activity?.Categories
+                              ?? Enumerable.Empty<Momentum.Domain.Entities.ActivityCategory>())
+                .Select(ac => new { ac.CategoryId, l.PointsRecorded }))
+            .GroupBy(x => x.CategoryId)
+            .ToDictionary(cg => cg.Key, cg => cg.Sum(x => x.PointsRecorded));
+    }
 }
