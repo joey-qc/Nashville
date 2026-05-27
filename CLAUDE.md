@@ -4,6 +4,13 @@ This file defines the coding conventions, architectural patterns, design rules, 
 
 ---
 
+## Startup Instruction
+
+Before performing any implementation task:
+1. Read this entire CLAUDE.md file.
+2. Read any referenced documentation files relevant to the requested task.
+3. Treat CLAUDE.md as the authoritative project operating guide.
+
 ## 1. Project Identity
 
 - **Application Name:** Momentum
@@ -212,3 +219,43 @@ Note: negative default points are intentional — they track detrimental habits.
 
 *Momentum — CLAUDE.md Skills File*
 *Version 1.4 — Updated category colors to new palette; replaced ApexCharts with custom SVG charting; removed ApexCharts namespace conflict rules; replaced MudBlazor-only rule with phased-migration directive*
+
+
+## Documentation Maintenance Rule
+
+After every completed coding task, Claude Code must update documentation using these rules:
+
+### Always update `/Docs/momentum-handoff.md`
+Update current project status, completed work, remaining work, and any changed deployment/runtime notes.
+
+### Feature changes
+If a user-facing feature is added, removed, renamed, or behaviorally changed:
+- Update `/Docs/momentum-functional-requirements.md`
+- Also update `/Docs/momentum-roadmap.md` only if the feature was previously planned, deferred, newly discovered, or affects future direction.
+
+### Bug fixes
+If a bug is fixed:
+- Update `/Docs/momentum-known-issues.md`
+- Move the issue to Resolved Issues or mark it Resolved with date/context.
+
+### UI/design changes
+If styling, layout, tokens, buttons, forms, charts, navigation, responsiveness, or visual patterns change:
+- Update `/Docs/momentum-design-system.md`
+
+### Architecture/API/data changes
+If the task changes data models, DTOs, API contracts, auth, services, caching, deployment, or cross-layer behavior:
+- Update `/Docs/momentum-software-specifications.md`
+
+### AI/codegen process changes
+If the task creates or improves reusable prompts, discovers codegen pitfalls, or establishes AI workflow rules:
+- Update `/Docs/momentum-codegen-prompts.md`
+
+### Required response section
+Every Claude Code response must include:
+
+## Documentation Updates
+
+- Updated:
+  - file path — summary of change
+- Not updated:
+  - file path — reason

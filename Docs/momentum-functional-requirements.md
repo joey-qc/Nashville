@@ -136,44 +136,72 @@ Accessible by clicking on a score total (Today, This Week, This Month) from the 
 
 ---
 
-## 8. Reports — Reporting & Analytics Screen
+## 8. Reports — Reporting & Analytics
 
-A single consolidated reporting screen with configurable filters.
+The Reports section contains two distinct sub-pages accessible via the Reports nav group: **Trends** and **Balance**. Each page focuses on a specific analytical perspective.
 
-### 8.1 Time Aggregation Selector
+---
+
+### 8.1 Trends Page (`/reports`)
+
+Focused on time-series patterns: how scores move day-over-day, week-over-week, and month-over-month.
+
+#### 8.1.1 Time Aggregation Selector
 The user selects one of the following aggregation levels:
-- **Day** — shows daily totals for the past 30 days (or since first entry if less than 30 days)
-- **Week** — shows weekly totals for the past 52 weeks (or since first entry if less than 52 weeks)
-- **Month** — shows monthly totals for the past 12 months (or since first entry if less than 12 months)
+- **Daily** — daily totals for the past 14 days
+- **Weekly** — weekly totals for the past 8 weeks
+- **Monthly** — monthly totals for the past 6 months
 
-### 8.2 Category Filter
-The user can filter the chart by category:
-- Physical
-- Mental
-- Spiritual
-- Social
-- Housekeeping
-- **All** (default — shows combined totals in medium gray)
+#### 8.1.2 Category Filter
+The user can filter the chart by category (Physical, Mental, Spiritual, Social, Housekeeping, or **All**). When a specific category is selected, only points from activities in that category are shown, using that category's color.
 
-When a specific category is selected, only points from activities in that category are shown, using that category's color.
+#### 8.1.3 Bar Chart
+- Stacked bar chart displaying point totals over time for the selected aggregation and category filter.
+- X-axis: time period labels (day, week number, or month abbreviation).
+- Y-axis: point totals with gridlines at 25% intervals.
+- Value labels displayed inside bars (white) if tall enough, above (muted) if short.
+- Period improvement pill (↑ or ↓ percentage vs. previous period) shown in the header.
 
-### 8.3 Chart Display
-- A **line chart** or **bar chart** displays point totals over time based on the selected aggregation and category filter.
-- X-axis: time periods (days, weeks, or months)
-- Y-axis: point totals
-- Chart updates dynamically when the user changes the aggregation or category filter.
+#### 8.1.4 Category Trend
+A sparkline panel showing each category's weekly point trend over the last 8 weeks. Displayed alongside the Top days/periods card.
 
-### 8.4 Balance — Category Breakdown Report
+- One row per category (Physical → Mental → Spiritual → Social → Housekeeping)
+- Each row shows: color dot · category name · sparkline area chart · 8-week total
 
-A dedicated sub-page under Reports showing how the user's points are distributed across the five wellness categories.
+#### 8.1.5 Top Days / Top Periods
+The five highest-scoring periods for the selected aggregation level.
+- **Daily view ("Top days"):** Date displayed as `MMM d, yyyy` (e.g., "May 15, 2026") for unambiguous context.
+- **Weekly / Monthly view ("Top periods"):** Compact label (e.g., "W23" or "May").
+- Progress bar showing score relative to the top scorer.
 
-- **Period selector:** Week, Month, or Year
-- **Chart:** Pie (or donut) chart showing each category's share of total points for the selected period
-- **Data labels:** Category name, total points, and percentage of overall total
-- Category colors match the global color scheme (Physical=green, Mental=blue, etc.)
-- Data is scoped to the logged-in user and filtered to the selected time period
+---
 
-### 8.5 Data Scope
+### 8.2 Balance Page (`/reports/balance`)
+
+Focused on category distribution: how balanced the user's activity is across the five wellness dimensions for a chosen period.
+
+#### 8.2.1 Period Selector
+Dropdown (presented as a styled pill): **This Week**, **This Month**, **This Year**.
+
+#### 8.2.2 Donut Chart + Category List
+- Donut ring chart showing each category's proportional share of total points for the selected period.
+- Category list alongside: color dot · category name · point total · percentage · horizontal bar.
+
+#### 8.2.3 Insight Callout
+A coaching callout highlighting which category is dominating and suggesting which underrepresented categories to add to bring the balance closer to even.
+
+#### 8.2.4 Category Breakdown
+A compact proportional breakdown panel showing the stacked color bar and category rows (dot · name · percentage · points) in canonical category order.
+
+#### 8.2.5 Best & Worst Days
+The two best-scoring days and the single worst-scoring day within the selected period.
+- Each row shows: best/worst badge · day name · date (`MM/dd/yyyy`) · top activity · point total.
+- Format example: **Tuesday · 05/26/2026**
+- Date shown as subtle secondary text alongside the day name.
+
+---
+
+### 8.3 Data Scope
 - Data shown is scoped to the logged-in user only.
 - If the user has been active for less than the maximum period, only available data is shown.
 

@@ -10,3 +10,10 @@ Start the WASM app in Terminal 2: dotnet run --project Momentum.Client
 
 dotnet watch --project Momentum.API
 dotnet watch --project Momentum.Client
+
+----------------
+
+To commit and (optionally) push
+git add .
+git commit -m "Add COmments Here "
+git push

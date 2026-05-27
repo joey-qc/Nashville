@@ -19,11 +19,13 @@ The application is structured as a **Visual Studio Solution** containing multipl
 | Technology | Purpose |
 |---|---|
 | Blazor WebAssembly (.NET 10) | SPA frontend running in the browser |
-| MudBlazor 9.4+ | UI component library (replaces Bootstrap entirely — do NOT include Bootstrap) |
-| Custom inline SVG | All charts (bar, line, donut, sparkline) rendered as inline SVG in Razor components |
+| Custom HTML/CSS | All UI markup — plain HTML elements styled with scoped CSS classes and shared design tokens |
+| `momentum-theme.css` | Global design token file — CSS custom properties for all colors, radii, and spacing |
+| Custom inline SVG | All charts (bar, line, donut, sparkline) and all icons rendered as inline SVG in Razor components |
+| MudBlazor (`ISnackbar` only) | Toast notifications only — retained until a custom `ToastHost` component is implemented; no other MudBlazor components are used |
 | C# | Primary programming language |
 
-> **Important:** MudBlazor is the sole UI component library. Bootstrap must NOT be included in scaffolding or referenced anywhere in the project. All data visualizations use custom SVG — do not introduce ApexCharts.Blazor or any other charting library.
+> **Important:** All pages use custom HTML/CSS — MudBlazor page components have been fully removed. Bootstrap must NOT be included. All data visualizations use custom SVG — do not introduce ApexCharts.Blazor or any other charting library. The `Blazor-ApexCharts` NuGet package is a leftover reference and should be removed (KI-010).
 
 ### 3.2 Backend
 
@@ -251,9 +253,9 @@ Both pages render charts as **custom inline SVG** — no charting library is imp
 - Unauthenticated users are redirected to `/login`.
 
 ### 8.4 Theme
-- The application uses **permanent dark mode** via MudBlazor's built-in theming system.
+- The application uses **permanent dark mode** defined entirely via CSS custom properties in `Momentum.Client/wwwroot/css/momentum-theme.css`.
 - There is no theme toggle or per-user theme preference — `ApplicationUser` does not store a `Theme` field.
-- The dark `MudThemeProvider` palette is configured once at the application level.
+- All colors, radii, and spacing are consumed as `var(--token-name)` references throughout scoped page CSS files. MudBlazor theming (`MudThemeProvider`) is not used for visual styling.
 
 ---
 
@@ -280,7 +282,7 @@ Both pages render charts as **custom inline SVG** — no charting library is imp
 ### 10.2 Client-Side Error Handling
 - API errors are caught in client service classes and surfaced to the UI as friendly error messages.
 - No technical stack traces or exception details are shown to the user.
-- MudBlazor Snackbar or Dialog components are used to display error and success notifications.
+- `ISnackbar` (MudBlazor, retained temporarily) is used to display error and success toast notifications. This will be replaced by a custom `ToastHost` component once implemented (see KI-009).
 
 ### 10.3 Global Exception Handler
 - A global exception handling middleware is registered in the ASP.NET Core pipeline.
@@ -325,4 +327,4 @@ The following are noted for future development and should be kept in mind when m
 ---
 
 *Momentum — Software Specifications Document*
-*Version 1.4 — Replaced ApexCharts with custom inline SVG charting; removed Theme from ApplicationUser; updated category color example; permanent dark mode noted; removed @using ApexCharts from report pages*
+*Version 1.5 — §3.1: replaced MudBlazor-as-primary-UI with custom HTML/CSS direction; noted ISnackbar as sole remaining MudBlazor dependency; §8.4: replaced MudBlazor theming references with momentum-theme.css CSS custom property system; §10.2: updated notification reference from MudBlazor Snackbar to ISnackbar (temporary)*

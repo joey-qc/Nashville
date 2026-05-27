@@ -93,50 +93,48 @@
         }
     </div>
 
-    <!-- ═══ Bottom row: breakdown + top periods ═══ -->
+    <!-- ═══ Bottom row: category trend + top periods ═══ -->
     @if (!_loading && _data.Any())
     {
-        var catTotals = BuildCategoryTotals();
-        var grandTot  = catTotals.Sum(c => c.Total);
-        var topList   = _data.OrderByDescending(d => d.Total).Take(5).ToList();
-        var topMax    = topList.FirstOrDefault()?.Total ?? 1;
+        var topList = _data.OrderByDescending(d => d.Total).Take(5).ToList();
+        var topMax  = topList.FirstOrDefault()?.Total ?? 1;
 
         <div class="bottom-row">
 
-            <!-- Category breakdown -->
-            <div class="bc-card">
-                <p class="bc-title">Category breakdown</p>
-                <p class="bc-sub">Share of total points across @PeriodLabel.ToLower()</p>
-
-                @if (grandTot > 0)
-                {
-                    <!-- Proportional color bar -->
-                    <div class="stack-bar">
-                        @foreach (var ct in catTotals)
-                        {
-                            var wPct = (ct.Total * 100.0 / grandTot).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
-                            <div class="stack-seg" style="width:@wPct%;background:@ct.ColorHex"></div>
-                        }
-                    </div>
-
-                    <!-- Category rows -->
-                    <div class="bc-list">
-                        @foreach (var ct in catTotals)
-                        {
-                            var pv = (int)Math.Round(ct.Total * 100.0 / grandTot);
-                            <div class="bc-row">
-                                <span class="bc-dot" style="background:@ct.ColorHex"></span>
-                                <span class="bc-name">@ct.Name</span>
-                                <span class="bc-pct">@pv%</span>
-                                <span class="bc-pts">@ct.Total pts</span>
+            <!-- Category trend sparklines (moved from Balance — time-series belongs here) -->
+            <div class="trend-card">
+                <div class="trend-head">
+                    <span class="trend-title">Category trend</span>
+                    <span class="trend-period">Last 8 weeks</span>
+                </div>
+                <div class="trend-list">
+                    @foreach (var cat in _categories)
+                    {
+                        var sparkVals = _sparkData.TryGetValue(cat.Id, out var sv) ? sv : new List<int>();
+                        var total8w   = sparkVals.Sum();
+                        var linePath  = BuildSparkPath(sparkVals);
+                        var areaPath  = BuildSparkArea(sparkVals);
+                        <div class="trend-row">
+                            <span class="trend-dot" style="background:@cat.ColorHex"></span>
+                            <span class="trend-name">@cat.Name</span>
+                            <div class="trend-spark-wrap">
+                                @if (linePath.Length > 0)
+                                {
+                                    <svg class="trend-spark" viewBox="0 0 100 24" preserveAspectRatio="none">
+                                        <path d="@areaPath" fill="@cat.ColorHex" fill-opacity="0.15"/>
+                                        <path d="@linePath" fill="none" stroke="@cat.ColorHex"
+                                              stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <div class="trend-spark-empty"></div>
+                                }
                             </div>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <p class="empty-text">No category data.</p>
-                }
+                            <span class="trend-total">@total8w</span>
+                        </div>
+                    }
+                </div>
             </div>
 
             <!-- Top periods -->
@@ -150,7 +148,7 @@
                         var bPct = (tp.Total * 100.0 / topMax).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
                         <div class="tc-row">
                             <span class="tc-rank">#@(rank + 1)</span>
-                            <span class="tc-label">@PeriodXLabel(tp)</span>
+                            <span class="tc-label">@TopPeriodLabel(tp)</span>
                             <div class="tc-bar-track">
                                 <div class="tc-bar-fill" style="width:@bPct%"></div>
                             </div>
@@ -168,8 +166,9 @@
 @code {
     private int _tabIndex;
     private int? _categoryId;
-    private List<DailyScoreDto> _data = [];
-    private List<CategoryDto> _categories = [];
+    private List<DailyScoreDto>         _data       = [];
+    private List<CategoryDto>           _categories = [];
+    private Dictionary<int, List<int>>  _sparkData  = [];
     private bool _loading = true;
     private int  _improvementPct;
 
@@ -199,6 +198,7 @@
         }
     }
 
+    // Short label for SVG chart x-axis (no year — space is limited)
     private string PeriodXLabel(DailyScoreDto d) => _tabIndex switch
     {
         1 => $"W{System.Globalization.ISOWeek.GetWeekOfYear(d.Date.ToDateTime(TimeOnly.MinValue))}",
@@ -206,13 +206,31 @@
         _ => d.Date.ToString("MMM d")
     };
 
+    // Full label for Top periods card — daily view includes year for unambiguous context
+    private string TopPeriodLabel(DailyScoreDto d) => _tabIndex switch
+    {
+        1 => $"W{System.Globalization.ISOWeek.GetWeekOfYear(d.Date.ToDateTime(TimeOnly.MinValue))}",
+        2 => d.Date.ToString("MMM"),
+        _ => d.Date.ToString("MMM d, yyyy")
+    };
+
     // ── Lifecycle ────────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
-        Task<IReadOnlyList<CategoryDto>> tCats = CategoryService.GetAllAsync();
-        Task tData = LoadData();
-        await Task.WhenAll(tCats, tData);
-        _categories = (await tCats).ToList();
+        // Load categories first (fast — cached in CategoryService) so we can
+        // kick off per-category spark requests in parallel with the chart data.
+        _categories = (await CategoryService.GetAllAsync()).OrderBy(c => c.Id).ToList();
+
+        var tData   = LoadData();
+        var tSparks = _categories.Select(c => ReportsService.GetWeeklyAsync(8, c.Id)).ToList();
+
+        var allTasks = new List<Task> { tData };
+        allTasks.AddRange(tSparks.Cast<Task>());
+        await Task.WhenAll(allTasks);
+
+        _sparkData = [];
+        for (int i = 0; i < _categories.Count; i++)
+            _sparkData[_categories[i].Id] = tSparks[i].Result.Select(d => d.Total).ToList();
     }
 
     private async Task SetTab(int idx)      { _tabIndex   = idx; await LoadData(); }
@@ -254,41 +272,33 @@
             : (int)Math.Round((current - previous) * 100.0 / previous);
     }
 
-    // Canonical display order: Physical(1) → Mental(2) → Spiritual(3) → Social(4) → Housekeeping(5)
-    private static readonly int[] CanonicalCatOrder = [1, 2, 3, 4, 5];
+    // ── Category trend sparklines ────────────────────────────
+    // Spark paths are always "last 8 weeks" regardless of the selected chart tab.
+    // Data is keyed by category ID and loaded in OnInitializedAsync.
 
-    // ── Category breakdown totals ────────────────────────────
-    private record CatTotal(int Id, string Name, string ColorHex, int Total);
-
-    private List<CatTotal> BuildCategoryTotals()
+    private static string BuildSparkPath(IList<int> vals, double w = 100, double h = 24)
     {
-        if (_categoryId.HasValue)
+        if (vals.Count < 2) return "";
+        var max   = Math.Max(1, vals.Max());
+        var min   = Math.Min(0, vals.Min());
+        var range = Math.Max(1, max - min);
+        var ic    = System.Globalization.CultureInfo.InvariantCulture;
+        var sb    = new System.Text.StringBuilder();
+        for (int i = 0; i < vals.Count; i++)
         {
-            var cat = _categories.FirstOrDefault(c => c.Id == _categoryId.Value);
-            if (cat is null) return [];
-            return [new CatTotal(cat.Id, cat.Name, cat.ColorHex, GrandTotal)];
+            var x = (i * w / (vals.Count - 1)).ToString("F1", ic);
+            var y = (h - (vals[i] - min) * (h - 2) / range).ToString("F1", ic);
+            sb.Append(i == 0 ? $"M {x} {y}" : $" L {x} {y}");
         }
+        return sb.ToString();
+    }
 
-        // Aggregate ByCategory across all periods
-        var agg = new Dictionary<int, int>();
-        foreach (var d in _data)
-            foreach (var (catId, pts) in d.ByCategory)
-            {
-                agg.TryGetValue(catId, out var cur);
-                agg[catId] = cur + pts;
-            }
-
-        return agg
-            .Select(kvp =>
-            {
-                var cat = _categories.FirstOrDefault(c => c.Id == kvp.Key);
-                return cat is null ? null : new CatTotal(cat.Id, cat.Name, cat.ColorHex, kvp.Value);
-            })
-            .Where(x => x?.Total > 0)
-            // Fixed canonical order, not sorted by points
-            .OrderBy(x => { var i = Array.IndexOf(CanonicalCatOrder, x!.Id); return i < 0 ? 999 : i; })
-            .Select(x => x!)
-            .ToList();
+    private static string BuildSparkArea(IList<int> vals, double w = 100, double h = 24)
+    {
+        var line = BuildSparkPath(vals, w, h);
+        if (line.Length == 0) return "";
+        var ic = System.Globalization.CultureInfo.InvariantCulture;
+        return $"{line} L {w.ToString("F1", ic)} {h.ToString("F1", ic)} L 0 {h.ToString("F1", ic)} Z";
     }
 
     // ── SVG chart (inline via MarkupString to avoid Razor <text> restrictions) ──
@@ -329,12 +339,13 @@
                 val == 0 ? "0" : val.ToString()));
         }
 
-        // Category color map; stacking uses CanonicalCatOrder
+        // Category color map; stacking uses canonical order Physical→Mental→Spiritual→Social→HK
         var catColors  = _categories.ToDictionary(c => c.Id, c => c.ColorHex);
         var solidColor = _categoryId.HasValue
             ? (_categories.FirstOrDefault(c => c.Id == _categoryId.Value)?.ColorHex ?? "#76E04A")
             : "#76E04A";
 
+        int[] canonicalOrder = [1, 2, 3, 4, 5];
         var itemW = chartW / n;
         var barW  = Math.Max(4, Math.Min(itemW * 0.62, 56));
 
@@ -351,7 +362,7 @@
 
             // Stacked segments: scale proportionally to totalH so combined height == totalH.
             // (ByCategory sums can exceed Total when activities span multiple categories.)
-            var catEntries = CanonicalCatOrder
+            var catEntries = canonicalOrder
                 .Where(catId => d.ByCategory.TryGetValue(catId, out var p) && p > 0)
                 .Select(catId => (catId, pts: d.ByCategory[catId]))
                 .ToList();
@@ -382,8 +393,8 @@
     private string BuildSvgContent(ChartData chart)
     {
         // Inline styles used instead of CSS classes — MarkupString bypasses Blazor scoped CSS
-        const string yLabelStyle = "font-size:9px;font-family:'DM Sans',sans-serif;fill:var(--text-muted)";
-        const string xLabelStyle = "font-size:9px;font-family:'DM Sans',sans-serif;fill:var(--text-muted)";
+        const string yLabelStyle = "font-size:9px;font-family:'DM Sans',sans-serif;fill:var(--chart-label)";
+        const string xLabelStyle = "font-size:9px;font-family:'DM Sans',sans-serif;fill:var(--chart-label)";
 
         var sb = new System.Text.StringBuilder();
 

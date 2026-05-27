@@ -52,6 +52,12 @@
         var bestDays = days.Take(2).ToList();
         var worstDay = days.Count > 2 ? days[^1] : null;
 
+        // Category breakdown in canonical order (Physical → Mental → Spiritual → Social → HK)
+        var catBreakdown = _balance
+            .Where(b => b.Total > 0)
+            .OrderBy(b => { var i = Array.IndexOf(CanonicalCatOrder, b.CategoryId); return i < 0 ? 999 : i; })
+            .ToList();
+
         @* ═══ Main card: donut + category list ═══ *@
         <div class="main-card">
 
@@ -116,43 +122,43 @@
             </div>
         </div>
 
-        @* ═══ Bottom row: trend + best/worst ═══ *@
+        @* ═══ Bottom row: category breakdown (left) + best & worst days (right) ═══ *@
         <div class="bottom-row">
 
-            @* Category trend sparklines *@
-            <div class="trend-card">
-                <div class="trend-head">
-                    <span class="trend-title">Category trend</span>
-                    <span class="trend-period">Last 8 weeks</span>
-                </div>
-                <div class="trend-list">
-                    @foreach (var cat in _categories)
-                    {
-                        var sparkVals = _sparkData.TryGetValue(cat.Id, out var sv) ? sv : new List<int>();
-                        var total8w   = sparkVals.Sum();
-                        var linePath  = BuildSparkPath(sparkVals);
-                        var areaPath  = BuildSparkArea(sparkVals);
-                        <div class="trend-row">
-                            <span class="trend-dot" style="background:@cat.ColorHex"></span>
-                            <span class="trend-name">@cat.Name</span>
-                            <div class="trend-spark-wrap">
-                                @if (linePath.Length > 0)
-                                {
-                                    <svg class="trend-spark" viewBox="0 0 100 24" preserveAspectRatio="none">
-                                        <path d="@areaPath" fill="@cat.ColorHex" fill-opacity="0.15"/>
-                                        <path d="@linePath" fill="none" stroke="@cat.ColorHex"
-                                              stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                }
-                                else
-                                {
-                                    <div class="trend-spark-empty"></div>
-                                }
+            @* Category breakdown (moved from Trend — distribution belongs here) *@
+            <div class="bc-card">
+                <p class="bc-title">Category breakdown</p>
+                <p class="bc-sub">Share of total points this @PeriodWord</p>
+
+                @if (catBreakdown.Any())
+                {
+                    <!-- Proportional color bar -->
+                    <div class="stack-bar">
+                        @foreach (var ct in catBreakdown)
+                        {
+                            var wPct = (ct.Total * 100.0 / GrandTotal).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+                            <div class="stack-seg" style="width:@wPct%;background:@ct.ColorHex"></div>
+                        }
+                    </div>
+
+                    <!-- Category rows -->
+                    <div class="bc-list">
+                        @foreach (var ct in catBreakdown)
+                        {
+                            var pv = (int)Math.Round(ct.Total * 100.0 / GrandTotal);
+                            <div class="bc-row">
+                                <span class="bc-dot" style="background:@ct.ColorHex"></span>
+                                <span class="bc-name">@ct.CategoryName</span>
+                                <span class="bc-pct">@pv%</span>
+                                <span class="bc-pts">@ct.Total pts</span>
                             </div>
-                            <span class="trend-total">@total8w</span>
-                        </div>
-                    }
-                </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="empty-text">No category data.</p>
+                }
             </div>
 
             @* Best & worst days *@
@@ -175,7 +181,7 @@
                                 </svg>
                             </div>
                             <div class="bwd-info">
-                                <span class="bwd-day">@day.DayName</span>
+                                <span class="bwd-day">@day.DayName <span class="bwd-date-inline">· @day.DateLabel</span></span>
                                 <span class="bwd-act">@day.TopActivity</span>
                             </div>
                             <span class="bwd-pts good">+@day.Total</span>
@@ -190,7 +196,7 @@
                                 </svg>
                             </div>
                             <div class="bwd-info">
-                                <span class="bwd-day">@worstDay.DayName</span>
+                                <span class="bwd-day">@worstDay.DayName <span class="bwd-date-inline">· @worstDay.DateLabel</span></span>
                                 <span class="bwd-act">@worstDay.TopActivity</span>
                             </div>
                             <span class="bwd-pts @(worstDay.Total >= 0 ? "good" : "bad")">
@@ -207,19 +213,21 @@
 </div>
 
 @code {
-    private string                     _period     = "week";
-    private List<CategoryTotalDto>     _balance    = [];
-    private List<CategoryDto>          _categories = [];
-    private Dictionary<int, List<int>> _sparkData  = [];
-    private List<ActivityLogDto>       _periodLogs = [];
+    private string                  _period     = "week";
+    private List<CategoryTotalDto>  _balance    = [];
+    private List<CategoryDto>       _categories = [];
+    private List<ActivityLogDto>    _periodLogs = [];
     private bool _loading = true;
+
+    // Canonical display order: Physical(1) → Mental(2) → Spiritual(3) → Social(4) → Housekeeping(5)
+    private static readonly int[] CanonicalCatOrder = [1, 2, 3, 4, 5];
 
     // ── Computed ──────────────────────────────────────────────
     private string PeriodWord        => _period switch { "month" => "month", "year" => "year", _ => "week" };
     private string PeriodCapitalized => _period switch { "month" => "This month", "year" => "This year", _ => "This week" };
     private int    GrandTotal        => _balance.Sum(b => b.Total);
 
-    private record DayInfo(DateOnly Date, string DayName, int Total, string TopActivity);
+    private record DayInfo(DateOnly Date, string DayName, string DateLabel, int Total, string TopActivity);
 
     private List<DayInfo> DayScores => _periodLogs
         .GroupBy(l => DateOnly.FromDateTime(l.LoggedAt.ToLocalTime()))
@@ -229,6 +237,7 @@
             return new DayInfo(
                 g.Key,
                 g.Key.ToDateTime(TimeOnly.MinValue).ToString("dddd"),
+                g.Key.ToString("MM/dd/yyyy"),
                 g.Sum(l => l.PointsRecorded),
                 topLog.ActivityName ?? "");
         })
@@ -258,19 +267,10 @@
         var tBalance = ReportsService.GetBalanceAsync(_period);
         var tLogs    = LogService.GetByDateRangeAsync(GetPeriodFrom(), DateTime.UtcNow);
 
-        // One sparkline call per category — all in parallel
-        var tSparks = _categories.Select(c => ReportsService.GetWeeklyAsync(8, c.Id)).ToList();
-
-        var allTasks = new List<Task> { tBalance, tLogs };
-        allTasks.AddRange(tSparks.Cast<Task>());
-        await Task.WhenAll(allTasks);
+        await Task.WhenAll(tBalance, tLogs);
 
         _balance    = tBalance.Result.OrderByDescending(b => b.Total).ToList();
         _periodLogs = tLogs.Result;
-
-        _sparkData = [];
-        for (int i = 0; i < _categories.Count; i++)
-            _sparkData[_categories[i].Id] = tSparks[i].Result.Select(d => d.Total).ToList();
 
         _loading = false;
     }
@@ -311,31 +311,5 @@
         }
 
         return sb.ToString();
-    }
-
-    // ── Sparklines ────────────────────────────────────────────
-    private static string BuildSparkPath(IList<int> vals, double w = 100, double h = 24)
-    {
-        if (vals.Count < 2) return "";
-        var max   = Math.Max(1, vals.Max());
-        var min   = Math.Min(0, vals.Min());
-        var range = Math.Max(1, max - min);
-        var ic    = System.Globalization.CultureInfo.InvariantCulture;
-        var sb    = new System.Text.StringBuilder();
-        for (int i = 0; i < vals.Count; i++)
-        {
-            var x = (i * w / (vals.Count - 1)).ToString("F1", ic);
-            var y = (h - (vals[i] - min) * (h - 2) / range).ToString("F1", ic);
-            sb.Append(i == 0 ? $"M {x} {y}" : $" L {x} {y}");
-        }
-        return sb.ToString();
-    }
-
-    private static string BuildSparkArea(IList<int> vals, double w = 100, double h = 24)
-    {
-        var line = BuildSparkPath(vals, w, h);
-        if (line.Length == 0) return "";
-        var ic = System.Globalization.CultureInfo.InvariantCulture;
-        return $"{line} L {w.ToString("F1", ic)} {h.ToString("F1", ic)} L 0 {h.ToString("F1", ic)} Z";
     }
 }

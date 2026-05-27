@@ -55,7 +55,7 @@ Momentum is moving away from MudBlazor toward:
 - inline SVG graphics/charts
 - responsive mobile-first layouts
 
-MudBlazor components may temporarily remain only on legacy pages not yet converted.
+All pages have been converted to custom HTML/CSS. The only remaining MudBlazor dependency is `ISnackbar` / `MudSnackbar` for toast notifications, retained intentionally until a custom toast component is implemented (see KI-009, KI-011).
 
 ---
 
@@ -140,6 +140,12 @@ Momentum models multidimensional impact rather than mutually-exclusive categoriz
 Transition strategy:
 - internal architecture first
 - user-facing terminology later
+
+Potential future UX benefits:
+- less task-manager language
+- more holistic/self-development framing
+- better support for overlapping behavioral impact
+- more psychologically resonant terminology
 
 ---
 
@@ -320,7 +326,11 @@ Momentum is intended to become:
 
 ## Remaining MudBlazor / Legacy UI Work
 
-- Login page
-- Register page
-- Final snackbar/toast replacement or confirmation that MudBlazor snackbar remains intentionally retained
-- Remove MudBlazor package after all remaining references are eliminated
+All pages are now fully converted to custom HTML/CSS (Home, Add Entry, View Log, Trends, Balance, Manage Activities, Settings, Login, Register). No MudBlazor page components remain.
+
+Remaining MudBlazor cleanup items:
+
+- **Custom toast component** — implement `ToastHost` + `ToastService` to replace `ISnackbar` (see KI-009, KI-011)
+- **Remove `ISnackbar` calls** — replace all `ISnackbar.Add(...)` usages once custom toast is live
+- **Remove MudBlazor NuGet package** — after all `ISnackbar` references are eliminated
+- **Remove ApexCharts NuGet package** — unused leftover from charting migration (see KI-010)

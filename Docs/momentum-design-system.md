@@ -1,0 +1,964 @@
+# Momentum Design System
+
+This document is the authoritative reference for UI implementation in the Momentum application. It covers design philosophy, visual tokens, component patterns, and rendering conventions. All new code and AI-generated code must follow this document.
+
+---
+
+## 1. Design Philosophy
+
+Momentum is a **behavioral momentum system**, not a productivity dashboard. The UI should feel:
+
+- **Calm and immersive** — dark, spacious, no visual clutter
+- **Focused** — one clear action per surface; minimal competing elements
+- **Reinforcing** — positive feedback without being garish
+- **Forward-moving** — visual hierarchy always points toward the next action
+- **Emotionally coherent** — color, weight, and spacing convey meaning, not just style
+
+### Visual Language Principles
+
+- Use dark blue layers (navy → surface → surface-2) to create depth without shadows
+- Reserve the primary green (`--primary`) for interactive CTAs and positive scores only
+- Use red (`--negative`) only for errors, destructive actions, and negative points
+- Uppercase small-caps labels (kickers, field labels) create hierarchy without size
+- Avoid gradients except for the primary CTA glow and brand logo
+- Never hardcode colors — always use design tokens from `momentum-theme.css`
+
+---
+
+## 2. Color Tokens
+
+All tokens are defined in `Momentum.Client/wwwroot/css/momentum-theme.css`.
+
+### Background Scale
+
+| Token | Value | Usage |
+|---|---|---|
+| `--bg` | `#050D1B` | Page background (body) |
+| `--bg-2` | `#081427` | Topbar background |
+| `--surface` | `#0E2240` | Card and modal backgrounds |
+| `--surface-2` | `#143055` | Input fields, quick-pick tiles, activity rows |
+| `--surface-3` | `#1A3B66` | Hover state for surface-2 elements |
+
+### Border Scale
+
+| Token | Value | Usage |
+|---|---|---|
+| `--border` | `#1F3D66` | Input borders, dropdown borders |
+| `--border-soft` | `#15294A` | Card borders, dividers, grid lines |
+
+### Brand / Interaction
+
+| Token | Value | Usage |
+|---|---|---|
+| `--primary` | `#76E04A` | Primary CTA, active nav item, positive score text |
+| `--primary-dim` | `#4FB02C` | Primary button hover state |
+| `--primary-glow` | `#76E04A30` | Button shadow, focus ring, selected chip background |
+| `--accent` | `#4FB8FF` | Month sparkline, secondary accent |
+| `--negative` | `#FF6B6B` | Error states, negative points, destructive actions |
+| `--positive` | `#76E04A` | Alias for `--primary` in score contexts |
+
+### Text Scale
+
+| Token | Value | Usage |
+|---|---|---|
+| `--text` | `#F0F4F8` | Primary body text, headings, input values |
+| `--text-dim` | `#8BA0B8` | Secondary text, subtitles, timestamps |
+| `--text-muted` | `#4A6080` | Labels, placeholders, disabled text, minor metadata |
+| `--chart-label` | `#A8BED0` | SVG chart axis labels only (see §9 for why a separate token) |
+
+### Category Colors
+
+Never hardcode category colors in components. Always read `ColorHex` from `CategoryDto`.
+
+| Category | Token | Value |
+|---|---|---|
+| Physical | `--cat-physical` | `#76E04A` |
+| Mental | `--cat-mental` | `#5BC8FF` |
+| Spiritual | `--cat-spiritual` | `#B894FF` |
+| Social | `--cat-social` | `#F7B500` |
+| Housekeeping | `--cat-housekeeping` | `#FF9472` |
+| All (filter default) | — | `#9E9E9E` |
+
+### Border Radius
+
+| Token | Value | Usage |
+|---|---|---|
+| `--radius-sm` | `8px` | Inputs, buttons, chips, pills, small cards |
+| `--radius` | `12px` | Standard cards |
+| `--radius-lg` | `16px` | Large cards, auth card |
+
+---
+
+## 3. Typography
+
+### Font Families
+
+| Family | Usage |
+|---|---|
+| `Space Grotesk` (700) | All headings (h1–h6), large numeric scores, KPI values, brand name, modal titles |
+| `DM Sans` (400/500/600/700) | All body text, labels, buttons, inputs, metadata |
+
+Both fonts are loaded from Google Fonts in `index.html`.
+
+### Type Scale
+
+| Role | Size | Weight | Font | Color |
+|---|---|---|---|---|
+| Page title (h1) | 1.6–2.2rem | 700 | Space Grotesk | `--text` |
+| Card title (h2) | 1.0–1.35rem | 700 | Space Grotesk | `--text` |
+| Section title | 0.95rem | 600 | Space Grotesk | `--text` |
+| KPI value | 1.8rem | 700 | Space Grotesk | `--text` |
+| Body text | 0.875rem | 400–500 | DM Sans | `--text` / `--text-dim` |
+| Field label (kicker) | 0.62–0.65rem | 700 | DM Sans | `--text-muted` |
+| Metadata / timestamp | 0.72–0.78rem | 400–500 | DM Sans | `--text-muted` |
+| Button text | 0.72–1.0rem | 700 | DM Sans | varies |
+| Chart axis label | 9px | — | SVG text | `--chart-label` via inline style |
+
+### Kicker Pattern
+
+Used above page titles and card titles to provide eyebrow context:
+
+```css
+.kicker {
+    display: block;
+    font-size: 0.62–0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12–0.15em;
+    color: var(--primary);  /* or --text-muted for less emphasis */
+    text-transform: uppercase;
+    margin-bottom: 6–8px;
+}
+```
+
+Examples: `ACCOUNT`, `WELCOME BACK`, `START A STREAK`, `EDITING`, `LIBRARY`
+
+---
+
+## 4. Spacing Rhythm
+
+Momentum uses a relaxed 4px base grid. Prefer multiples of 4 for all spacing.
+
+### Common Spacing Values
+
+| Context | Value |
+|---|---|
+| Between page sections / cards | 20–28px (gap) |
+| Card padding (standard) | 20px |
+| Card padding (large/auth) | 28–32px |
+| Field group bottom margin | 20–22px |
+| Label bottom margin | 6–8px |
+| Button padding (primary CTA) | 11–14px vertical, 22–26px horizontal |
+| Button padding (text action) | 4px vertical, 0 horizontal |
+| Chip/pill padding | 2–4px vertical, 7–10px horizontal |
+
+### Page Content Max-Widths
+
+| Context | Max-Width |
+|---|---|
+| Home dashboard | 1200px |
+| Log Activity | 680px |
+| Manage Activities | unconstrained (full card list) |
+| Settings | 640px |
+| Auth pages (Login/Register) | 400px |
+| Manage Activities modal | 580px |
+
+---
+
+## 5. Card Patterns
+
+### Standard Card
+
+```css
+background: var(--surface);
+border: 1px solid var(--border-soft);
+border-radius: var(--radius);   /* 12px */
+padding: 20px;
+```
+
+### Large Card (Settings, auth)
+
+```css
+border-radius: var(--radius-lg);  /* 16px or 20px */
+padding: 28–32px;
+```
+
+### Auth Card
+
+```css
+border-radius: 20px;
+padding: 32px 28px 24px;
+box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+```
+
+### Card Header Row (`.card-head`)
+
+```css
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: 16px;
+flex-wrap: wrap;
+gap: 8px;
+```
+
+Contains: `.card-label` (uppercase kicker, `--text-muted`) or `.card-title` (Space Grotesk, `--text`), plus an optional right-aligned action or legend.
+
+### Card Divider
+
+```html
+<hr class="card-divider" />
+```
+```css
+border: none;
+border-top: 1px solid var(--border-soft);
+margin: 0;
+```
+
+Used in Settings between card-top, card-body, and card-footer sections.
+
+---
+
+## 6. Button Hierarchy
+
+Momentum uses three tiers of button emphasis.
+
+### Tier 1 — Primary CTA
+
+Green filled button. Used for the single dominant action on a form or page.
+
+```css
+padding: 11–14px 22–26px;
+background: var(--primary);
+color: #071a07;               /* dark green text — NOT white */
+border: none;
+border-radius: var(--radius-sm);
+font-family: 'DM Sans', sans-serif;
+font-size: 0.9–1.0rem;
+font-weight: 700;
+box-shadow: 0 0 16–22px rgba(118, 224, 74, 0.18–0.22),
+            0 2–4px 6–12px rgba(0, 0, 0, 0.28–0.3);
+cursor: pointer;
+-webkit-appearance: none;
+appearance: none;
+```
+
+Hover: `background: var(--primary-dim)` + increased glow shadow.  
+Disabled: `opacity: 0.6; cursor: not-allowed; box-shadow: none`.
+
+Primary CTAs always use the arrow icon (`→`) for navigation actions:
+```html
+<span>Sign in</span>
+<svg viewBox="0 0 24 24" width="18" height="18" …><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+```
+
+### Tier 2 — Secondary / Outline
+
+Not currently used as a standalone pattern. Prefer primary or text actions.
+
+### Tier 3 — Text Action (Cancel / Non-destructive)
+
+Bare text button, no border or background.
+
+```css
+background: transparent;
+border: none;
+color: var(--text-muted);
+font-size: 0.72rem;
+font-weight: 700;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+padding: 4px 0;
+cursor: pointer;
+```
+
+Example label: `CANCEL`
+
+### Tier 4 — Destructive Text Action
+
+Red text, same bare style as Tier 3.
+
+```css
+background: transparent;
+border: none;
+color: var(--negative);
+font-size: 0.72rem;
+font-weight: 700;
+letter-spacing: 0.1em;
+opacity: 0.6;       /* resting — draws less attention */
+padding: 4px 0;
+cursor: pointer;
+```
+
+Hover: `opacity: 1`.  
+Example label: `DELETE ACTIVITY` (with small trash icon inline).
+
+### Social / Ghost Buttons (auth pages only)
+
+```css
+background: var(--surface-2);
+border: 1px solid var(--border);
+border-radius: var(--radius-sm);
+color: var(--text-dim);
+font-size: 0.88rem;
+font-weight: 500;
+padding: 11px 16px;
+```
+
+---
+
+## 7. Form Styling
+
+### Standard Field Pattern
+
+Used on all inner-app forms (Log Activity, Manage Activities, Settings):
+
+```css
+/* Label */
+.field-label {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 6–8px;
+}
+
+/* Input */
+.field-input {
+    width: 100%;
+    padding: 10–12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875–0.9rem;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color 0.15s ease;
+}
+
+.field-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);  /* Settings uses this; Log does not */
+}
+```
+
+Placeholder: `color: var(--text-muted)`.
+
+### Auth Field Pattern (Login / Register)
+
+Stacked label-inside-container: the label and input share one container div (`.auth-field`), so the label appears inside the input area rather than above it.
+
+```html
+<div class="auth-field">
+    <label class="auth-field-label" for="field-id">EMAIL</label>
+    <input id="field-id" type="email" class="auth-field-input" … />
+</div>
+```
+
+```css
+.auth-field {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px 13px;
+    margin-bottom: 10px;
+    cursor: text;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-field:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.auth-field-label {
+    display: block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+    pointer-events: none;
+}
+
+.auth-field-input {
+    flex: 1;
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-weight: 500;
+    outline: none;
+    padding: 0;
+}
+```
+
+### Password Field with Eye Toggle
+
+Wrap input + toggle in `.auth-field-inner` (flex row). The toggle button (`.pw-toggle`) is transparent with `--text-muted` icon color.
+
+### Textarea
+
+```css
+background: var(--surface-2);
+border: 1px solid var(--border);
+border-radius: var(--radius-sm);
+resize: vertical;
+min-height: 80px;
+```
+
+### Points Spinner
+
+```html
+<div class="pts-spinner">
+    <button class="pts-btn">−</button>
+    <div class="pts-value-wrap pos|neg|''">
+        <span class="pts-num">+5</span>
+        <span class="pts-sub">PER ENTRY</span>
+    </div>
+    <button class="pts-btn">+</button>
+</div>
+```
+
+- Positive value: `.pos` → `color: var(--positive)`
+- Negative value: `.neg` → `color: var(--negative)`
+- Zero: `--text-muted`
+- Sub-label "PER ENTRY" is `0.52rem`, `opacity: 0.45`
+
+### Custom Checkbox (auth / terms)
+
+Native checkbox is visually hidden (`opacity: 0; width: 1px`). A sibling `.auth-check-box` is styled via the adjacent sibling CSS selector:
+
+```css
+.auth-check:checked + .auth-check-box {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #071a07;  /* checkmark color */
+}
+```
+
+---
+
+## 8. Action Row Conventions
+
+### Standard Action Row
+
+The action row sits at the bottom of a form card or modal. Primary CTA on the left; Cancel as text action to its right.
+
+```html
+<div class="action-row">
+    <button type="submit" class="btn-submit" disabled="@busy">Log activity</button>
+    <button type="button" class="btn-text-cancel">CANCEL</button>
+</div>
+```
+
+```css
+.action-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 6px;
+}
+```
+
+The primary button is **not** full-width; it takes only the width of its content plus padding.
+
+### Modal Footer (with Destructive Action)
+
+When a modal has both save/cancel and a potential delete action, use a `space-between` footer layout:
+
+```html
+<div class="modal-footer">
+    <div class="modal-footer-left">
+        <button type="submit" class="btn-save">Save changes</button>
+        <button type="button" class="btn-text-cancel">CANCEL</button>
+    </div>
+    @if (isEditing)
+    {
+        <button type="button" class="btn-text-delete">
+            <!-- trash SVG icon -->
+            DELETE ACTIVITY
+        </button>
+    }
+</div>
+```
+
+```css
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-soft);
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.modal-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+```
+
+The delete action is **separated** to the far right, visually distinct from the primary action cluster.
+
+---
+
+## 9. Destructive Action Conventions
+
+1. **Never show a destructive button unless a user-initiated action has created a context** (user has clicked Edit, selected a row, etc.)
+2. Delete is always a **Tier 4 text action** (`var(--negative)`, `opacity: 0.6` at rest)
+3. For activities with log history, a 409 response triggers a **confirmation dialog** with two options:
+   - **Hide from future logging** (archive — preserves data)
+   - **Delete this activity and all history** (cascade — permanent, clearly warned)
+4. The cascade option should use `var(--negative)` or be visually marked as irreversible
+5. Never auto-proceed after a destructive action — always require explicit user confirmation
+
+---
+
+## 10. Modal Patterns
+
+### Trigger
+
+Modals in Manage Activities open when a user taps a row or the "+ New Activity" button. They are rendered in-page with a backdrop overlay.
+
+### Modal Card
+
+```css
+.modal-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    max-width: 580px;
+    width: 100%;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+```
+
+### Modal Header
+
+```html
+<div class="modal-header">
+    <div class="modal-title-group">
+        <span class="modal-kicker">EDITING</span>  <!-- or LIBRARY for new -->
+        <h2 class="modal-title">Activity Name</h2>
+    </div>
+    <button class="modal-close-btn" type="button" aria-label="Close">✕</button>
+</div>
+```
+
+```css
+.modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 12px;
+}
+
+.modal-kicker {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--primary);
+}
+
+.modal-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+}
+```
+
+### Side-by-Side Form Layout (within modal)
+
+When Default Points and Categories should appear on the same row:
+
+```css
+.form-split-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+    align-items: start;
+}
+```
+
+On mobile (≤660px): collapses to `grid-template-columns: 1fr`.
+
+---
+
+## 11. Category Chip Styling
+
+Used in Manage Activities modal for multi-select category toggles.
+
+### Selected State (solid fill)
+
+```html
+<button class="cat-toggle-btn cat-selected"
+        style="border-color:{cat.ColorHex};background:{cat.ColorHex};color:rgba(0,0,0,0.78)">
+    <span class="cat-toggle-dot" style="background:rgba(0,0,0,0.22)"></span>
+    @cat.Name
+</button>
+```
+
+### Unselected State (colored border)
+
+```html
+<button class="cat-toggle-btn"
+        style="border-color:{cat.ColorHex}55;color:{cat.ColorHex}CC">
+    <span class="cat-toggle-dot" style="background:{cat.ColorHex}"></span>
+    @cat.Name
+</button>
+```
+
+```css
+.cat-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1.5px solid;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.15s ease;
+}
+```
+
+The color is always **driven by inline styles from `cat.ColorHex`**, not hardcoded CSS classes.
+
+### Display Chips (read-only, on log entries / activity rows)
+
+```html
+<span class="cat-tag" style="background:{cat.ColorHex}1A;color:{cat.ColorHex}">
+    @cat.Name
+</span>
+```
+
+```css
+.cat-tag {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+```
+
+The `1A` suffix (hex opacity 10%) on the background provides the subtle tinted fill.
+
+---
+
+## 12. SVG and Chart Rendering Conventions
+
+### Critical Blazor Constraint
+
+**`<text>` is a reserved Razor pseudo-element.** Placing `<text x="..." y="...">` in a Razor component causes build error RZ1023. SVG text nodes must be rendered via `@((MarkupString)...)`:
+
+```razor
+@((MarkupString)$"<text x=\"{x}\" y=\"{y}\" style=\"font-size:9px;fill:var(--chart-label)\">{value}</text>")
+```
+
+### CSS Isolation and MarkupString
+
+Blazor's CSS isolation adds a scoped attribute (e.g., `b-a1b2c3d4`) to elements rendered by the component. `MarkupString` bypasses the Blazor renderer — injected elements never receive the scoped attribute, so **scoped CSS class rules do not match them**.
+
+**Always apply `fill`, `font-size`, and other SVG text styles via inline `style` attribute in the MarkupString string, not via CSS class selectors.**
+
+```razor
+<!-- CORRECT -->
+@((MarkupString)$"<text ... style=\"fill:var(--chart-label);font-size:9px\">{tv}</text>")
+
+<!-- WRONG — CSS class will not apply -->
+@((MarkupString)$"<text class=\"chart-y-label\" ...>{tv}</text>")
+```
+
+### Bar Chart Geometry
+
+Standard bar chart SVG geometry constants:
+
+```csharp
+const double ChL = 40;   // left x of chart area
+const double ChT = 15;   // top y of bars
+const double ChB = 170;  // bottom y of bars
+const double ChH = 155;  // usable chart height (ChB - ChT)
+const double ChW = 450;  // chart width (490 - ChL)
+const double BarW = 14;  // individual bar pixel width
+```
+
+ViewBox: `"0 0 500 200"`. Y-axis labels at `x=34`, x-axis day labels at `y=193`.
+
+### Bar Colors
+
+- Current week bars: `fill="var(--primary)"` (green)
+- Last week / comparison bars: `fill="var(--text-muted)"` (gray)
+- Negative-value bars: `fill="var(--negative)"` (red) — use `.setback-fill`
+
+### Gridlines
+
+```razor
+<line x1="@ChL" y1="@y" x2="490" y2="@y"
+      stroke="var(--border-soft)" stroke-width="1"/>
+```
+
+### Ring Chart (Today's Momentum)
+
+Full-circle ring using `stroke-dasharray` (conceptually). Implemented as a plain `<circle>` with `stroke`:
+
+- Positive or zero day: `stroke="url(#ringGrad)"` (green gradient), `stroke-opacity="1"`
+- Negative day: `stroke="var(--negative)"`, `stroke-opacity="0.4"`
+
+Score text color:
+- Positive: `fill: var(--text)` (via `.ring-score-text`)
+- Negative: `fill: var(--negative)` (via `.ring-score-neg`)
+
+### Sparklines
+
+```css
+.spark-line {
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.week-spark  { stroke: var(--primary); }
+.month-spark { stroke: var(--accent); }
+```
+
+### Category Bar Fill
+
+Progress bars in the momentum card read color from `CategoryTotalDto.ColorHex`. Never hardcode category colors in SVG.
+
+---
+
+## 13. Responsive Behavior
+
+### Breakpoints
+
+| Breakpoint | Applies To |
+|---|---|
+| ≤900px | Report bottom-row collapses from two columns to single column (Balance page) |
+| ≤768px | Home dashboard grid collapses; sidebar switches to overlay drawer; report bottom-row collapses (Trend page) |
+| ≤660px | Manage Activities modal footer stacks; form split row collapses |
+| ≤540px | Log Activity side-by-side fields collapse; quick-pick goes single column |
+| ≤480px | Home KPI cards stack vertically; momentum body stacks ring above bars; auth cards get reduced padding; Best & worst day date suffix hidden |
+
+### Home Dashboard
+
+- **Desktop**: Two-column grids (`hero-row`: `1fr 300px`; `split-row`: `1fr 380px`)
+- **≤768px**: Both collapse to single column; KPI cards become `1fr 1fr` grid side-by-side
+- **≤480px**: KPI cards collapse to single column; momentum body stacks vertically
+
+### Auth Pages
+
+Auth pages render inside `.auth-shell` (full-height flex column, centered), which is provided by `MainLayout.razor` when the user is unauthenticated. The auth page itself (`.auth-page`) is `max-width: 400px`, centering brand + card + footer.
+
+### Modals
+
+Modals are in-page overlays with `max-width: 580px`. On mobile (≤660px), the modal footer stacks vertically (`flex-direction: column; align-items: stretch`).
+
+### Sidebar
+
+- Desktop: Fixed 280px sidebar; collapses to 64px icon-only mode via the `collapsed` CSS class
+- Mobile (≤767px): Sidebar slides off-screen; `.hamburger` button shows it as an overlay drawer with `.mobile-overlay` backdrop
+
+#### Sidebar State Model
+
+The hamburger button toggles **two boolean flags** simultaneously via `ToggleSidebar()`:
+
+| Flag | Controls |
+|---|---|
+| `_collapsed` | Desktop: sidebar shrinks to 64px icon rail |
+| `_mobileOpen` | Mobile: sidebar slides in as an overlay drawer |
+
+These are toggled together because the same button serves both viewports — CSS media queries decide which behavior is actually visible at the current width.
+
+**Critical rule — Razor conditional rendering in the nav:**  
+Never use `@if (_collapsed)` alone to decide which nav item template to render. The `_collapsed` flag is `true` whenever the mobile drawer is open (because both flags toggle together). Using `_collapsed` alone as the template guard causes the collapsed (icon-only) template to render even when the mobile drawer is showing the full expanded nav.
+
+**Correct guard for icon-rail templates:**
+```razor
+@if (_collapsed && !_mobileOpen)
+{
+    <!-- Desktop icon-rail only: icon, no label, no children -->
+}
+else
+{
+    <!-- Full nav (desktop expanded OR mobile open drawer): icon + label + children -->
+}
+```
+
+This ensures that when the mobile drawer is open (`_mobileOpen=true`), the full labeled template always renders regardless of the `_collapsed` state.
+
+#### CSS Restoration vs. DOM Existence
+
+CSS `!important` overrides in the mobile media query can **restore visibility** of hidden elements, but they **cannot create elements that were never rendered**. If Razor chooses the icon-only branch, `<span class="nav-label">` does not exist in the DOM — no CSS can make it appear. Always ensure the correct Razor template branch renders first; then use CSS to fine-tune appearance.
+
+#### Reports Group Submenu
+
+The Reports nav entry uses a collapsible pattern (toggle button + child links):
+- The toggle button carries `aria-expanded="true/false"` and `aria-controls="reports-submenu"`.
+- Child links (`Trends`, `Balance`) are wrapped in `<div id="reports-submenu" style="display:contents">` for accessible association without layout disruption.
+- `_reportsExpanded` defaults to `true` and is initialized to `true` when the page path starts with `/reports`.
+- On mobile: Reports is expanded (full group) by default because the mobile drawer always uses the full-template branch.
+
+---
+
+## 14. Report Page Layouts
+
+Each report sub-page uses a consistent two-zone bottom-row layout: a wide `1fr` left card and a fixed-width right card, separated by a 20px gap.
+
+### Trends Page (`/reports`)
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Header: title · period label · improvement pill      │
+│ Stats line: total · avg · best period                │
+├─────────────────────────────────────────────────────┤
+│ Controls: Daily / Weekly / Monthly tabs              │
+│           Category filter chips                      │
+├─────────────────────────────────────────────────────┤
+│ Bar chart card (full width, stacked by category)     │
+├──────────────────────────────┬──────────────────────┤
+│ Category trend               │ Top days / periods   │
+│ (sparklines, last 8 weeks)   │ (300px fixed)        │
+│ 1fr                          │                      │
+└──────────────────────────────┴──────────────────────┘
+```
+
+**Bottom-row grid:** `grid-template-columns: 1fr 300px`  
+**Top periods date format:** `MMM d, yyyy` (daily only — e.g., "May 15, 2026"); weekly/monthly use short labels.  
+**Top periods grid:** `grid-template-columns: 24px auto 1fr 40px` — label column auto-sizes to date text width; bar takes remaining `1fr`.
+
+### Balance Page (`/reports/balance`)
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Header: kicker · title · subtitle · period selector  │
+├─────────────────────────────────────────────────────┤
+│ Main card: donut chart + category list               │
+│ (full width, period-based distribution)              │
+├─────────────────────────────────────────────────────┤
+│ Insight callout (dominant category coaching)         │
+├──────────────────────────────┬──────────────────────┤
+│ Category breakdown           │ Best & worst days    │
+│ (stacked bar + list,         │ (300px fixed)        │
+│ canonical category order)    │                      │
+│ 1fr                          │                      │
+└──────────────────────────────┴──────────────────────┘
+```
+
+**Bottom-row grid:** `grid-template-columns: 1fr 300px`  
+**Best & worst day format:** `DayName · MM/dd/yyyy` — date is an inline `<span class="bwd-date-inline">` with lighter weight and muted color. At ≤480px, the date suffix is hidden (`display: none`) to keep rows compact.
+
+### Section Placement Rationale
+
+| Section | Page | Rationale |
+|---|---|---|
+| Category trend (sparklines) | Trends | Time-series data belongs with time-series analysis |
+| Top days / Top periods | Trends | Highest-scoring periods are a trend-analysis concept |
+| Category breakdown (stacked bar) | Balance | Distribution/share is a balance concept |
+| Best & worst days | Balance | Day-level scoring within a period is a balance insight |
+
+### Date Format Conventions for Report Pages
+
+| Context | Format | Example |
+|---|---|---|
+| Top days (Trend page) | `MMM d, yyyy` | May 15, 2026 |
+| Top weeks (Trend page) | `W{n}` | W23 |
+| Top months (Trend page) | `MMM` | May |
+| Best/worst day name (Balance) | `dddd` | Tuesday |
+| Best/worst day date (Balance) | `MM/dd/yyyy` | 05/26/2026 |
+| Combined best/worst display | `{DayName} · {Date}` | Tuesday · 05/26/2026 |
+
+---
+
+## 15. Auth Page Patterns
+
+Auth pages (Login, Register) share styles from `wwwroot/css/auth-pages.css` — a **global** (non-scoped) stylesheet loaded in `index.html`.
+
+### Structure
+
+```
+.auth-page
+├── .auth-brand (logo wrap + brand name + DAILY WELLNESS)
+├── .auth-card
+│   ├── .auth-card-header (eyebrow + title + subtitle)
+│   ├── .auth-alert (error or info banner — conditional)
+│   ├── <form>
+│   │   ├── .auth-field (stacked label + input)
+│   │   ├── .auth-meta-row (checkbox + forgot password link)
+│   │   └── .auth-submit (full-width green CTA)
+│   ├── .auth-divider (OR CONTINUE WITH — Login only)
+│   ├── .auth-social-row (Google/Apple — Login only, disabled)
+│   └── .auth-bottom-nav (No account? Create one)
+└── <footer class="auth-footer">
+```
+
+### Eyebrow Labels
+
+| Page | Eyebrow | Title |
+|---|---|---|
+| Login | `WELCOME BACK` | `Sign in` |
+| Register | `START A STREAK` | `Create account` |
+
+### Alert Banners
+
+```css
+.auth-alert-error {
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    color: #FF9B9B;
+}
+
+.auth-alert-info {  /* cold-start banner */
+    background: rgba(91, 200, 255, 0.1);
+    border: 1px solid rgba(91, 200, 255, 0.25);
+    color: var(--text-dim);
+}
+```
+
+---
+
+## 16. Accessibility Expectations
+
+- All `<button>` and `<input>` elements must have meaningful text content or `aria-label`
+- Eye-toggle buttons: `aria-label="Show password"` / `aria-label="Hide password"` (dynamic)
+- Close buttons: `aria-label="Close"`
+- Decorative SVG icons: `aria-hidden="true"`
+- Charts: currently no screen-reader text; future work should add `<title>` inside SVG
+- Headings (`h1`–`h6`) have `outline: none` in global CSS — they are not interactive and must not receive visible focus rings
+- **Do not** globally suppress focus outlines — interactive elements (buttons, inputs, links) must retain their browser focus ring for keyboard navigation
+- Color is never the **only** indicator of state (points always show `+`/`-` prefix in addition to color)
+
+---
+
+## 17. Toast Notifications
+
+Toast notifications use `ISnackbar` / `MudSnackbar` from MudBlazor — the **only** permitted MudBlazor dependency. This is a known temporary dependency (see Known Issues KI-009, KI-011). Usage:
+
+```csharp
+Snackbar.Add("Settings saved.", Severity.Success);
+Snackbar.Add("Failed to save settings.", Severity.Error);
+```
+
+Do not use `MudSnackbar` directly in markup. Use the `ISnackbar` service only.
+
+---
+
+*Momentum Design System — v1.0*
+*Reflects UI state after Phase 4 redesign (all pages converted to custom HTML/CSS)*

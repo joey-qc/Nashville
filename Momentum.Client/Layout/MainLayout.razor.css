@@ -159,6 +159,11 @@
     transform: rotate(180deg);
 }
 
+/* Reports submenu wrapper — layout-neutral container used for aria-controls */
+#reports-submenu {
+    display: contents; /* collapses to nothing — children flow as if the div weren't there */
+}
+
 /* Child nav items (Trends, Balance) */
 .nav-child {
     padding-left: 44px;
