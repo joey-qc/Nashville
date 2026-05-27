@@ -160,6 +160,11 @@
     fill: var(--text-muted);
 }
 
+/* Negative-day score text: red to match the muted red ring */
+.ring-score-neg {
+    fill: var(--negative);
+}
+
 /* Score + category bars */
 .momentum-stats {
     flex: 1;
@@ -337,12 +342,12 @@
 
 .chart-x-label {
     font-size: 9px;
-    fill: var(--text-muted);
+    fill: var(--chart-label);
 }
 
 .chart-y-label {
     font-size: 9px;
-    fill: var(--text-muted);
+    fill: var(--chart-label);
 }
 
 .chart-legend {
@@ -523,4 +528,62 @@
 @keyframes pulse {
     0%, 100% { opacity: 0.5; }
     50%       { opacity: 1; }
+}
+
+/* ── Mobile responsive ───────────────────────────────────── */
+@media (max-width: 768px) {
+    .home {
+        gap: 16px;
+    }
+
+    /* Stack all grid rows to a single column */
+    .hero-row,
+    .split-row {
+        grid-template-columns: 1fr;
+    }
+
+    /* KPI cards sit below momentum card — let them be full width */
+    .kpi-stack {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    /* Momentum body: ring + bars side by side until very small */
+    .momentum-body {
+        gap: 16px;
+    }
+
+    /* Activity cats: allow wrap on narrow rows */
+    .activity-cats {
+        max-width: 90px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* KPI cards stack vertically on very small phones */
+    .kpi-stack {
+        grid-template-columns: 1fr;
+    }
+
+    /* Ring + bars go vertical */
+    .momentum-body {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .momentum-stats {
+        width: 100%;
+        padding-top: 0;
+    }
+
+    /* Tighten page header */
+    .home-welcome {
+        font-size: 1.35rem;
+    }
+
+    /* Hide category tags on tiny screens to keep row compact */
+    .activity-cats {
+        display: none;
+    }
 }

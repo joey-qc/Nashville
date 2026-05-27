@@ -25,9 +25,9 @@ public class ActivityLogService(HttpClient http)
 
     public async Task<List<ActivityLogDto>> GetByDateRangeAsync(DateTime from, DateTime to)
     {
-        var result = await http.GetFromJsonAsync<List<ActivityLogDto>>(
-            $"api/logs?from={from:O}&to={to:O}") ?? [];
-
+        var response = await http.GetAsync($"api/logs?from={from:O}&to={to:O}");
+        if (!response.IsSuccessStatusCode) return [];
+        var result = await response.Content.ReadFromJsonAsync<List<ActivityLogDto>>() ?? [];
         return TagUtc(result);
     }
 
@@ -35,7 +35,9 @@ public class ActivityLogService(HttpClient http)
     {
         try
         {
-            return TagUtc(await http.GetFromJsonAsync<ActivityLogDto>($"api/logs/{id}"));
+            var response = await http.GetAsync($"api/logs/{id}");
+            if (!response.IsSuccessStatusCode) return null;
+            return TagUtc(await response.Content.ReadFromJsonAsync<ActivityLogDto>());
         }
         catch
         {

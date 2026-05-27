@@ -46,10 +46,12 @@ else
                         </defs>
                         <!-- Track (background circle) -->
                         <circle class="ring-track" cx="70" cy="70" r="52"/>
-                        <!-- Full green gradient ring -->
-                        <circle class="ring-full" cx="70" cy="70" r="52" stroke="url(#ringGrad)"/>
+                        <!-- Ring fill: green gradient for positive, muted red for negative/zero -->
+                        <circle class="ring-full" cx="70" cy="70" r="52"
+                                stroke="@(IsNegativeDay ? "var(--negative)" : "url(#ringGrad)")"
+                                stroke-opacity="@(IsNegativeDay ? "0.4" : "1")"/>
                         <!-- Center: today's total -->
-                        <text x="70" y="64" class="ring-score-text" text-anchor="middle">@(_summary?.TodayTotal ?? 0)</text>
+                        <text x="70" y="64" class="ring-score-text @(IsNegativeDay ? "ring-score-neg" : "")" text-anchor="middle">@(_summary?.TodayTotal ?? 0)</text>
                         <text x="70" y="82" class="ring-score-label" text-anchor="middle">TODAY</text>
                     </svg>
                 </div>
@@ -155,12 +157,13 @@ else
             {
                 <svg class="bar-svg" viewBox="0 0 500 200" preserveAspectRatio="xMidYMid meet">
                     <!-- Y-axis gridlines + labels -->
+                    <!-- Note: <text> is a reserved Razor tag, so SVG text nodes must use @((MarkupString)...) -->
                     @foreach (var (ty, tv) in YTicks())
                     {
-                        <line x1="@ChL" y1="@ty.ToString("F0")" x2="490" y2="@ty.ToString("F0")"
+                        var tyStr = ty.ToString("F0");
+                        <line x1="@ChL" y1="@tyStr" x2="490" y2="@tyStr"
                               stroke="var(--border-soft)" stroke-width="1"/>
-                        <tspan x="34" y="@ty.ToString("F0")" class="chart-y-label"
-                               dominant-baseline="central" text-anchor="end">@tv</tspan>
+                        @((MarkupString)$"<text x=\"34\" y=\"{tyStr}\" dominant-baseline=\"central\" text-anchor=\"end\" style=\"font-size:9px;fill:var(--chart-label)\">{tv}</text>")
                     }
                     <!-- Bars + x-labels -->
                     @for (int idx = 0; idx < _comparison.Days.Count; idx++)
@@ -175,7 +178,7 @@ else
                         var lbx = LabelX(idx).ToString("F1");
                         <rect x="@cx" y="@cy" width="@BarW" height="@ch" fill="var(--primary)" rx="3"/>
                         <rect x="@lx" y="@ly" width="@BarW" height="@lh" fill="var(--text-muted)" rx="3"/>
-                        <tspan x="@lbx" y="193" class="chart-x-label" text-anchor="middle">@day.DayLabel</tspan>
+                        @((MarkupString)$"<text x=\"{lbx}\" y=\"193\" text-anchor=\"middle\" style=\"font-size:9px;fill:var(--chart-label)\">{day.DayLabel[0]}</text>")
                     }
                 </svg>
             }
@@ -267,8 +270,11 @@ else
     private int    CatBarMax      => _todayByCategory.Count > 0 ? Math.Max(1, _todayByCategory.Max(c => Math.Abs(c.Total))) : 1;
     private double CatPct(int v)  => Math.Min(100, Math.Abs(v) * 100.0 / CatBarMax);
     private IEnumerable<CategoryTotalDto> PositiveCats => _todayByCategory.Where(c => c.Total > 0).OrderByDescending(c => c.Total);
-    private int    SetbacksTotal  => _todayByCategory.Where(c => c.Total < 0).Sum(c => c.Total);
+    // Sum negative log points directly — do NOT sum per-category totals, which would
+    // count a multi-category entry's points once per category (double/triple counting).
+    private int    SetbacksTotal  => _todayLogs.Where(l => l.PointsRecorded < 0).Sum(l => l.PointsRecorded);
     private bool   HasSetbacks    => SetbacksTotal < 0;
+    private bool   IsNegativeDay  => (_summary?.TodayTotal ?? 0) < 0;
 
     /* ── Computed: week/month deltas ──────────────────────────── */
     private int LastWeekTotal => _comparison?.Days.Sum(d => d.LastWeek) ?? 0;
@@ -345,15 +351,25 @@ else
     /* ── Data loading ─────────────────────────────────────────── */
     protected override async Task OnInitializedAsync()
     {
-        if (AuthState is not null)
+        // ── Auth guard ────────────────────────────────────────────
+        // Must check BEFORE any API call. During a logout race the auth state
+        // propagates asynchronously; without this guard Home fires API calls
+        // with a cleared token and receives 401 errors.
+        if (AuthState is null)
         {
-            var state = await AuthState;
-            _displayName = state.User.FindFirst("displayName")?.Value
-                        ?? state.User.Identity?.Name
-                        ?? "there";
+            _loading = false;
+            return;
         }
+        var state = await AuthState;
+        if (!(state.User.Identity?.IsAuthenticated ?? false))
+        {
+            _loading = false;
+            return; // AuthorizeView / router will navigate to /login
+        }
+        _displayName = state.User.FindFirst("displayName")?.Value
+                    ?? state.User.Identity?.Name
+                    ?? "there";
 
-        var cats     = await CategoryService.GetAllAsync();
         var todayUtc = DateTime.UtcNow.Date;
 
         var tSummary  = ScoreService.GetSummaryAsync();

@@ -13,6 +13,7 @@
   --text: #F0F4F8;
   --text-dim: #8BA0B8;
   --text-muted: #4A6080;
+  --chart-label: #A8BED0; /* chart axis labels: lighter than text-dim, not pure white */
   --negative: #FF6B6B;
   --positive: #76E04A;
   --cat-physical: #76E04A;
@@ -33,4 +34,5 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Space Grotesk', sans-serif;
+  outline: none; /* headings are not interactive; suppress browser focus ring */
 }

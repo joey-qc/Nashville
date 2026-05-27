@@ -11,7 +11,16 @@ public class ActivityService(HttpClient http)
 
     public async Task LoadAsync()
     {
-        _cache = await http.GetFromJsonAsync<List<ActivityDto>>("api/activities") ?? [];
+        // Use GetAsync so we can inspect the status code before reading the body.
+        // GetFromJsonAsync calls EnsureSuccessStatusCode internally and throws on 401/403,
+        // which would surface as an unhandled exception during logout race conditions.
+        var response = await http.GetAsync("api/activities");
+        if (!response.IsSuccessStatusCode)
+        {
+            _cache = [];
+            return;
+        }
+        _cache = await response.Content.ReadFromJsonAsync<List<ActivityDto>>() ?? [];
     }
 
     public void Invalidate() => _cache = null;
@@ -24,8 +33,9 @@ public class ActivityService(HttpClient http)
 
     public async Task<IReadOnlyList<ActivityDto>> GetFrequentAsync(int count = 10)
     {
-        var result = await http.GetFromJsonAsync<List<ActivityDto>>($"api/activities/frequent?count={count}");
-        return result ?? [];
+        var response = await http.GetAsync($"api/activities/frequent?count={count}");
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<ActivityDto>>() ?? [];
     }
 
     public async Task<ActivityDto?> CreateAsync(CreateActivityDto dto)
