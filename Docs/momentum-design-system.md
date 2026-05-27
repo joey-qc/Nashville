@@ -755,7 +755,7 @@ Progress bars in the momentum card read color from `CategoryTotalDto.ColorHex`. 
 | ≤768px | Home dashboard grid collapses; sidebar switches to overlay drawer; report bottom-row collapses (Trend page) |
 | ≤660px | Manage Activities modal footer stacks; form split row collapses |
 | ≤540px | Log Activity side-by-side fields collapse; quick-pick goes single column |
-| ≤480px | Home KPI cards stack vertically; momentum body stacks ring above bars; auth cards get reduced padding; Best & worst day date suffix hidden |
+| ≤480px | Home KPI cards stack vertically; momentum body stacks ring above bars; auth cards get reduced padding; Best & worst day date suffix rendered at slightly smaller font (never hidden) |
 
 ### Home Dashboard
 
@@ -854,16 +854,39 @@ Each report sub-page uses a consistent two-zone bottom-row layout: a wide `1fr` 
 │ (full width, period-based distribution)              │
 ├─────────────────────────────────────────────────────┤
 │ Insight callout (dominant category coaching)         │
-├──────────────────────────────┬──────────────────────┤
-│ Category breakdown           │ Best & worst days    │
-│ (stacked bar + list,         │ (300px fixed)        │
-│ canonical category order)    │                      │
-│ 1fr                          │                      │
-└──────────────────────────────┴──────────────────────┘
+├─────────────────────────────────────────────────────┤
+│ Best & worst days (full width)                       │
+│ top 2 best days + 1 worst day for the period         │
+└─────────────────────────────────────────────────────┘
 ```
 
-**Bottom-row grid:** `grid-template-columns: 1fr 300px`  
-**Best & worst day format:** `DayName · MM/dd/yyyy` — date is an inline `<span class="bwd-date-inline">` with lighter weight and muted color. At ≤480px, the date suffix is hidden (`display: none`) to keep rows compact.
+**Layout:** All cards are full-width stacked — no side-by-side bottom row on this page.  
+**Best & worst day format:** `DayName · MM/dd/yyyy` — date is an inline `<span class="bwd-date-inline">` with lighter weight and muted color. The date is **always visible** at all breakpoints. At ≤480px, font-size shrinks to `0.72rem` but the element is never `display: none`.
+
+### Home Dashboard (`/`)
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Header: date · welcome · subtitle                    │
+├──────────────────────────────────┬──────────────────┤
+│ Today's Momentum card            │ KPI stack        │
+│ (ring + category bars)           │ (This Week       │
+│ 1fr                              │  This Month)     │
+│                                  │ 300px            │
+├──────────────────────────────┬───┴──────────────────┤
+│ Bar chart                    │ Today's activity     │
+│ (This wk vs last wk)         │ (list, up to 5)      │
+│ 1fr                          │ 380px                │
+├─────────────────────────────────────────────────────┤
+│ Weekly category breakdown (full width)               │
+│ stacked bar + category rows · This Week only         │
+└─────────────────────────────────────────────────────┘
+```
+
+**Grid rows:** `hero-row`: `1fr 300px`; `split-row`: `1fr 380px`; breakdown card is full-width in page flow.  
+**Weekly breakdown CSS prefix:** `wkb-` (`.wkb-card`, `.wkb-stack`, `.wkb-seg`, `.wkb-row`, etc.)  
+**Breakdown data:** `ReportsService.GetBalanceAsync("week")` — fixed to current week, positive categories only, canonical order.  
+**Responsive:** At ≤768px the bar track column hides (`grid-template-columns: 10px 1fr 44px 110px`); at ≤480px the bar track is `display: none` and columns collapse to `10px 1fr 44px`.
 
 ### Section Placement Rationale
 
@@ -871,16 +894,17 @@ Each report sub-page uses a consistent two-zone bottom-row layout: a wide `1fr` 
 |---|---|---|
 | Category trend (sparklines) | Trends | Time-series data belongs with time-series analysis |
 | Top days / Top periods | Trends | Highest-scoring periods are a trend-analysis concept |
-| Category breakdown (stacked bar) | Balance | Distribution/share is a balance concept |
+| Category breakdown (stacked bar) | Home (§5.4) | Weekly snapshot belongs on the dashboard for at-a-glance use |
 | Best & worst days | Balance | Day-level scoring within a period is a balance insight |
+| Donut + category list | Balance | Proportional distribution across the selected period |
 
 ### Date Format Conventions for Report Pages
 
 | Context | Format | Example |
 |---|---|---|
 | Top days (Trend page) | `MMM d, yyyy` | May 15, 2026 |
-| Top weeks (Trend page) | `W{n}` | W23 |
-| Top months (Trend page) | `MMM` | May |
+| Top weeks (Trend page) | `W{n} yyyy` | W21 2026 |
+| Top months (Trend page) | `MMM yyyy` | May 2026 |
 | Best/worst day name (Balance) | `dddd` | Tuesday |
 | Best/worst day date (Balance) | `MM/dd/yyyy` | 05/26/2026 |
 | Combined best/worst display | `{DayName} · {Date}` | Tuesday · 05/26/2026 |
@@ -960,5 +984,5 @@ Do not use `MudSnackbar` directly in markup. Use the `ISnackbar` service only.
 
 ---
 
-*Momentum Design System — v1.0*
-*Reflects UI state after Phase 4 redesign (all pages converted to custom HTML/CSS)*
+*Momentum Design System — v1.1*
+*Reflects UI state after Phase 4 redesign (all pages converted to custom HTML/CSS) plus report restructuring: Category Breakdown moved to Home; sparklines moved to Trends; Balance page simplified to full-width stacked layout; Top Periods labels include year; bwd-date-inline always visible*

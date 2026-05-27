@@ -510,6 +510,87 @@
     background: var(--primary-glow);
 }
 
+/* ── Weekly category breakdown card ─────────────────────── */
+.wkb-stack {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    gap: 2px;
+    margin-bottom: 20px;
+}
+
+.wkb-seg {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+    min-width: 2px;
+}
+
+.wkb-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.wkb-row {
+    display: grid;
+    grid-template-columns: 10px 1fr 52px 160px;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.wkb-row:first-child { padding-top: 0; }
+.wkb-row:last-child  { border-bottom: none; padding-bottom: 0; }
+
+.wkb-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+.wkb-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.wkb-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.wkb-sub {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+}
+
+.wkb-pct {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.wkb-track {
+    height: 6px;
+    background: var(--surface-3);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.wkb-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
 /* ── Loading state ───────────────────────────────────────── */
 .home-loading {
     display: flex;
@@ -558,6 +639,12 @@
     .activity-cats {
         max-width: 90px;
     }
+
+    /* Narrow breakdown bar column */
+    .wkb-row {
+        grid-template-columns: 10px 1fr 44px 110px;
+        gap: 8px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -584,6 +671,15 @@
 
     /* Hide category tags on tiny screens to keep row compact */
     .activity-cats {
+        display: none;
+    }
+
+    /* Collapse breakdown to dot + name + pct only */
+    .wkb-row {
+        grid-template-columns: 10px 1fr 44px;
+    }
+
+    .wkb-track {
         display: none;
     }
 }

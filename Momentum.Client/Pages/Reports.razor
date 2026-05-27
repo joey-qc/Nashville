@@ -206,11 +206,11 @@
         _ => d.Date.ToString("MMM d")
     };
 
-    // Full label for Top periods card — daily view includes year for unambiguous context
+    // Full label for Top periods card — all views include year for unambiguous context
     private string TopPeriodLabel(DailyScoreDto d) => _tabIndex switch
     {
-        1 => $"W{System.Globalization.ISOWeek.GetWeekOfYear(d.Date.ToDateTime(TimeOnly.MinValue))}",
-        2 => d.Date.ToString("MMM"),
+        1 => $"W{System.Globalization.ISOWeek.GetWeekOfYear(d.Date.ToDateTime(TimeOnly.MinValue))} {d.Date.Year}",
+        2 => d.Date.ToString("MMM yyyy"),
         _ => d.Date.ToString("MMM d, yyyy")
     };
 

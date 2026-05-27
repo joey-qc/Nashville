@@ -237,6 +237,51 @@ else
 
     </div>
 
+    <!-- ══ WEEKLY CATEGORY BREAKDOWN ══ -->
+    <div class="card wkb-card">
+        <div class="card-head">
+            <span class="card-title">This week by category</span>
+        </div>
+        @if (_weekBalance.Count == 0)
+        {
+            <p class="no-data-hint">No activity logged this week.</p>
+        }
+        else
+        {
+            <!-- Stacked proportion bar -->
+            <div class="wkb-stack">
+                @foreach (var cat in _weekBalance)
+                {
+                    var segPct = GrandWeekTotal > 0
+                        ? (cat.Total * 100.0 / GrandWeekTotal).ToString("F1", System.Globalization.CultureInfo.InvariantCulture)
+                        : "0.0";
+                    <div class="wkb-seg" style="width:@segPct%;background:@cat.ColorHex"
+                         title="@cat.CategoryName: @cat.Total pts"></div>
+                }
+            </div>
+            <!-- Category rows -->
+            <div class="wkb-list">
+                @foreach (var cat in _weekBalance)
+                {
+                    var pct     = GrandWeekTotal > 0 ? (int)Math.Round(cat.Total * 100.0 / GrandWeekTotal) : 0;
+                    var fillPct = GrandWeekTotal > 0 ? Math.Min(100.0, cat.Total * 100.0 / GrandWeekTotal) : 0.0;
+                    var fillStr = fillPct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+                    <div class="wkb-row">
+                        <span class="wkb-dot" style="background:@cat.ColorHex"></span>
+                        <div class="wkb-info">
+                            <span class="wkb-name">@cat.CategoryName</span>
+                            <span class="wkb-sub">@cat.Total pts</span>
+                        </div>
+                        <span class="wkb-pct">@pct%</span>
+                        <div class="wkb-track">
+                            <div class="wkb-fill" style="width:@fillStr%;background:@cat.ColorHex"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
 </div>
 }
 
@@ -258,8 +303,12 @@ else
     private List<ActivityLogDto>     _todayLogs       = [];
     private List<DailyScoreDto>      _last30Days      = [];
     private List<DailyScoreDto>      _last2Months     = [];
+    private List<CategoryTotalDto>   _weekBalance     = [];
     private string _displayName = "there";
     private bool   _loading     = true;
+
+    // Canonical display order: Physical(1) → Mental(2) → Spiritual(3) → Social(4) → Housekeeping(5)
+    private static readonly int[] _canonicalCatOrder = [1, 2, 3, 4, 5];
 
     /* ── Computed: header ─────────────────────────────────────── */
     private string DateLine =>
@@ -275,6 +324,9 @@ else
     private int    SetbacksTotal  => _todayLogs.Where(l => l.PointsRecorded < 0).Sum(l => l.PointsRecorded);
     private bool   HasSetbacks    => SetbacksTotal < 0;
     private bool   IsNegativeDay  => (_summary?.TodayTotal ?? 0) < 0;
+
+    /* ── Computed: weekly category breakdown ─────────────────── */
+    private int GrandWeekTotal => _weekBalance.Where(b => b.Total > 0).Sum(b => b.Total);
 
     /* ── Computed: week/month deltas ──────────────────────────── */
     private int LastWeekTotal => _comparison?.Days.Sum(d => d.LastWeek) ?? 0;
@@ -372,19 +424,26 @@ else
 
         var todayUtc = DateTime.UtcNow.Date;
 
-        var tSummary  = ScoreService.GetSummaryAsync();
-        var tCompare  = ScoreService.GetWeeklyComparisonAsync();
-        var tLogs     = LogService.GetByDateRangeAsync(todayUtc, todayUtc.AddDays(1));
-        var tDaily    = ReportsService.GetDailyAsync(31);
-        var tMonthly  = ReportsService.GetMonthlyAsync(2);
+        var tSummary     = ScoreService.GetSummaryAsync();
+        var tCompare     = ScoreService.GetWeeklyComparisonAsync();
+        var tLogs        = LogService.GetByDateRangeAsync(todayUtc, todayUtc.AddDays(1));
+        var tDaily       = ReportsService.GetDailyAsync(31);
+        var tMonthly     = ReportsService.GetMonthlyAsync(2);
+        var tWeekBalance = ReportsService.GetBalanceAsync("week");
 
-        await Task.WhenAll(tSummary, tCompare, tLogs, tDaily, tMonthly);
+        await Task.WhenAll(tSummary, tCompare, tLogs, tDaily, tMonthly, tWeekBalance);
 
         _summary     = tSummary.Result;
         _comparison  = tCompare.Result;
         _todayLogs   = tLogs.Result;
         _last30Days  = tDaily.Result.TakeLast(30).ToList();
         _last2Months = tMonthly.Result;
+
+        // Weekly category breakdown — canonical order, positive categories only
+        _weekBalance = tWeekBalance.Result
+            .Where(b => b.Total > 0)
+            .OrderBy(b => { var i = Array.IndexOf(_canonicalCatOrder, b.CategoryId); return i < 0 ? 999 : i; })
+            .ToList();
 
         // Build today's category breakdown directly from today's logs.
         // Note: DailyScoreDto.ByCategory is never populated by the reports API (only Date+Total

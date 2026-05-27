@@ -52,12 +52,6 @@
         var bestDays = days.Take(2).ToList();
         var worstDay = days.Count > 2 ? days[^1] : null;
 
-        // Category breakdown in canonical order (Physical → Mental → Spiritual → Social → HK)
-        var catBreakdown = _balance
-            .Where(b => b.Total > 0)
-            .OrderBy(b => { var i = Array.IndexOf(CanonicalCatOrder, b.CategoryId); return i < 0 ? 999 : i; })
-            .ToList();
-
         @* ═══ Main card: donut + category list ═══ *@
         <div class="main-card">
 
@@ -122,91 +116,50 @@
             </div>
         </div>
 
-        @* ═══ Bottom row: category breakdown (left) + best & worst days (right) ═══ *@
-        <div class="bottom-row">
-
-            @* Category breakdown (moved from Trend — distribution belongs here) *@
-            <div class="bc-card">
-                <p class="bc-title">Category breakdown</p>
-                <p class="bc-sub">Share of total points this @PeriodWord</p>
-
-                @if (catBreakdown.Any())
+        @* ═══ Best & worst days ═══ *@
+        <div class="bwd-card">
+            <div class="bwd-head">
+                <span class="bwd-title">Best &amp; worst days</span>
+                <span class="bwd-period">@PeriodCapitalized</span>
+            </div>
+            <div class="bwd-list">
+                @if (days.Count == 0)
                 {
-                    <!-- Proportional color bar -->
-                    <div class="stack-bar">
-                        @foreach (var ct in catBreakdown)
-                        {
-                            var wPct = (ct.Total * 100.0 / GrandTotal).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
-                            <div class="stack-seg" style="width:@wPct%;background:@ct.ColorHex"></div>
-                        }
-                    </div>
-
-                    <!-- Category rows -->
-                    <div class="bc-list">
-                        @foreach (var ct in catBreakdown)
-                        {
-                            var pv = (int)Math.Round(ct.Total * 100.0 / GrandTotal);
-                            <div class="bc-row">
-                                <span class="bc-dot" style="background:@ct.ColorHex"></span>
-                                <span class="bc-name">@ct.CategoryName</span>
-                                <span class="bc-pct">@pv%</span>
-                                <span class="bc-pts">@ct.Total pts</span>
-                            </div>
-                        }
+                    <p class="bwd-empty">No entries logged this @PeriodWord.</p>
+                }
+                @foreach (var day in bestDays)
+                {
+                    <div class="bwd-row">
+                        <div class="bwd-badge good">
+                            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                                <path d="M7 14l5-5 5 5z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div class="bwd-info">
+                            <span class="bwd-day">@day.DayName <span class="bwd-date-inline">· @day.DateLabel</span></span>
+                            <span class="bwd-act">@day.TopActivity</span>
+                        </div>
+                        <span class="bwd-pts good">+@day.Total</span>
                     </div>
                 }
-                else
+                @if (worstDay is not null)
                 {
-                    <p class="empty-text">No category data.</p>
+                    <div class="bwd-row">
+                        <div class="bwd-badge bad">
+                            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                                <path d="M7 10l5 5 5-5z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div class="bwd-info">
+                            <span class="bwd-day">@worstDay.DayName <span class="bwd-date-inline">· @worstDay.DateLabel</span></span>
+                            <span class="bwd-act">@worstDay.TopActivity</span>
+                        </div>
+                        <span class="bwd-pts @(worstDay.Total >= 0 ? "good" : "bad")">
+                            @(worstDay.Total > 0 ? "+" : "")@worstDay.Total
+                        </span>
+                    </div>
                 }
             </div>
-
-            @* Best & worst days *@
-            <div class="bwd-card">
-                <div class="bwd-head">
-                    <span class="bwd-title">Best &amp; worst days</span>
-                    <span class="bwd-period">@PeriodCapitalized</span>
-                </div>
-                <div class="bwd-list">
-                    @if (days.Count == 0)
-                    {
-                        <p class="bwd-empty">No entries logged this @PeriodWord.</p>
-                    }
-                    @foreach (var day in bestDays)
-                    {
-                        <div class="bwd-row">
-                            <div class="bwd-badge good">
-                                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-                                    <path d="M7 14l5-5 5 5z" fill="currentColor"/>
-                                </svg>
-                            </div>
-                            <div class="bwd-info">
-                                <span class="bwd-day">@day.DayName <span class="bwd-date-inline">· @day.DateLabel</span></span>
-                                <span class="bwd-act">@day.TopActivity</span>
-                            </div>
-                            <span class="bwd-pts good">+@day.Total</span>
-                        </div>
-                    }
-                    @if (worstDay is not null)
-                    {
-                        <div class="bwd-row">
-                            <div class="bwd-badge bad">
-                                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-                                    <path d="M7 10l5 5 5-5z" fill="currentColor"/>
-                                </svg>
-                            </div>
-                            <div class="bwd-info">
-                                <span class="bwd-day">@worstDay.DayName <span class="bwd-date-inline">· @worstDay.DateLabel</span></span>
-                                <span class="bwd-act">@worstDay.TopActivity</span>
-                            </div>
-                            <span class="bwd-pts @(worstDay.Total >= 0 ? "good" : "bad")">
-                                @(worstDay.Total > 0 ? "+" : "")@worstDay.Total
-                            </span>
-                        </div>
-                    }
-                </div>
-            </div>
-
         </div>
     }
 
@@ -218,9 +171,6 @@
     private List<CategoryDto>       _categories = [];
     private List<ActivityLogDto>    _periodLogs = [];
     private bool _loading = true;
-
-    // Canonical display order: Physical(1) → Mental(2) → Spiritual(3) → Social(4) → Housekeeping(5)
-    private static readonly int[] CanonicalCatOrder = [1, 2, 3, 4, 5];
 
     // ── Computed ──────────────────────────────────────────────
     private string PeriodWord        => _period switch { "month" => "month", "year" => "year", _ => "week" };

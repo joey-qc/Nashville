@@ -70,6 +70,13 @@ This is the first screen a user sees after successful login.
 - Example: If today is Tuesday, the chart compares total points earned Monday–Tuesday this week vs. Monday–Tuesday last week.
 - This gives immediate visual feedback on whether the user is ahead of or behind last week's pace.
 
+### 5.4 Weekly Category Breakdown
+- At the bottom of the Home dashboard, a card shows this week's activity broken down by wellness category.
+- A full-width stacked proportional bar visualizes each category's relative share of the week's points using category colors.
+- Below the bar, a row per category shows: color dot · category name · point total · percentage · horizontal bar.
+- Only categories with at least one positive point entry for the current week are displayed.
+- Categories appear in canonical order: Physical → Mental → Spiritual → Social → Housekeeping.
+
 ---
 
 ## 6. Log Activity Screen
@@ -171,7 +178,8 @@ A sparkline panel showing each category's weekly point trend over the last 8 wee
 #### 8.1.5 Top Days / Top Periods
 The five highest-scoring periods for the selected aggregation level.
 - **Daily view ("Top days"):** Date displayed as `MMM d, yyyy` (e.g., "May 15, 2026") for unambiguous context.
-- **Weekly / Monthly view ("Top periods"):** Compact label (e.g., "W23" or "May").
+- **Weekly view ("Top periods"):** ISO week number with year (e.g., "W21 2026").
+- **Monthly view ("Top periods"):** Month abbreviation with year (e.g., "May 2026").
 - Progress bar showing score relative to the top scorer.
 
 ---
@@ -190,14 +198,11 @@ Dropdown (presented as a styled pill): **This Week**, **This Month**, **This Yea
 #### 8.2.3 Insight Callout
 A coaching callout highlighting which category is dominating and suggesting which underrepresented categories to add to bring the balance closer to even.
 
-#### 8.2.4 Category Breakdown
-A compact proportional breakdown panel showing the stacked color bar and category rows (dot · name · percentage · points) in canonical category order.
-
-#### 8.2.5 Best & Worst Days
+#### 8.2.4 Best & Worst Days
 The two best-scoring days and the single worst-scoring day within the selected period.
 - Each row shows: best/worst badge · day name · date (`MM/dd/yyyy`) · top activity · point total.
 - Format example: **Tuesday · 05/26/2026**
-- Date shown as subtle secondary text alongside the day name.
+- Date is shown as subtle secondary text alongside the day name and is **always visible** — it is never hidden at any screen size or breakpoint (may be rendered at a slightly smaller font size on very small phones).
 
 ---
 
@@ -294,4 +299,4 @@ When a new user registers, the following starter activities are automatically ad
 ---
 
 *Momentum — Functional Requirements Document*
-*Version 1.3 — Updated navigation label to "Add Entry"; updated category color names to new palette; replaced theme toggle with permanent dark mode note*
+*Version 1.4 — Added §5.4 weekly category breakdown on Home dashboard; updated Top Periods format to include year (W21 2026, May 2026); removed Category Breakdown from Balance page (redundant with donut); updated Best & Worst Days date always-visible rule*
