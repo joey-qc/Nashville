@@ -36,7 +36,7 @@ public class ActivityService(IActivityRepository activityRepo, IActivityLogRepos
             IsArchived = false,
             CreatedAt = now,
             UpdatedAt = now,
-            Categories = dto.CategoryIds.Select(id => new ActivityCategory { CategoryId = id }).ToList()
+            Dimensions = dto.CategoryIds.Select(id => new ActivityDimension { DimensionId = id }).ToList()
         };
 
         await activityRepo.AddAsync(activity);
@@ -53,7 +53,7 @@ public class ActivityService(IActivityRepository activityRepo, IActivityLogRepos
         activity.Description = dto.Description;
         activity.DefaultPoints = dto.DefaultPoints;
         activity.UpdatedAt = DateTime.UtcNow;
-        activity.Categories = dto.CategoryIds.Select(cid => new ActivityCategory { ActivityId = id, CategoryId = cid }).ToList();
+        activity.Dimensions = dto.CategoryIds.Select(cid => new ActivityDimension { ActivityId = id, DimensionId = cid }).ToList();
 
         await activityRepo.SaveChangesAsync();
         return Map(activity);
@@ -80,7 +80,7 @@ public class ActivityService(IActivityRepository activityRepo, IActivityLogRepos
             if (logCount > 0)
                 await logRepo.DeleteByActivityAsync(id, userId);
 
-            activity.Categories.Clear();
+            activity.Dimensions.Clear();
             await activityRepo.SaveChangesAsync();
 
             await activityRepo.DeleteAsync(activity);
@@ -97,11 +97,11 @@ public class ActivityService(IActivityRepository activityRepo, IActivityLogRepos
         Description = a.Description,
         DefaultPoints = a.DefaultPoints,
         IsArchived = a.IsArchived,
-        Categories = a.Categories.Select(ac => new CategoryDto
+        Categories = a.Dimensions.Select(ad => new CategoryDto
         {
-            Id = ac.Category?.Id ?? ac.CategoryId,
-            Name = ac.Category?.Name ?? string.Empty,
-            ColorHex = ac.Category?.ColorHex ?? string.Empty
+            Id       = ad.Dimension?.Id       ?? ad.DimensionId,
+            Name     = ad.Dimension?.Name     ?? string.Empty,
+            ColorHex = ad.Dimension?.ColorHex ?? string.Empty
         }).ToList()
     };
 }

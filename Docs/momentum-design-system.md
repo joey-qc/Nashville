@@ -973,7 +973,7 @@ Auth pages (Login, Register) share styles from `wwwroot/css/auth-pages.css` — 
 
 ## 17. Toast Notifications
 
-Toast notifications use `ISnackbar` / `MudSnackbar` from MudBlazor — the **only** permitted MudBlazor dependency. This is a known temporary dependency (see Known Issues KI-009, KI-011). Usage:
+Toast notifications use `ISnackbar` / `MudSnackbar` from MudBlazor — the **only** permitted MudBlazor dependency. This is a known temporary dependency pending the native Momentum toast system (see Known Issues KI-009). Usage:
 
 ```csharp
 Snackbar.Add("Settings saved.", Severity.Success);

@@ -55,7 +55,7 @@ Momentum is moving away from MudBlazor toward:
 - inline SVG graphics/charts
 - responsive mobile-first layouts
 
-All pages have been converted to custom HTML/CSS. The only remaining MudBlazor dependency is `ISnackbar` / `MudSnackbar` for toast notifications, retained intentionally until a custom toast component is implemented (see KI-009, KI-011).
+All pages have been converted to custom HTML/CSS. The only remaining MudBlazor dependency is `ISnackbar` / `MudSnackbar` for toast notifications, retained intentionally until a native Momentum toast system is implemented (see KI-009).
 
 ---
 
@@ -94,32 +94,40 @@ The design language emphasizes:
 
 ## Activity Template vs Behavioral Event
 
+**Status: IN PROGRESS** — v2 Dimension Model migration underway on branch `feature/v2-dimension-model`.
+See `Docs/migration-snapshots/` for pre-migration artifacts and the implementation plan.
+
+### Phase 1 milestone: ActivityLogEntryDimension
+The first concrete step is materializing per-log-entry dimension assignments into a dedicated
+`ActivityLogEntryDimensions` table. This decouples historical report data from the activity's
+current dimension configuration — changing an activity's dimensions will no longer retroactively
+alter past reports.
+
+Simultaneously, "Category" is renamed to "Dimension" at every layer (entities, DTOs, services,
+API endpoints, UI) to align with the long-term terminology goal.
+
+### Original intent (preserved)
+
 Current model:
 - Activities define default meaning
 - Log entries inherit metadata from activities
 
-Future direction:
-- Activities become reusable templates
-- Individual log entries become richer behavioral events
+Target model:
+- Activities become reusable templates with default dimensions
+- Individual log entries become richer behavioral events with their own persisted dimensions
 
-Future log entries may support:
-- dimension overrides
-- contextual meaning
-- custom point adjustments
-- richer metadata
+Future log entries may additionally support:
+- per-entry dimension overrides at log time (UI — deferred to post-v2)
+- contextual meaning and richer metadata
 
-This transition will impact:
-- database schema
-- EF Core entities
-- DTOs
-- APIs
-- reporting
-- filtering
-- analytics
-- charting
-- UX flows
+This transition impacts:
+- database schema (new join table; table renames)
+- EF Core entities and migrations
+- DTOs and API contracts
+- all reporting calculations (ScoreService, ReportsService)
+- all UI pages
 
-This should be treated as a major architectural milestone.
+This is a major architectural milestone — implement on the dedicated feature branch only.
 
 ---
 
@@ -330,7 +338,125 @@ All pages are now fully converted to custom HTML/CSS (Home, Add Entry, View Log,
 
 Remaining MudBlazor cleanup items:
 
-- **Custom toast component** — implement `ToastHost` + `ToastService` to replace `ISnackbar` (see KI-009, KI-011)
+- **Native Momentum toast system** — implement `ToastHost` + `ToastService` to replace `ISnackbar`; enables full MudBlazor removal (see KI-009)
 - **Remove `ISnackbar` calls** — replace all `ISnackbar.Add(...)` usages once custom toast is live
 - **Remove MudBlazor NuGet package** — after all `ISnackbar` references are eliminated
 - **Remove ApexCharts NuGet package** — unused leftover from charting migration (see KI-010)
+
+## Planned View Log Enhancements
+
+Status: Planned
+
+### Dynamic Period Navigation
+
+The View Log screen will evolve from a static filter model into a navigable time-based activity browser.
+
+---
+
+### Day View
+
+Current filter label:
+- Today
+
+Planned label:
+- Day
+
+Behavior:
+- Show selected date beside the Day filter.
+- Clicking the displayed date opens a calendar/date picker.
+- User can navigate to any available log date.
+
+Display mode:
+- Raw activity log entries for the selected calendar day.
+
+If filter is not Day:
+- Hide date picker/calendar UI.
+
+---
+
+### Week View
+
+Filter label:
+- Week
+
+Behavior:
+- Display selected week and year.
+- Clicking the displayed period allows selecting:
+  - week number (1–52)
+  - year
+- Earliest selectable year:
+  - 2026
+- If only one year of data exists:
+  - year may display as read-only
+
+Aggregation behavior:
+- Group entries by:
+  - week
+  - year
+  - activity
+
+Displayed points:
+- SUM of grouped entries
+
+Purpose:
+- Weekly behavioral pattern analysis.
+
+---
+
+### Month View
+
+Filter label:
+- Month
+
+Behavior:
+- Display selected month and year.
+- Clicking the displayed period allows selecting:
+  - month
+  - year
+
+Aggregation behavior:
+- Group entries by:
+  - month
+  - year
+  - activity
+
+Displayed points:
+- SUM of grouped entries
+
+Purpose:
+- Monthly trend analysis and habit visibility.
+
+---
+
+### Year View
+
+Filter label:
+- Year
+
+Behavior:
+- Display selected year.
+- Clicking the displayed year allows selecting a year.
+
+Aggregation behavior:
+- Group entries by:
+  - year
+  - activity
+
+Displayed points:
+- SUM of grouped entries
+
+Purpose:
+- Long-term activity trend visibility.
+
+---
+
+### Future UX Considerations
+
+Potential future enhancements:
+- previous/next period navigation arrows
+- quick jump to current period
+- empty-period handling
+- expandable grouped rows
+- drill-down from Week/Month/Year into Day detail
+- sticky period header
+- charts/mini visualizations

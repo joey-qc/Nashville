@@ -66,11 +66,15 @@ All pages converted from MudBlazor to custom HTML/CSS using design tokens from `
 
 | ID | Issue | Status |
 |---|---|---|
-| KI-009 | `ISnackbar` / MudBlazor NuGet still required for toast | Deferred — needs custom toast first |
+| KI-009 | Replace MudBlazor Snackbar with native Momentum Toast system (`ToastHost` + `ToastService`) | Deferred |
 | KI-010 | `Blazor-ApexCharts` NuGet leftover in `.csproj` | Open — safe to remove, no code uses it |
-| KI-011 | Custom global toast (prerequisite for removing MudBlazor) | Deferred |
+| KI-013 | Daily log uses wrong local day due to UTC/local timezone mismatch — entries after ~8 PM Eastern appear in next day's log; "Today" can appear empty before midnight | **Open — High** |
 
 Full detail: `Docs/momentum-known-issues.md`
+
+### Pre-v2-migration note on KI-013
+
+KI-013 is an **active data accuracy bug** affecting all daily queries (Home dashboard, View Log Today, Trends daily chart, Balance best/worst days). It is independent of the v2 Dimension Model migration but should be fixed before or alongside the migration — the v2 schema work changes how `ActivityLogEntryDimensions` are queried, and fixing UTC/local boundaries in the same pass reduces the risk of the bug being baked into the new query patterns.
 
 ---
 
@@ -95,4 +99,4 @@ Full detail: `Docs/momentum-known-issues.md`
 
 ---
 
-*Momentum Handoff — Updated 2026-05-27*
+*Momentum Handoff — Updated 2026-05-29*

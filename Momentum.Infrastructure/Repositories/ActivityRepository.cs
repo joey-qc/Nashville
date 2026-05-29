@@ -9,14 +9,14 @@ public class ActivityRepository(AppDbContext context) : IActivityRepository
 {
     public async Task<IEnumerable<Activity>> GetAllAsync(string userId) =>
         await context.Activities
-            .Include(a => a.Categories).ThenInclude(ac => ac.Category)
+            .Include(a => a.Dimensions).ThenInclude(ad => ad.Dimension)
             .Where(a => a.UserId == userId && !a.IsArchived)
             .OrderBy(a => a.Name)
             .ToListAsync();
 
     public async Task<IEnumerable<Activity>> GetFrequentAsync(string userId, int count = 10) =>
         await context.Activities
-            .Include(a => a.Categories).ThenInclude(ac => ac.Category)
+            .Include(a => a.Dimensions).ThenInclude(ad => ad.Dimension)
             .Where(a => a.UserId == userId && !a.IsArchived)
             .OrderByDescending(a => a.Logs.Count(l => l.UserId == userId))
             .Take(count)
@@ -24,7 +24,7 @@ public class ActivityRepository(AppDbContext context) : IActivityRepository
 
     public async Task<Activity?> GetByIdAsync(int id, string userId) =>
         await context.Activities
-            .Include(a => a.Categories).ThenInclude(ac => ac.Category)
+            .Include(a => a.Dimensions).ThenInclude(ad => ad.Dimension)
             .Include(a => a.Logs)
             .FirstOrDefaultAsync(a => a.Id == id && a.UserId == userId);
 

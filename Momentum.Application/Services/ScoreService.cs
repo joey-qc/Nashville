@@ -18,7 +18,7 @@ public class ScoreService(IActivityLogRepository logRepo) : IScoreService
         return new ScoreSummaryDto
         {
             TodayTotal = list.Where(l => l.LoggedAt >= todayStart).Sum(l => l.PointsRecorded),
-            WeekTotal = list.Where(l => l.LoggedAt >= weekStart).Sum(l => l.PointsRecorded),
+            WeekTotal  = list.Where(l => l.LoggedAt >= weekStart).Sum(l => l.PointsRecorded),
             MonthTotal = list.Sum(l => l.PointsRecorded)
         };
     }
@@ -38,11 +38,11 @@ public class ScoreService(IActivityLogRepository logRepo) : IScoreService
         {
             Days = days.Select((label, i) => new DayComparisonDto
             {
-                DayLabel = label,
+                DayLabel    = label,
                 CurrentWeek = list
                     .Where(l => l.LoggedAt.Date == thisWeekStart.AddDays(i))
                     .Sum(l => l.PointsRecorded),
-                LastWeek = list
+                LastWeek    = list
                     .Where(l => l.LoggedAt.Date == lastWeekStart.AddDays(i))
                     .Sum(l => l.PointsRecorded)
             }).ToList()
@@ -51,21 +51,21 @@ public class ScoreService(IActivityLogRepository logRepo) : IScoreService
 
     public async Task<IEnumerable<DailyScoreDto>> GetDailyTotalsAsync(string userId, int days, int? categoryId)
     {
-        var to = DateTime.UtcNow.Date.AddDays(1);
+        var to   = DateTime.UtcNow.Date.AddDays(1);
         var from = to.AddDays(-days);
         return await GetTotalsAsync(userId, from, to, "day", categoryId);
     }
 
     public async Task<IEnumerable<DailyScoreDto>> GetWeeklyTotalsAsync(string userId, int weeks, int? categoryId)
     {
-        var to = DateTime.UtcNow.Date.AddDays(1);
+        var to   = DateTime.UtcNow.Date.AddDays(1);
         var from = to.AddDays(-weeks * 7);
         return await GetTotalsAsync(userId, from, to, "week", categoryId);
     }
 
     public async Task<IEnumerable<DailyScoreDto>> GetMonthlyTotalsAsync(string userId, int months, int? categoryId)
     {
-        var to = DateTime.UtcNow.Date.AddDays(1);
+        var to   = DateTime.UtcNow.Date.AddDays(1);
         var from = to.AddMonths(-months);
         return await GetTotalsAsync(userId, from, to, "month", categoryId);
     }
@@ -76,7 +76,7 @@ public class ScoreService(IActivityLogRepository logRepo) : IScoreService
         var logs = await logRepo.GetByDateRangeAsync(userId, from, to);
 
         var filtered = categoryId.HasValue
-            ? logs.Where(l => l.Activity?.Categories.Any(ac => ac.CategoryId == categoryId.Value) == true)
+            ? logs.Where(l => l.LogEntryDimensions.Any(led => led.DimensionId == categoryId.Value))
             : logs;
 
         return groupBy switch
@@ -126,19 +126,18 @@ public class ScoreService(IActivityLogRepository logRepo) : IScoreService
 
         foreach (var log in logs)
         {
-            if (log.Activity?.Categories is null) continue;
-            foreach (var ac in log.Activity.Categories)
+            foreach (var led in log.LogEntryDimensions)
             {
-                if (ac.Category is null) continue;
-                if (!totals.TryGetValue(ac.CategoryId, out var dto))
+                if (led.Dimension is null) continue;
+                if (!totals.TryGetValue(led.DimensionId, out var dto))
                 {
                     dto = new CategoryTotalDto
                     {
-                        CategoryId = ac.CategoryId,
-                        CategoryName = ac.Category.Name,
-                        ColorHex = ac.Category.ColorHex
+                        CategoryId   = led.DimensionId,
+                        CategoryName = led.Dimension.Name,
+                        ColorHex     = led.Dimension.ColorHex
                     };
-                    totals[ac.CategoryId] = dto;
+                    totals[led.DimensionId] = dto;
                 }
                 dto.Total += log.PointsRecorded;
             }
@@ -149,17 +148,14 @@ public class ScoreService(IActivityLogRepository logRepo) : IScoreService
 
     private static DateTime GetWeekStart(DateTime date) => date.AddDays(-(int)date.DayOfWeek);
 
-    // When no category filter is applied, compute points per category for each period bucket
-    // so the client can render stacked bars. When a category is filtered, ByCategory is empty.
     private static Dictionary<int, int> BuildByCategory(
         IEnumerable<Momentum.Domain.Entities.ActivityLog> group, int? categoryId)
     {
         if (categoryId.HasValue) return [];
         return group
-            .SelectMany(l => (l.Activity?.Categories
-                              ?? Enumerable.Empty<Momentum.Domain.Entities.ActivityCategory>())
-                .Select(ac => new { ac.CategoryId, l.PointsRecorded }))
-            .GroupBy(x => x.CategoryId)
+            .SelectMany(l => l.LogEntryDimensions
+                .Select(led => new { led.DimensionId, l.PointsRecorded }))
+            .GroupBy(x => x.DimensionId)
             .ToDictionary(cg => cg.Key, cg => cg.Sum(x => x.PointsRecorded));
     }
 }

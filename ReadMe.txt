@@ -15,5 +15,12 @@ dotnet watch --project Momentum.Client
 
 To commit and (optionally) push
 git add .
-git commit -m "Add COmments Here "
+git commit -m "Moved a few reports around and fixed mobile nav"
 git push
+
+
+Next Prompts:
+- When I try to add an entry after 9pm, the log is empty as though I have started a new day 3 hours early. 
+- The view log page
+    - When fiter: "Day" is selected, make the date picker control so that I can customize the day of activities shown
+    - When "Week", "Month" or "Year" selected... group by report. (date picker control hidden)

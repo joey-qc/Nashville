@@ -24,3 +24,8 @@ publish/
 # OS
 .DS_Store
 Thumbs.db
+
+# Pre-migration data snapshots — may contain production data, never commit
+Docs/migration-snapshots/*.csv
+Docs/migration-snapshots/*.json
+Docs/migration-snapshots/*.xlsx
