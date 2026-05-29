@@ -1,10 +1,10 @@
 namespace Momentum.Domain.Entities;
 
-public class ActivityCategory
+public class ActivityDimension
 {
     public int ActivityId { get; set; }
-    public int CategoryId { get; set; }
+    public int DimensionId { get; set; }
 
     public Activity Activity { get; set; } = null!;
-    public Category Category { get; set; } = null!;
+    public Dimension Dimension { get; set; } = null!;
 }

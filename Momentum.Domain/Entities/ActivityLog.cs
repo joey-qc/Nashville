@@ -11,4 +11,5 @@ public class ActivityLog
     public DateTime CreatedAt { get; set; }
 
     public Activity Activity { get; set; } = null!;
+    public ICollection<ActivityLogEntryDimension> LogEntryDimensions { get; set; } = [];
 }

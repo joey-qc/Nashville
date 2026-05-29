@@ -55,7 +55,7 @@ Momentum is moving away from MudBlazor toward:
 - inline SVG graphics/charts
 - responsive mobile-first layouts
 
-All pages have been converted to custom HTML/CSS. The only remaining MudBlazor dependency is `ISnackbar` / `MudSnackbar` for toast notifications, retained intentionally until a custom toast component is implemented (see KI-009, KI-011).
+All pages have been converted to custom HTML/CSS. The only remaining MudBlazor dependency is `ISnackbar` / `MudSnackbar` for toast notifications, retained intentionally until a native Momentum toast system is implemented (see KI-009).
 
 ---
 
@@ -94,32 +94,31 @@ The design language emphasizes:
 
 ## Activity Template vs Behavioral Event
 
-Current model:
-- Activities define default meaning
-- Log entries inherit metadata from activities
+**Status: COMPLETE** — v2 Dimension Model migration deployed to production 2026-05-29.
+Commit `79a81b5` on `feature/v2-dimension-model`. Migration `20260529151638_V2_DimensionModel`.
+See `Docs/migration-snapshots/README.md` for validation results.
 
-Future direction:
-- Activities become reusable templates
-- Individual log entries become richer behavioral events
+### What was completed (Phases 1–10)
 
-Future log entries may support:
-- dimension overrides
-- contextual meaning
-- custom point adjustments
-- richer metadata
+- `Category` renamed to `Dimension` and `ActivityCategory` renamed to `ActivityDimension` at all layers: database schema, EF Core entities, repositories, services, DTOs, API controllers, and all client UI pages.
+- `ActivityLogEntryDimensions` join table created and backfilled (79 rows from 54 existing log entries × their activity dimensions).
+- Legacy `Category.cs` and `ActivityCategory.cs` domain entities deleted.
+- All production validation checks passed; all 6 smoke tests passed.
 
-This transition will impact:
-- database schema
-- EF Core entities
-- DTOs
-- APIs
-- reporting
-- filtering
-- analytics
-- charting
-- UX flows
+### What was deferred (post-v2)
 
-This should be treated as a major architectural milestone.
+- **Per-entry dimension overrides at log time** — the `ActivityLogEntryDimensions` snapshot is currently written from the activity's current dimensions. Allowing the user to override which dimensions apply to an individual log entry (e.g., "I logged Exercise but only want it to count for Mental today") is a planned future UX feature.
+- **User-facing terminology change** — internal architecture now uses "Dimension" everywhere. The user-facing label remains "Category" (CLAUDE.md §4, API DTOs, UI). Renaming the user-facing label is a separate decision.
+
+### Architecture state (current)
+
+- Activities are reusable templates with a set of `ActivityDimensions`.
+- Each `ActivityLog` entry has its own `ActivityLogEntryDimensions` snapshot, populated at creation time.
+- Historical reports read from `ActivityLogEntryDimensions` — stable regardless of future changes to an activity's dimension configuration.
+
+Future log entries may additionally support:
+- per-entry dimension overrides at log time (deferred)
+- contextual meaning and richer metadata
 
 ---
 
@@ -138,8 +137,8 @@ Rationale:
 Momentum models multidimensional impact rather than mutually-exclusive categorization.
 
 Transition strategy:
-- internal architecture first
-- user-facing terminology later
+- internal architecture first ✅ (complete — "Dimension" is now the internal term at all layers)
+- user-facing terminology later (planned — UI still shows "Category")
 
 Potential future UX benefits:
 - less task-manager language
@@ -330,7 +329,125 @@ All pages are now fully converted to custom HTML/CSS (Home, Add Entry, View Log,
 
 Remaining MudBlazor cleanup items:
 
-- **Custom toast component** — implement `ToastHost` + `ToastService` to replace `ISnackbar` (see KI-009, KI-011)
+- **Native Momentum toast system** — implement `ToastHost` + `ToastService` to replace `ISnackbar`; enables full MudBlazor removal (see KI-009)
 - **Remove `ISnackbar` calls** — replace all `ISnackbar.Add(...)` usages once custom toast is live
 - **Remove MudBlazor NuGet package** — after all `ISnackbar` references are eliminated
 - **Remove ApexCharts NuGet package** — unused leftover from charting migration (see KI-010)
+
+## Planned View Log Enhancements
+
+Status: Planned
+
+### Dynamic Period Navigation
+
+The View Log screen will evolve from a static filter model into a navigable time-based activity browser.
+
+---
+
+### Day View
+
+Current filter label:
+- Today
+
+Planned label:
+- Day
+
+Behavior:
+- Show selected date beside the Day filter.
+- Clicking the displayed date opens a calendar/date picker.
+- User can navigate to any available log date.
+
+Display mode:
+- Raw activity log entries for the selected calendar day.
+
+If filter is not Day:
+- Hide date picker/calendar UI.
+
+---
+
+### Week View
+
+Filter label:
+- Week
+
+Behavior:
+- Display selected week and year.
+- Clicking the displayed period allows selecting:
+  - week number (1–52)
+  - year
+- Earliest selectable year:
+  - 2026
+- If only one year of data exists:
+  - year may display as read-only
+
+Aggregation behavior:
+- Group entries by:
+  - week
+  - year
+  - activity
+
+Displayed points:
+- SUM of grouped entries
+
+Purpose:
+- Weekly behavioral pattern analysis.
+
+---
+
+### Month View
+
+Filter label:
+- Month
+
+Behavior:
+- Display selected month and year.
+- Clicking the displayed period allows selecting:
+  - month
+  - year
+
+Aggregation behavior:
+- Group entries by:
+  - month
+  - year
+  - activity
+
+Displayed points:
+- SUM of grouped entries
+
+Purpose:
+- Monthly trend analysis and habit visibility.
+
+---
+
+### Year View
+
+Filter label:
+- Year
+
+Behavior:
+- Display selected year.
+- Clicking the displayed year allows selecting a year.
+
+Aggregation behavior:
+- Group entries by:
+  - year
+  - activity
+
+Displayed points:
+- SUM of grouped entries
+
+Purpose:
+- Long-term activity trend visibility.
+
+---
+
+### Future UX Considerations
+
+Potential future enhancements:
+- previous/next period navigation arrows
+- quick jump to current period
+- empty-period handling
+- expandable grouped rows
+- drill-down from Week/Month/Year into Day detail
+- sticky period header
+- charts/mini visualizations

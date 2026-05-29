@@ -4,7 +4,7 @@ using Momentum.Shared;
 
 namespace Momentum.Application.Services;
 
-public class ActivityLogService(IActivityLogRepository logRepo) : IActivityLogService
+public class ActivityLogService(IActivityLogRepository logRepo, IActivityRepository activityRepo) : IActivityLogService
 {
     public async Task<IEnumerable<ActivityLogDto>> GetByDateRangeAsync(string userId, DateTime from, DateTime to)
     {
@@ -20,6 +20,8 @@ public class ActivityLogService(IActivityLogRepository logRepo) : IActivityLogSe
 
     public async Task<ActivityLogDto> CreateAsync(string userId, CreateActivityLogDto dto)
     {
+        var activity = await activityRepo.GetByIdAsync(dto.ActivityId, userId);
+
         var log = new ActivityLog
         {
             UserId = userId,
@@ -27,7 +29,10 @@ public class ActivityLogService(IActivityLogRepository logRepo) : IActivityLogSe
             LoggedAt = DateTime.SpecifyKind(dto.LoggedAt, DateTimeKind.Utc),
             PointsRecorded = dto.PointsRecorded,
             Notes = dto.Notes,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            LogEntryDimensions = activity?.Dimensions
+                .Select(ad => new ActivityLogEntryDimension { DimensionId = ad.DimensionId })
+                .ToList() ?? []
         };
 
         await logRepo.AddAsync(log);
@@ -41,6 +46,15 @@ public class ActivityLogService(IActivityLogRepository logRepo) : IActivityLogSe
     {
         var log = await logRepo.GetByIdAsync(id, userId);
         if (log is null) return null;
+
+        // Re-derive dimension snapshot if the activity assignment is changing
+        if (log.ActivityId != dto.ActivityId)
+        {
+            var activity = await activityRepo.GetByIdAsync(dto.ActivityId, userId);
+            log.LogEntryDimensions = activity?.Dimensions
+                .Select(ad => new ActivityLogEntryDimension { DimensionId = ad.DimensionId })
+                .ToList() ?? [];
+        }
 
         log.ActivityId = dto.ActivityId;
         log.LoggedAt = DateTime.SpecifyKind(dto.LoggedAt, DateTimeKind.Utc);
@@ -66,12 +80,12 @@ public class ActivityLogService(IActivityLogRepository logRepo) : IActivityLogSe
         Id = l.Id,
         ActivityId = l.ActivityId,
         ActivityName = l.Activity?.Name ?? string.Empty,
-        Categories = l.Activity?.Categories.Select(ac => new CategoryDto
+        Categories = l.LogEntryDimensions.Select(led => new CategoryDto
         {
-            Id = ac.Category.Id,
-            Name = ac.Category.Name,
-            ColorHex = ac.Category.ColorHex
-        }).ToList() ?? [],
+            Id       = led.Dimension.Id,
+            Name     = led.Dimension.Name,
+            ColorHex = led.Dimension.ColorHex
+        }).ToList(),
         LoggedAt = DateTime.SpecifyKind(l.LoggedAt, DateTimeKind.Utc),
         PointsRecorded = l.PointsRecorded,
         Notes = l.Notes

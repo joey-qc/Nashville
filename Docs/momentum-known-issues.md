@@ -222,27 +222,83 @@ Removed the `var cats = await CategoryService.GetAllAsync();` line. No functiona
 
 ---
 
-## KI-009 — MudBlazor ISnackbar dependency not yet replaced
+## KI-009 — Replace MudBlazor Snackbar with native Momentum Toast system
 
 | Field | Value |
 |---|---|
 | **ID** | KI-009 |
 | **Status** | DEFERRED |
-| **Area** | Multiple pages, `_Imports.razor`, `Program.cs`, MudBlazor NuGet |
-| **Severity** | Low — functional, but blocks full MudBlazor removal |
-| **Target** | After custom global toast component is implemented |
+| **Area** | UI Infrastructure — `Momentum.Client/Components/`, `MainLayout.razor`, `Program.cs`, MudBlazor NuGet |
+| **Severity** | Low — fully functional today; MudBlazor snackbar works correctly; this is a clean-up and design-consistency initiative |
+| **Target** | Prioritize when MudBlazor NuGet is being removed (see KI-010) |
 
 ### Description
-All pages and components have been converted from MudBlazor to custom HTML/CSS (see CLAUDE.md §3.1). The only remaining MudBlazor dependency is `ISnackbar` / `MudSnackbar`, used for toast-style success and error notifications throughout the application.
 
-Until a custom global toast component is implemented, `ISnackbar` remains the approved notification mechanism. This is intentional and documented as "BY DESIGN (temporary)" in CLAUDE.md.
+All pages and components have been converted from MudBlazor to custom HTML/CSS (CLAUDE.md §3.1). The **one remaining MudBlazor dependency** is `ISnackbar` / `MudSnackbar`, used for toast-style notifications (success, error, warning) throughout the application. Until a native Momentum toast system exists, `ISnackbar` is the approved temporary mechanism.
 
-### Resolution Path
-1. Implement a lightweight custom toast component (e.g., `<ToastHost>` in `MainLayout.razor` with a `ToastService` singleton).
-2. Replace all `ISnackbar.Add(...)` calls with `ToastService.Show(...)` equivalents.
-3. Remove `builder.Services.AddMudServices()` from `Program.cs`.
-4. Remove the `Blazor-MudBlazor` NuGet package.
-5. Update CLAUDE.md §3.1 to reflect full removal.
+This issue tracks the full initiative: designing and building the native toast system, migrating all call sites, and removing MudBlazor entirely from the project.
+
+**Why this matters beyond cleanup:**
+- MudSnackbar uses its own visual language (colors, radius, shadows) that does not align with Momentum's design tokens.
+- The MudBlazor NuGet package adds ~300 kB to the WASM payload; removal meaningfully improves cold-start time.
+- A native `ToastService` can be better typed, easier to test, and can be extended (e.g., persistent toasts, action buttons) without MudBlazor constraints.
+
+### Current State
+
+`ISnackbar` is injected in the following contexts (not exhaustive — all pages with form submission or destructive actions):
+- `LogActivity.razor` — success on log submission
+- `ActivityDetail.razor` — success on edit / delete log entry
+- `Activities.razor` — success/error/conflict on activity CRUD
+- `Settings.razor` — success/error on profile save
+
+`AddMudServices()` is registered in `Program.cs`. `MudSnackbarProvider` is rendered in `MainLayout.razor`.
+
+### Architectural Design (target state)
+
+#### `ToastService` (singleton)
+```csharp
+// Momentum.Client/Services/ToastService.cs
+public class ToastService
+{
+    public event Action<ToastMessage>? OnShow;
+    public void Show(string message, ToastType type = ToastType.Success, int durationMs = 4000)
+        => OnShow?.Invoke(new ToastMessage(message, type, durationMs));
+}
+
+public record ToastMessage(string Message, ToastType Type, int DurationMs);
+public enum ToastType { Success, Error, Warning, Info }
+```
+
+#### `ToastHost` component
+- Registered in `MainLayout.razor` (outside the main content area, inside the auth shell).
+- Subscribes to `ToastService.OnShow` via `StateHasChanged`.
+- Renders a fixed-position overlay (`bottom-right`, `z-index` above sidebar).
+- Manages a queue of active toasts; each auto-dismisses after `DurationMs`.
+- Supports swipe-to-dismiss on mobile (touch events).
+- Stacks gracefully: newest toast appears at bottom, pushes older ones up.
+
+#### Visual design
+- Uses `var(--surface-2)` card background + `1px solid var(--border)` border.
+- Left accent border (4px) matches toast type:
+  - `Success` → `var(--primary)` (green)
+  - `Error` → `var(--negative)` (red)
+  - `Warning` → `var(--cat-social)` (amber)
+  - `Info` → `var(--cat-mental)` (sky blue)
+- Entry animation: slide in from right (`translateX`) with `opacity` fade — 200ms ease-out.
+- Exit animation: fade out with slight upward translate — 180ms ease-in.
+- Mobile: toasts appear at top-center (full-width minus 24px margin) instead of bottom-right.
+
+### Migration Steps
+
+1. Implement `ToastService` in `Momentum.Client/Services/` and register as `Singleton` in `Program.cs`.
+2. Build `ToastHost.razor` + `ToastHost.razor.css` in `Momentum.Client/Components/`.
+3. Add `<ToastHost />` to `MainLayout.razor`; remove `<MudSnackbarProvider />`.
+4. Replace all `ISnackbar.Add(...)` call sites with `ToastService.Show(...)`.
+5. Remove `[Inject] ISnackbar Snackbar` from all pages.
+6. Remove `builder.Services.AddMudServices()` from `Program.cs`.
+7. Remove `<PackageReference Include="MudBlazor" .../>` from `Momentum.Client.csproj`.
+8. Update `CLAUDE.md §3.1` and `§3.2` to remove the `ISnackbar` exception note.
+9. Update this issue to RESOLVED; update KI-010 if ApexCharts removal is also complete.
 
 ---
 
@@ -265,25 +321,15 @@ Remove `<PackageReference Include="Blazor-ApexCharts" .../>` from `Momentum.Clie
 
 ---
 
-## KI-011 — Custom global toast: prerequisite for full MudBlazor removal
+## KI-011 — ~~Custom global toast: prerequisite for full MudBlazor removal~~
 
 | Field | Value |
 |---|---|
 | **ID** | KI-011 |
-| **Status** | DEFERRED |
-| **Area** | New component required: `Momentum.Client/Components/ToastHost.razor` |
-| **Severity** | Low — enhancement / cleanup |
-| **Blocked by** | KI-009 (same resolution path) |
+| **Status** | RETIRED — consolidated into KI-009 |
+| **Consolidated** | 2026-05-28 |
 
-### Description
-A custom `ToastHost` / `ToastService` needs to be built before MudBlazor can be fully removed. This is tracked as a distinct issue from KI-009 because it requires design and implementation work, not just a replacement call.
-
-### Design Notes
-- `ToastService` should be a `Singleton` or `Scoped` service with `Show(message, type)` API.
-- Toast types: `Success`, `Error`, `Warning`, `Info` — styled with Momentum color tokens.
-- `ToastHost` renders as an overlay in `MainLayout.razor`, outside the main content area.
-- Auto-dismiss after ~4 seconds; swipe-to-dismiss on mobile.
-- Stacks multiple toasts if called in quick succession.
+This issue was originally tracked separately from KI-009 to distinguish "replace the call sites" (KI-009) from "build the toast component" (KI-011). In practice they are the same initiative and cannot be resolved independently. All content from KI-011 has been merged into the KI-009 description. **KI-011 is retired; do not reuse this ID.**
 
 ---
 
@@ -342,5 +388,74 @@ Also added `aria-expanded` and `aria-controls` to the Reports toggle button for 
 
 ---
 
+## KI-013 — Daily log uses wrong local day due to UTC/local timezone mismatch
+
+| Field | Value |
+|---|---|
+| **ID** | KI-013 |
+| **Status** | OPEN |
+| **Area** | Date/Time Handling — `Momentum.Client/Pages/`, `Momentum.Application/Services/ScoreService.cs`, `Momentum.Infrastructure/Repositories/` |
+| **Severity** | High — entries appear on the wrong day; daily scoring, View Log, and Home dashboard all show incorrect data |
+| **Discovered** | Live use testing, Eastern timezone |
+
+### Symptoms
+
+Two distinct but related manifestations of the same underlying UTC/local boundary mismatch:
+
+**Symptom A — Early rollover (View Log Today appears empty before midnight)**
+- "Today" in View Log and the Home dashboard appears empty after approximately 9 PM local Eastern time, even when entries were logged earlier the same evening.
+- App behaves as though the local calendar day has already ended before the clock reaches midnight.
+- Likely caused by UTC date boundaries (which advance 4–5 hours ahead of Eastern time) being used for "today" filtering instead of local date boundaries.
+
+**Symptom B — Prior-evening entries appear in the next day's log**
+- Entries logged the previous night appear in the *next* local day's View Log "Today" screen.
+- Observed example: "Programming" and "Salad" entries logged at **8:23 PM Eastern** on a given night appeared in the following day's "Today" view.
+- This confirms the issue is a bidirectional UTC/local date-boundary mismatch — UTC midnight does not align with local midnight, so entries near the boundary are misassigned to the wrong local day in both directions.
+
+### Likely Root Cause
+
+`ActivityLog.LoggedAt` is stored in UTC (correct). The bug is in how "today" date boundaries are computed for filtering:
+
+- The server-side or client-side code likely computes `DateTime.UtcNow.Date` as the start of "today" rather than converting to local time first.
+- For Eastern time (UTC-4 in summer / UTC-5 in winter), UTC midnight is 8–9 PM the *previous* evening local time. This means:
+  - Entries logged after ~8 PM Eastern are UTC-dated to the next day → appear tomorrow
+  - "Today" filters using UTC midnight exclude entries logged this evening → today looks empty
+
+Possible additional contributors:
+- Inconsistency between client browser time (local) and API server time (UTC)
+- `DateOnly.FromDateTime(l.LoggedAt)` without timezone conversion in client-side `DayScores` computation (`Balance.razor`)
+- `GetByDateRangeAsync(todayUtc, todayUtc.AddDays(1))` in `Home.OnInitializedAsync` using UTC boundaries for a local-day concept
+
+### Impact
+
+- **Home dashboard**: "Today's Momentum" ring and category breakdown show wrong or empty data after ~8 PM local
+- **View Log "Today"**: appears empty or shows prior-day entries
+- **Balance page "Best & worst days"**: day assignment can be wrong for late-evening entries
+- **Trends daily chart**: entries may land in the wrong day bucket
+- **Score totals** (Today/Week/Month): today's total can read 0 or be inflated with yesterday's late entries
+
+### Production Reproduction (confirmed 2026-05-29)
+
+Observed after v2 Dimension Model deployment (unrelated to the migration):
+
+- **Balance page** reported Friday total: **+1**
+- **View Log "Today"** reported Friday total: **+26**
+- **Cause:** Prior-evening entries from Thursday night were included in Friday's "Today" view, inflating the View Log total. The Balance page used a different (possibly more correct) boundary, producing a lower number.
+- This confirms the bidirectional boundary mismatch — the same evening entries that are excluded from "Today" when logged late can appear the *next* morning as part of the prior day's total in one view but not another.
+
+**This issue is unrelated to the v2 Dimension Model migration.** The migration is complete and all post-migration smoke tests passed. KI-013 is an independent date/time boundary bug that predates v2.
+
+### Investigation Areas (not yet root-caused)
+
+- `ScoreService.GetSummaryAsync` — `todayStart` / `todayEnd` computation
+- `ScoreService.GetDailyTotalsAsync` — grouping logic for day buckets
+- `ActivityLogRepository.GetByDateRangeAsync` — caller-supplied `from`/`to` boundaries
+- `Home.OnInitializedAsync` — `todayUtc` variable passed to `LogService.GetByDateRangeAsync`
+- `Balance.razor` `DayScores` property — `DateOnly.FromDateTime(l.LoggedAt.ToLocalTime())` (may be correct; needs verification)
+- `ActivityDetail.razor` — period filter date boundary construction
+- `CreateActivityLogDto.LoggedAt` — whether the client sends UTC or local time on log creation
+
+---
+
 *Momentum — Known Issues Log*  
-*Last updated: 2026-05-27*
+*Last updated: 2026-05-29*

@@ -10,8 +10,7 @@ public class ActivityLogRepository(AppDbContext context) : IActivityLogRepositor
     public async Task<IEnumerable<ActivityLog>> GetByDateRangeAsync(string userId, DateTime from, DateTime to) =>
         await context.ActivityLogs
             .Include(l => l.Activity)
-                .ThenInclude(a => a.Categories)
-                    .ThenInclude(ac => ac.Category)
+            .Include(l => l.LogEntryDimensions).ThenInclude(led => led.Dimension)
             .Where(l => l.UserId == userId && l.LoggedAt >= from && l.LoggedAt < to)
             .OrderByDescending(l => l.LoggedAt)
             .ToListAsync();
@@ -19,8 +18,7 @@ public class ActivityLogRepository(AppDbContext context) : IActivityLogRepositor
     public async Task<ActivityLog?> GetByIdAsync(int id, string userId) =>
         await context.ActivityLogs
             .Include(l => l.Activity)
-                .ThenInclude(a => a.Categories)
-                    .ThenInclude(ac => ac.Category)
+            .Include(l => l.LogEntryDimensions).ThenInclude(led => led.Dimension)
             .FirstOrDefaultAsync(l => l.Id == id && l.UserId == userId);
 
     public async Task<int> CountByActivityAsync(int activityId, string userId) =>

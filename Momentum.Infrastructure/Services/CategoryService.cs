@@ -8,7 +8,7 @@ namespace Momentum.Infrastructure.Services;
 public class CategoryService(AppDbContext context) : ICategoryService
 {
     public async Task<IEnumerable<CategoryDto>> GetAllAsync() =>
-        await context.Categories
+        await context.Dimensions
             .OrderBy(c => c.Id)
             .Select(c => new CategoryDto { Id = c.Id, Name = c.Name, ColorHex = c.ColorHex })
             .ToListAsync();

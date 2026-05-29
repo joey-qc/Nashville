@@ -6,7 +6,7 @@ namespace Momentum.Infrastructure.Services;
 
 public class ActivitySeedService(AppDbContext context) : IActivitySeedService
 {
-    // Category IDs match HasData seed: 1=Physical, 2=Mental, 3=Spiritual, 4=Social, 5=Housekeeping
+    // Dimension IDs match HasData seed: 1=Physical, 2=Mental, 3=Spiritual, 4=Social, 5=Housekeeping
     private static readonly (string Name, int Points, int[] CategoryIds)[] _defaults =
     [
         ("Exercise / Gym",           8,  [1]),
@@ -36,7 +36,7 @@ public class ActivitySeedService(AppDbContext context) : IActivitySeedService
             IsArchived = false,
             CreatedAt = now,
             UpdatedAt = now,
-            Categories = d.CategoryIds.Select(id => new ActivityCategory { CategoryId = id }).ToList()
+            Dimensions = d.CategoryIds.Select(id => new ActivityDimension { DimensionId = id }).ToList()
         }).ToList();
 
         await context.Activities.AddRangeAsync(activities);

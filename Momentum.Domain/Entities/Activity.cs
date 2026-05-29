@@ -11,6 +11,6 @@ public class Activity
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
-    public ICollection<ActivityCategory> Categories { get; set; } = [];
+    public ICollection<ActivityDimension> Dimensions { get; set; } = [];
     public ICollection<ActivityLog> Logs { get; set; } = [];
 }

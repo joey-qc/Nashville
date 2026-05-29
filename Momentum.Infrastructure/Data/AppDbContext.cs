@@ -8,42 +8,66 @@ namespace Momentum.Infrastructure.Data;
 public class AppDbContext(DbContextOptions<AppDbContext> options)
     : IdentityDbContext<ApplicationUser>(options)
 {
-    public DbSet<Category> Categories => Set<Category>();
-    public DbSet<Activity> Activities => Set<Activity>();
-    public DbSet<ActivityCategory> ActivityCategories => Set<ActivityCategory>();
-    public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
+    public DbSet<Dimension>                  Dimensions                  => Set<Dimension>();
+    public DbSet<Activity>                   Activities                  => Set<Activity>();
+    public DbSet<ActivityDimension>          ActivityDimensions          => Set<ActivityDimension>();
+    public DbSet<ActivityLog>                ActivityLogs                => Set<ActivityLog>();
+    public DbSet<ActivityLogEntryDimension>  ActivityLogEntryDimensions  => Set<ActivityLogEntryDimension>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
 
-        builder.Entity<ActivityCategory>()
-            .HasKey(ac => new { ac.ActivityId, ac.CategoryId });
+        // ActivityDimension — composite PK
+        builder.Entity<ActivityDimension>()
+            .HasKey(ad => new { ad.ActivityId, ad.DimensionId });
 
-        builder.Entity<ActivityCategory>()
-            .HasOne(ac => ac.Category)
-            .WithMany(c => c.ActivityCategories)
-            .HasForeignKey(ac => ac.CategoryId)
+        // ActivityDimension → Dimension (Restrict delete)
+        builder.Entity<ActivityDimension>()
+            .HasOne(ad => ad.Dimension)
+            .WithMany(d => d.ActivityDimensions)
+            .HasForeignKey(ad => ad.DimensionId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Activity → ActivityDimension (Cascade delete)
         builder.Entity<Activity>()
-            .HasMany(a => a.Categories)
-            .WithOne(ac => ac.Activity)
-            .HasForeignKey(ac => ac.ActivityId)
+            .HasMany(a => a.Dimensions)
+            .WithOne(ad => ad.Activity)
+            .HasForeignKey(ad => ad.ActivityId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Activity → ActivityLog (Restrict delete)
         builder.Entity<Activity>()
             .HasMany(a => a.Logs)
             .WithOne(l => l.Activity)
             .HasForeignKey(l => l.ActivityId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<Category>().HasData(
-            new Category { Id = 1, Name = "Physical",     ColorHex = "#76E04A" },
-            new Category { Id = 2, Name = "Mental",       ColorHex = "#5BC8FF" },
-            new Category { Id = 3, Name = "Spiritual",    ColorHex = "#B894FF" },
-            new Category { Id = 4, Name = "Social",       ColorHex = "#F7B500" },
-            new Category { Id = 5, Name = "Housekeeping", ColorHex = "#FF9472" }
+        // ActivityLogEntryDimension — composite PK
+        builder.Entity<ActivityLogEntryDimension>()
+            .HasKey(led => new { led.ActivityLogId, led.DimensionId });
+
+        // ActivityLogEntryDimension → ActivityLog (Cascade delete)
+        builder.Entity<ActivityLogEntryDimension>()
+            .HasOne(led => led.ActivityLog)
+            .WithMany(l => l.LogEntryDimensions)
+            .HasForeignKey(led => led.ActivityLogId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // ActivityLogEntryDimension → Dimension (Restrict delete)
+        builder.Entity<ActivityLogEntryDimension>()
+            .HasOne(led => led.Dimension)
+            .WithMany(d => d.LogEntryDimensions)
+            .HasForeignKey(led => led.DimensionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Seed data — same IDs and values as old Category seed
+        builder.Entity<Dimension>().HasData(
+            new Dimension { Id = 1, Name = "Physical",     ColorHex = "#76E04A" },
+            new Dimension { Id = 2, Name = "Mental",       ColorHex = "#5BC8FF" },
+            new Dimension { Id = 3, Name = "Spiritual",    ColorHex = "#B894FF" },
+            new Dimension { Id = 4, Name = "Social",       ColorHex = "#F7B500" },
+            new Dimension { Id = 5, Name = "Housekeeping", ColorHex = "#FF9472" }
         );
     }
 }

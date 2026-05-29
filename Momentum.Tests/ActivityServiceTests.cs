@@ -18,7 +18,7 @@ public class ActivityServiceTests
     [Fact]
     public async Task DeleteAsync_NoLogs_DeletesActivity()
     {
-        var activity = new Activity { Id = 1, UserId = UserId, Categories = [] };
+        var activity = new Activity { Id = 1, UserId = UserId, Dimensions = [] };
         _activityRepo.GetByIdAsync(1, UserId).Returns(activity);
         _logRepo.CountByActivityAsync(1, UserId).Returns(0);
 
@@ -31,7 +31,7 @@ public class ActivityServiceTests
     [Fact]
     public async Task DeleteAsync_HasLogs_NoAction_Returns409Info()
     {
-        var activity = new Activity { Id = 1, UserId = UserId, Categories = [] };
+        var activity = new Activity { Id = 1, UserId = UserId, Dimensions = [] };
         _activityRepo.GetByIdAsync(1, UserId).Returns(activity);
         _logRepo.CountByActivityAsync(1, UserId).Returns(3);
 
@@ -44,7 +44,7 @@ public class ActivityServiceTests
     [Fact]
     public async Task DeleteAsync_ArchiveAction_SetsIsArchived()
     {
-        var activity = new Activity { Id = 1, UserId = UserId, Categories = [], IsArchived = false };
+        var activity = new Activity { Id = 1, UserId = UserId, Dimensions = [], IsArchived = false };
         _activityRepo.GetByIdAsync(1, UserId).Returns(activity);
         _logRepo.CountByActivityAsync(1, UserId).Returns(2);
 
@@ -71,8 +71,8 @@ public class ActivityServiceTests
     {
         var activities = new List<Activity>
         {
-            new() { Id = 1, UserId = UserId, Name = "Run", Categories = [] },
-            new() { Id = 2, UserId = UserId, Name = "Read", Categories = [] }
+            new() { Id = 1, UserId = UserId, Name = "Run", Dimensions = [] },
+            new() { Id = 2, UserId = UserId, Name = "Read", Dimensions = [] }
         };
         _activityRepo.GetAllAsync(UserId).Returns(activities);
 
@@ -101,6 +101,6 @@ public class ActivityServiceTests
         Assert.Equal("Yoga", captured.Name);
         Assert.Equal(UserId, captured.UserId);
         Assert.Equal(6, captured.DefaultPoints);
-        Assert.Equal(2, captured.Categories.Count);
+        Assert.Equal(2, captured.Dimensions.Count);
     }
 }
