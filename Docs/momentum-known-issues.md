@@ -434,6 +434,17 @@ Possible additional contributors:
 - **Trends daily chart**: entries may land in the wrong day bucket
 - **Score totals** (Today/Week/Month): today's total can read 0 or be inflated with yesterday's late entries
 
+### Production Reproduction (confirmed 2026-05-29)
+
+Observed after v2 Dimension Model deployment (unrelated to the migration):
+
+- **Balance page** reported Friday total: **+1**
+- **View Log "Today"** reported Friday total: **+26**
+- **Cause:** Prior-evening entries from Thursday night were included in Friday's "Today" view, inflating the View Log total. The Balance page used a different (possibly more correct) boundary, producing a lower number.
+- This confirms the bidirectional boundary mismatch — the same evening entries that are excluded from "Today" when logged late can appear the *next* morning as part of the prior day's total in one view but not another.
+
+**This issue is unrelated to the v2 Dimension Model migration.** The migration is complete and all post-migration smoke tests passed. KI-013 is an independent date/time boundary bug that predates v2.
+
 ### Investigation Areas (not yet root-caused)
 
 - `ScoreService.GetSummaryAsync` — `todayStart` / `todayEnd` computation

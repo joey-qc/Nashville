@@ -6,9 +6,32 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** UI Redesign — Complete  
+**Phase:** v2 Dimension Model Migration — Complete and Live in Production  
 **Build Status:** ✅ All projects build clean (0 warnings, 0 errors)  
-**Last Updated:** 2026-05-27
+**Last Updated:** 2026-05-29
+
+### v2 Migration Deployment Summary
+
+| Item | Value |
+|---|---|
+| Migration | `20260529151638_V2_DimensionModel` |
+| Commit deployed | `79a81b5` |
+| Deployment date | 2026-05-29 |
+| Deployment method | Azure App Service ZipDeploy (OneDeploy) |
+| Database | MomentumDb (Azure SQL Serverless, West US 2) |
+| Migration execution time | 1.47 seconds |
+| API deployment time | 27.6 seconds |
+
+**Post-migration production validation (all passed):**
+
+| Table | Row Count |
+|---|---|
+| Dimensions | 5 |
+| ActivityDimensions | 44 |
+| ActivityLogs | 54 |
+| ActivityLogEntryDimensions | 79 |
+
+**Production smoke tests:** All 6 passed (GET /api/categories, GET /api/activities, POST /api/logs, ActivityLogEntryDimensions snapshot write verified, GET /api/scores/summary, GET /api/reports/balance).
 
 ---
 
@@ -24,9 +47,34 @@ This file tracks the current state of the project, what has been completed, and 
 | Logging | Serilog |
 | Hosting | Azure (API + Blazor static files) |
 
+### v2 Data Model (live as of 2026-05-29)
+
+The `Category` / `ActivityCategory` entities have been renamed and extended:
+
+| v1 (retired) | v2 (current) | Notes |
+|---|---|---|
+| `Categories` table | `Dimensions` table | 5 wellness dimensions; user-facing label still "Category" |
+| `ActivityCategories` table | `ActivityDimensions` table | Links activities to dimensions |
+| *(did not exist)* | `ActivityLogEntryDimensions` table | Point-in-time dimension snapshot per log entry |
+
+**`ActivityLogEntryDimensions`** is written at log creation time from the activity's current `ActivityDimensions`. This decouples historical reporting from future changes to an activity's dimension assignments — past report data is stable regardless of how an activity is reconfigured.
+
+Domain entities `Category.cs` and `ActivityCategory.cs` have been deleted. `Dimension`, `ActivityDimension`, and `ActivityLogEntryDimension` are the authoritative model.
+
+User-facing terminology remains "Category" — the internal rename to "Dimension" is an architectural change only.
+
 ---
 
 ## Completed Work
+
+### Phase 10: v2 Dimension Model Migration (2026-05-29 — complete)
+- Renamed `Category` → `Dimension` and `ActivityCategory` → `ActivityDimension` at all layers (entities, DTOs, repositories, services, API contracts, UI)
+- Created `ActivityLogEntryDimensions` join table for point-in-time dimension snapshots per log entry
+- Deleted legacy `Category.cs` and `ActivityCategory.cs` domain entities
+- EF Core migration `20260529151638_V2_DimensionModel` applied to production MomentumDb
+- Backfilled 79 `ActivityLogEntryDimensions` rows from existing `ActivityLogs × ActivityDimensions`
+- All 6 production smoke tests passed
+- User-facing "Category" terminology preserved; per-entry dimension overrides deferred to post-v2
 
 ### Phase 1–3: Foundation
 - Multi-user architecture with JWT auth
@@ -72,9 +120,9 @@ All pages converted from MudBlazor to custom HTML/CSS using design tokens from `
 
 Full detail: `Docs/momentum-known-issues.md`
 
-### Pre-v2-migration note on KI-013
+### Note on KI-013
 
-KI-013 is an **active data accuracy bug** affecting all daily queries (Home dashboard, View Log Today, Trends daily chart, Balance best/worst days). It is independent of the v2 Dimension Model migration but should be fixed before or alongside the migration — the v2 schema work changes how `ActivityLogEntryDimensions` are queried, and fixing UTC/local boundaries in the same pass reduces the risk of the bug being baked into the new query patterns.
+KI-013 is an **active data accuracy bug** confirmed in production. It is independent of the v2 Dimension Model migration (which is now complete). The v2 migration did not introduce or worsen this bug.
 
 ---
 
@@ -83,7 +131,8 @@ KI-013 is an **active data accuracy bug** affecting all daily queries (Home dash
 - API and Blazor WASM are deployed to Azure.
 - Azure SQL is on the Serverless tier — cold start can take 20–40 seconds after idle. A warm-up retry loop runs on startup (5 attempts × 3-second backoff) with a user-visible info banner.
 - CORS is configured for the known client origin. Wildcard `*` is never used.
-- JWT secrets and connection strings are in Azure Key Vault / App Service configuration — never in source.
+- JWT secrets and connection strings are in Azure App Service configuration — never in source.
+- **v2 schema is live** as of 2026-05-29. The production database is on migration `20260529151638_V2_DimensionModel`. Pre-migration PITR restore point: `2026-05-29T19:00:51Z UTC`.
 
 ---
 
@@ -99,4 +148,4 @@ KI-013 is an **active data accuracy bug** affecting all daily queries (Home dash
 
 ---
 
-*Momentum Handoff — Updated 2026-05-29*
+*Momentum Handoff — Updated 2026-05-29 (v2 Dimension Model migration complete)*

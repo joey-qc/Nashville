@@ -94,40 +94,31 @@ The design language emphasizes:
 
 ## Activity Template vs Behavioral Event
 
-**Status: IN PROGRESS** — v2 Dimension Model migration underway on branch `feature/v2-dimension-model`.
-See `Docs/migration-snapshots/` for pre-migration artifacts and the implementation plan.
+**Status: COMPLETE** — v2 Dimension Model migration deployed to production 2026-05-29.
+Commit `79a81b5` on `feature/v2-dimension-model`. Migration `20260529151638_V2_DimensionModel`.
+See `Docs/migration-snapshots/README.md` for validation results.
 
-### Phase 1 milestone: ActivityLogEntryDimension
-The first concrete step is materializing per-log-entry dimension assignments into a dedicated
-`ActivityLogEntryDimensions` table. This decouples historical report data from the activity's
-current dimension configuration — changing an activity's dimensions will no longer retroactively
-alter past reports.
+### What was completed (Phases 1–10)
 
-Simultaneously, "Category" is renamed to "Dimension" at every layer (entities, DTOs, services,
-API endpoints, UI) to align with the long-term terminology goal.
+- `Category` renamed to `Dimension` and `ActivityCategory` renamed to `ActivityDimension` at all layers: database schema, EF Core entities, repositories, services, DTOs, API controllers, and all client UI pages.
+- `ActivityLogEntryDimensions` join table created and backfilled (79 rows from 54 existing log entries × their activity dimensions).
+- Legacy `Category.cs` and `ActivityCategory.cs` domain entities deleted.
+- All production validation checks passed; all 6 smoke tests passed.
 
-### Original intent (preserved)
+### What was deferred (post-v2)
 
-Current model:
-- Activities define default meaning
-- Log entries inherit metadata from activities
+- **Per-entry dimension overrides at log time** — the `ActivityLogEntryDimensions` snapshot is currently written from the activity's current dimensions. Allowing the user to override which dimensions apply to an individual log entry (e.g., "I logged Exercise but only want it to count for Mental today") is a planned future UX feature.
+- **User-facing terminology change** — internal architecture now uses "Dimension" everywhere. The user-facing label remains "Category" (CLAUDE.md §4, API DTOs, UI). Renaming the user-facing label is a separate decision.
 
-Target model:
-- Activities become reusable templates with default dimensions
-- Individual log entries become richer behavioral events with their own persisted dimensions
+### Architecture state (current)
+
+- Activities are reusable templates with a set of `ActivityDimensions`.
+- Each `ActivityLog` entry has its own `ActivityLogEntryDimensions` snapshot, populated at creation time.
+- Historical reports read from `ActivityLogEntryDimensions` — stable regardless of future changes to an activity's dimension configuration.
 
 Future log entries may additionally support:
-- per-entry dimension overrides at log time (UI — deferred to post-v2)
+- per-entry dimension overrides at log time (deferred)
 - contextual meaning and richer metadata
-
-This transition impacts:
-- database schema (new join table; table renames)
-- EF Core entities and migrations
-- DTOs and API contracts
-- all reporting calculations (ScoreService, ReportsService)
-- all UI pages
-
-This is a major architectural milestone — implement on the dedicated feature branch only.
 
 ---
 
@@ -146,8 +137,8 @@ Rationale:
 Momentum models multidimensional impact rather than mutually-exclusive categorization.
 
 Transition strategy:
-- internal architecture first
-- user-facing terminology later
+- internal architecture first ✅ (complete — "Dimension" is now the internal term at all layers)
+- user-facing terminology later (planned — UI still shows "Category")
 
 Potential future UX benefits:
 - less task-manager language
