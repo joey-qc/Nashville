@@ -129,14 +129,16 @@ All data transferred between client and server uses DTOs (Data Transfer Objects)
 
 Key DTOs include:
 - `ActivityDto` — for activity library data; includes `Description`, `List<CategoryDto> Categories`
-- `ActivityLogDto` — for log entry data; includes `List<CategoryDto> Categories`
-- `CategoryDto` — for category data (Id, Name, ColorHex); returned by `GET /api/categories`
+- `ActivityLogDto` — for log entry data; includes `List<CategoryDto> Categories` (the log entry's saved dimension snapshot)
+- `CategoryDto` — for dimension data (Id, Name, ColorHex); returned by `GET /api/categories`; named `CategoryDto` for historical reasons
 - `ScoreSummaryDto` — for landing page score totals
-- `DailyScoreDto` — for reporting chart data points; category breakdown keyed by `int` (CategoryId)
+- `DailyScoreDto` — for reporting chart data points; dimension breakdown keyed by `int` (DimensionId)
 - `UserSettingsDto` — for profile and settings
 - `LoginRequestDto` / `LoginResponseDto` — for authentication
 - `RegisterRequestDto` — for new user registration
 - `CreateActivityDto` / `UpdateActivityDto` — include optional `Description` (`[MaxLength(500)]`), use `List<int> CategoryIds` (not enum values)
+- `CreateActivityLogDto` — includes optional `List<int>? DimensionIds`; when provided the submitted IDs become the log entry's dimension snapshot; when null the activity's current dimensions are used as the default
+- `UpdateActivityLogDto` — includes optional `List<int>? DimensionIds`; when provided the entry's snapshot is fully replaced; when null and the activity changed, snapshot is re-derived from the new activity; when null and activity unchanged, existing snapshot is preserved
 
 ---
 

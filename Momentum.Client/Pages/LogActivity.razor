@@ -1,6 +1,7 @@
 @page "/log"
 @attribute [Authorize]
 @inject ActivityService ActivityService
+@inject CategoryService CategoryService
 @inject ActivityLogService LogService
 @inject ScoreService ScoreService
 @inject NavigationManager Navigation
@@ -158,6 +159,33 @@
                 }
             </div>
 
+            <!-- ── Dimensions ── -->
+            @if (_allDimensions.Any())
+            {
+                <div class="field-group">
+                    <div class="field-label-row">
+                        <label class="field-label">DIMENSIONS</label>
+                        <span class="field-hint">
+                            @(EditId.HasValue ? "These changes apply only to this log entry" : "Defaults from selected activity")
+                        </span>
+                    </div>
+                    <div class="dim-toggle-row">
+                        @foreach (var dim in _allDimensions)
+                        {
+                            var sel = _selectedDimensionIds.Contains(dim.Id);
+                            <button type="button"
+                                    class="dim-toggle-btn @(sel ? "dim-selected" : "")"
+                                    style="@(sel ? $"border-color:{dim.ColorHex};background:{dim.ColorHex};color:rgba(0,0,0,0.78)" : $"border-color:{dim.ColorHex}55;color:{dim.ColorHex}CC")"
+                                    @onclick="@(() => ToggleDimension(dim.Id))">
+                                <span class="dim-toggle-dot"
+                                      style="background:@(sel ? "rgba(0,0,0,0.22)" : dim.ColorHex)"></span>
+                                @dim.Name
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+
             <!-- ── Date + Time ── -->
             <div class="field-row">
                 <div class="field-group">
@@ -246,13 +274,15 @@
     [SupplyParameterFromQuery] private int? EditId { get; set; }
 
     /* ── State ───────────────────────────────────────────────── */
-    private List<ActivityDto>    _frequent        = [];
-    private List<ActivityDto>    _allActivities   = [];
+    private List<ActivityDto>    _frequent          = [];
+    private List<ActivityDto>    _allActivities     = [];
+    private List<CategoryDto>    _allDimensions     = [];
     private ActivityDto?         _selectedActivity;
+    private List<int>            _selectedDimensionIds = [];
     private ScoreSummaryDto?     _todaySummary;
     private int                  _todayEntryCount;
     private bool                 _dropdownOpen;
-    private string               _searchText      = "";
+    private string               _searchText        = "";
     private bool                 _busy;
 
     private readonly LogFormModel _model = new()
@@ -291,19 +321,24 @@
             var tSummary  = ScoreService.GetSummaryAsync();
             var todayUtc  = DateTime.UtcNow.Date;
             var tLogs     = LogService.GetByDateRangeAsync(todayUtc, todayUtc.AddDays(1));
+            var tDims     = CategoryService.GetAllAsync();
 
-            await Task.WhenAll(tAll, tFrequent, tSummary, tLogs);
+            await Task.WhenAll(tAll, tFrequent, tSummary, tLogs, tDims);
 
             _allActivities   = tAll.Result.Where(a => !a.IsArchived).ToList();
             _frequent        = tFrequent.Result.ToList();
             _todaySummary    = tSummary.Result;
             _todayEntryCount = tLogs.Result.Count;
+            _allDimensions   = tDims.Result.ToList();
         }
         else
         {
-            // Edit mode: just need the activity list then load the log
-            var all = await ActivityService.GetAllAsync();
-            _allActivities = all.Where(a => !a.IsArchived).ToList();
+            // Edit mode: just need the activity list and dimension list then load the log
+            var tAll  = ActivityService.GetAllAsync();
+            var tDims = CategoryService.GetAllAsync();
+            await Task.WhenAll(tAll, tDims);
+            _allActivities = tAll.Result.Where(a => !a.IsArchived).ToList();
+            _allDimensions = tDims.Result.ToList();
             await LoadEditEntryAsync(EditId.Value);
         }
     }
@@ -318,11 +353,12 @@
             return;
         }
 
-        _selectedActivity = _allActivities.FirstOrDefault(a => a.Id == log.ActivityId);
-        _model.Date       = log.LoggedAt.ToLocalTime().Date;
-        _model.Time       = log.LoggedAt.ToLocalTime().TimeOfDay;
-        _model.Points     = log.PointsRecorded;
-        _model.Notes      = log.Notes;
+        _selectedActivity     = _allActivities.FirstOrDefault(a => a.Id == log.ActivityId);
+        _model.Date           = log.LoggedAt.ToLocalTime().Date;
+        _model.Time           = log.LoggedAt.ToLocalTime().TimeOfDay;
+        _model.Points         = log.PointsRecorded;
+        _model.Notes          = log.Notes;
+        _selectedDimensionIds = log.Categories.Select(c => c.Id).ToList();
         StateHasChanged();
         await JS.InvokeVoidAsync("scrollTo", 0, 0);
     }
@@ -330,8 +366,9 @@
     /* ── Activity selection ──────────────────────────────────── */
     private void SelectActivity(ActivityDto? activity)
     {
-        _selectedActivity = activity;
-        _model.Points     = activity?.DefaultPoints ?? 0;
+        _selectedActivity     = activity;
+        _model.Points         = activity?.DefaultPoints ?? 0;
+        _selectedDimensionIds = activity?.Categories.Select(c => c.Id).ToList() ?? [];
     }
 
     // Tapping an already-selected quick-pick tile deselects it and clears the form.
@@ -339,9 +376,10 @@
     {
         if (_selectedActivity?.Id == a.Id)
         {
-            _selectedActivity = null;
-            _model.Points     = 0;
-            _model.Notes      = null;
+            _selectedActivity     = null;
+            _model.Points         = 0;
+            _model.Notes          = null;
+            _selectedDimensionIds = [];
         }
         else
         {
@@ -365,13 +403,21 @@
         }
         else
         {
-            _selectedActivity = null;
-            _model.Points     = 0;
-            _model.Notes      = null;
-            _model.Date       = DateTime.Today;
-            _model.Time       = DateTime.Now.TimeOfDay;
+            _selectedActivity     = null;
+            _model.Points         = 0;
+            _model.Notes          = null;
+            _model.Date           = DateTime.Today;
+            _model.Time           = DateTime.Now.TimeOfDay;
+            _selectedDimensionIds = [];
             Navigation.NavigateTo("/");
         }
+    }
+
+    /* ── Dimensions ─────────────────────────────────────────── */
+    private void ToggleDimension(int id)
+    {
+        if (_selectedDimensionIds.Contains(id)) _selectedDimensionIds.Remove(id);
+        else _selectedDimensionIds.Add(id);
     }
 
     /* ── Dropdown ────────────────────────────────────────────── */
@@ -422,7 +468,8 @@
                 ActivityId     = _selectedActivity.Id,
                 LoggedAt       = loggedAt,
                 PointsRecorded = _model.Points,
-                Notes          = _model.Notes
+                Notes          = _model.Notes,
+                DimensionIds   = _selectedDimensionIds.Count > 0 ? _selectedDimensionIds : null
             });
             _busy = false;
 
@@ -442,7 +489,8 @@
                 ActivityId     = _selectedActivity.Id,
                 LoggedAt       = loggedAt,
                 PointsRecorded = _model.Points,
-                Notes          = _model.Notes
+                Notes          = _model.Notes,
+                DimensionIds   = _selectedDimensionIds.Count > 0 ? _selectedDimensionIds : null
             });
             _busy = false;
 
@@ -459,11 +507,12 @@
             _todayEntryCount++;
 
             // Reset form for next entry
-            _selectedActivity = null;
-            _model.Notes      = null;
-            _model.Points     = 0;
-            _model.Date       = DateTime.Today;
-            _model.Time       = DateTime.Now.TimeOfDay;
+            _selectedActivity     = null;
+            _model.Notes          = null;
+            _model.Points         = 0;
+            _model.Date           = DateTime.Today;
+            _model.Time           = DateTime.Now.TimeOfDay;
+            _selectedDimensionIds = [];
         }
     }
 

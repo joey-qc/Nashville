@@ -36,11 +36,11 @@
 
 ---
 
-## 4. Category Definitions & Color Coding
+## 4. Dimension Definitions & Color Coding
 
-Activities belong to one or more of the following five categories. Category colors are consistent across all screens, charts, lists, checkboxes, and UI elements throughout the application.
+Activities belong to one or more of the following five wellness dimensions. Dimension colors are consistent across all screens, charts, lists, chips, and UI elements throughout the application.
 
-| Category | Color |
+| Dimension | Color |
 |---|---|
 | Physical | Bright Green |
 | Mental | Sky Blue |
@@ -70,12 +70,12 @@ This is the first screen a user sees after successful login.
 - Example: If today is Tuesday, the chart compares total points earned Monday–Tuesday this week vs. Monday–Tuesday last week.
 - This gives immediate visual feedback on whether the user is ahead of or behind last week's pace.
 
-### 5.4 Weekly Category Breakdown
-- At the bottom of the Home dashboard, a card shows this week's activity broken down by wellness category.
-- A full-width stacked proportional bar visualizes each category's relative share of the week's points using category colors.
-- Below the bar, a row per category shows: color dot · category name · point total · percentage · horizontal bar.
-- Only categories with at least one positive point entry for the current week are displayed.
-- Categories appear in canonical order: Physical → Mental → Spiritual → Social → Housekeeping.
+### 5.4 Weekly Dimension Breakdown
+- At the bottom of the Home dashboard, a card shows this week's activity broken down by wellness dimension.
+- A full-width stacked proportional bar visualizes each dimension's relative share of the week's points using dimension colors.
+- Below the bar, a row per dimension shows: color dot · dimension name · point total · percentage · horizontal bar.
+- Only dimensions with at least one positive point entry for the current week are displayed.
+- Dimensions appear in canonical order: Physical → Mental → Spiritual → Social → Housekeeping.
 
 ---
 
@@ -96,6 +96,7 @@ Accessible via the persistent "+" button from any screen.
 |---|---|
 | Activity | Selected from quick pick or autocomplete dropdown (required) |
 | Description | Read-only; shown only when the selected activity has a description |
+| Dimensions | Pre-selected from the chosen activity's default dimensions; user can add/remove dimensions for this specific entry before saving |
 | Date | Defaults to today's date; user can change it |
 | Time | Defaults to current time; user can change it |
 | Points | Pre-populated with the activity's default point value; user can adjust up or down using a **spinner control** |
@@ -125,7 +126,7 @@ Accessible by clicking on a score total (Today, This Week, This Month) from the 
 - Activities are listed in **chronological order**, earliest at the top, most recent at the bottom.
 - Each entry displays:
   - Activity name
-  - Category (displayed as a color-coded chip or badge matching the category color)
+  - Dimensions (displayed as color-coded dots and labels matching the entry's saved dimension snapshot)
   - Points earned (the adjusted value at time of logging, not the default)
   - Date and time logged
   - Notes (if any)
@@ -133,7 +134,9 @@ Accessible by clicking on a score total (Today, This Week, This Month) from the 
 ### 7.2 Editing a Log Entry
 - Each activity entry is **clickable/editable**.
 - Clicking an entry opens an edit form pre-populated with the logged values.
-- The user can modify the activity, date, time, points, and notes.
+- The user can modify the activity, date, time, points, notes, and **dimensions**.
+- When editing, the dimension selector loads the entry's saved dimension snapshot (not the activity's current defaults).
+- Dimension changes apply only to that specific log entry — the parent activity's default dimensions are not affected.
 - Changes are saved and reflected immediately in score totals.
 
 ### 7.3 Deleting a Log Entry
@@ -159,8 +162,8 @@ The user selects one of the following aggregation levels:
 - **Weekly** — weekly totals for the past 8 weeks
 - **Monthly** — monthly totals for the past 6 months
 
-#### 8.1.2 Category Filter
-The user can filter the chart by category (Physical, Mental, Spiritual, Social, Housekeeping, or **All**). When a specific category is selected, only points from activities in that category are shown, using that category's color.
+#### 8.1.2 Dimension Filter
+The user can filter the chart by dimension (Physical, Mental, Spiritual, Social, Housekeeping, or **All**). When a specific dimension is selected, only points from activities in that dimension are shown, using that dimension's color.
 
 #### 8.1.3 Bar Chart
 - Stacked bar chart displaying point totals over time for the selected aggregation and category filter.
@@ -169,11 +172,11 @@ The user can filter the chart by category (Physical, Mental, Spiritual, Social, 
 - Value labels displayed inside bars (white) if tall enough, above (muted) if short.
 - Period improvement pill (↑ or ↓ percentage vs. previous period) shown in the header.
 
-#### 8.1.4 Category Trend
-A sparkline panel showing each category's weekly point trend over the last 8 weeks. Displayed alongside the Top days/periods card.
+#### 8.1.4 Dimension Trend
+A sparkline panel showing each dimension's weekly point trend over the last 8 weeks. Displayed alongside the Top days/periods card.
 
-- One row per category (Physical → Mental → Spiritual → Social → Housekeeping)
-- Each row shows: color dot · category name · sparkline area chart · 8-week total
+- One row per dimension (Physical → Mental → Spiritual → Social → Housekeeping)
+- Each row shows: color dot · dimension name · sparkline area chart · 8-week total
 
 #### 8.1.5 Top Days / Top Periods
 The five highest-scoring periods for the selected aggregation level.
@@ -186,17 +189,17 @@ The five highest-scoring periods for the selected aggregation level.
 
 ### 8.2 Balance Page (`/reports/balance`)
 
-Focused on category distribution: how balanced the user's activity is across the five wellness dimensions for a chosen period.
+Focused on dimension distribution: how balanced the user's activity is across the five wellness dimensions for a chosen period.
 
 #### 8.2.1 Period Selector
 Dropdown (presented as a styled pill): **This Week**, **This Month**, **This Year**.
 
-#### 8.2.2 Donut Chart + Category List
-- Donut ring chart showing each category's proportional share of total points for the selected period.
-- Category list alongside: color dot · category name · point total · percentage · horizontal bar.
+#### 8.2.2 Donut Chart + Dimension List
+- Donut ring chart showing each dimension's proportional share of total points for the selected period.
+- Dimension list alongside: color dot · dimension name · point total · percentage · horizontal bar.
 
 #### 8.2.3 Insight Callout
-A coaching callout highlighting which category is dominating and suggesting which underrepresented categories to add to bring the balance closer to even.
+A coaching callout highlighting which dimension is dominating and suggesting which underrepresented dimensions to add to bring the balance closer to even.
 
 #### 8.2.4 Best & Worst Days
 The two best-scoring days and the single worst-scoring day within the selected period.
@@ -220,10 +223,10 @@ A dedicated section for managing the user's activity library.
 - Displays all active activities in the user's library.
 - Each activity shows:
   - Activity name
-  - Categories (color-coded checkboxes or chips)
+  - Dimensions (color-coded chips)
   - Default point value
   - Active/archived status
-- Activities can be sorted by clicking column headers (name, categories, default points) and searched by name.
+- Activities can be sorted by clicking column headers (name, dimensions, default points) and searched by name.
 
 ### 9.2 Add New Activity
 - A form to create a new activity with the following fields:
@@ -232,12 +235,12 @@ A dedicated section for managing the user's activity library.
 |---|---|
 | Name | Text field (e.g., "Hiking (Solo)") |
 | Description | Optional multi-line text field describing the activity |
-| Categories | Multi-select color-coded chips, one per category; at least one must be selected |
+| Dimensions | Multi-select color-coded chips, one per dimension; at least one must be selected |
 | Default Point Value | Integer input; can be positive (beneficial) or negative (detrimental) |
 
 ### 9.3 Edit Existing Activity
 - Clicking an activity opens an edit form pre-populated with existing values.
-- All fields (name, description, categories, point value) are editable.
+- All fields (name, description, dimensions, point value) are editable.
 - Changes apply to future log entries only; historical logs retain their recorded point values.
 
 ### 9.4 Delete / Archive Activity
@@ -257,7 +260,7 @@ When a user attempts to delete an activity, the system checks for existing log e
 
 When a new user registers, the following starter activities are automatically added to their library with default point values. Users can edit, archive, or delete these at any time.
 
-| Activity | Categories | Default Points |
+| Activity | Dimensions | Default Points |
 |---|---|---|
 | Exercise / Gym | Physical | +8 |
 | Hiking (Solo) | Physical | +8 |
@@ -291,7 +294,7 @@ When a new user registers, the following starter activities are automatically ad
 ## 12. General UX Requirements
 
 - The application is **responsive** and usable on desktop and tablet browsers.
-- **Color coding** for categories is consistent across all screens — charts, activity lists, category chips, checkboxes, and form elements all use the same color per category.
+- **Color coding** for dimensions is consistent across all screens — charts, activity lists, dimension chips, and form elements all use the same color per dimension.
 - **Friendly error messages** are shown to users when something goes wrong — no technical stack traces visible to the user.
 - All data is **scoped to the logged-in user** — no user can see another user's activities, logs, or scores.
 - The application supports **multiple user accounts** — architecture is multi-user from the ground up.
@@ -299,4 +302,4 @@ When a new user registers, the following starter activities are automatically ad
 ---
 
 *Momentum — Functional Requirements Document*
-*Version 1.4 — Added §5.4 weekly category breakdown on Home dashboard; updated Top Periods format to include year (W21 2026, May 2026); removed Category Breakdown from Balance page (redundant with donut); updated Best & Worst Days date always-visible rule*
+*Version 1.5 — Renamed all Category/Categories user-facing terminology to Dimension/Dimensions throughout; added Dimensions field to §6.3 Log Activity form; updated §7.2 to reflect per-entry dimension editing; activity list in §7.1 now shows dimension labels*

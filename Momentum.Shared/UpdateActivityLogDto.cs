@@ -15,4 +15,6 @@ public class UpdateActivityLogDto
 
     [MaxLength(1000)]
     public string? Notes { get; set; }
+
+    public List<int>? DimensionIds { get; set; }
 }

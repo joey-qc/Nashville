@@ -455,7 +455,117 @@ Observed after v2 Dimension Model deployment (unrelated to the migration):
 - `ActivityDetail.razor` — period filter date boundary construction
 - `CreateActivityLogDto.LoggedAt` — whether the client sends UTC or local time on log creation
 
+### Diagnostic Hypothesis (2026-05-31)
+
+The query retrieving a day's log entries likely relies on database-side or server-side date logic to determine "today" or to derive the selected calendar day's boundaries. Likely patterns:
+
+- `GETDATE()` or `GETUTCDATE()` called inside the SQL `WHERE` clause
+- SQL-side date truncation (e.g., `CAST(timestamp AS DATE)`)
+- `.Date` property comparison on a UTC `DateTime` without prior timezone conversion
+- EF Core translating a `.Date` comparison into a SQL date function that uses the database server's timezone
+
+Because `ActivityLog.LoggedAt` is stored in UTC and the database/server operates in UTC, any "today" boundary derived server-side will be a UTC calendar-day boundary — not the user's local calendar-day boundary. That is the proximate cause of the bidirectional mismatch described in the Symptoms section.
+
+### Proposed Fix Direction
+
+Do not ask the database or server to determine "today." Instead:
+
+1. Determine the selected local date in the **application layer** (browser or client).
+2. Compute the local start (`00:00:00` local) and exclusive local end (`00:00:00` local of the following day) for that selected date.
+3. Convert those two boundaries to UTC using the user's intended timezone.
+4. Pass `startUtc` and `endUtc` as explicit parameters to the API or repository.
+5. Query using an inclusive start and exclusive end against the stored UTC timestamp:
+
+```csharp
+entry.TimestampUtc >= startUtc &&
+entry.TimestampUtc < endUtc
+```
+
+This preserves UTC storage while ensuring the day boundary matches the user's local calendar day.
+
+### Patterns to Avoid in the Fix
+
+- `GETDATE()` or `GETUTCDATE()` in the `WHERE` clause
+- `GETUTCDATE()` or any SQL-side "today" derivation
+- SQL-side date truncation in the filter predicate
+- Comparing only `.Date` on a UTC `DateTime` without prior timezone conversion
+- Relying on the server or database timezone setting to produce the correct local day
+
+### Patterns to Prefer in the Fix
+
+- Explicit `startUtc` / `endUtc` parameters derived in the application layer
+- App-layer timezone conversion before forming the query boundary
+- Inclusive start, exclusive end (`>=` / `<`)
+- Unit tests for entries logged near local midnight (both before and after)
+- Unit tests around DST boundaries if per-user timezone support is introduced
+
+---
+
+## KI-014 — UpdateAsync: first save fails when adding a new dimension to an existing log entry
+
+| Field | Value |
+|---|---|
+| **ID** | KI-014 |
+| **Status** | RESOLVED |
+| **Area** | `Momentum.Application/Services/ActivityLogService.cs` |
+| **Severity** | High — editing log-entry dimensions failed on first attempt; second attempt succeeded |
+| **Discovered** | Local testing of per-entry dimension control feature (2026-05-31) |
+
+### Symptoms
+
+When editing a log entry and adding a dimension that the entry did not previously have:
+
+- Clicking Save showed the generic "Failed to update log entry. Please try again." toast.
+- Clicking Save a second time (without any further changes) succeeded.
+- The parent activity's dimensions were unaffected in both cases.
+
+### Root Cause
+
+`UpdateAsync` was calling `Map(log)` directly after `SaveChangesAsync()` using the in-memory `ActivityLog` entity. `Map()` accesses `led.Dimension.Id` / `.Name` / `.ColorHex` on each `ActivityLogEntryDimension` in the snapshot.
+
+When a new dimension is added to the snapshot (e.g., Social/DimensionId=4 added to an entry that only had Mental/DimensionId=2), the new `ActivityLogEntryDimension` is created as:
+```csharp
+new ActivityLogEntryDimension { DimensionId = 4 }
+```
+The `Dimension` navigation property on this object is `null`. EF Core can only fix up navigation properties after `SaveChanges` by matching FK values against entities **already loaded into the current DbContext scope**. Because the original `GetByIdAsync` call eagerly loaded only the `Dimension` entities referenced by the log's *pre-existing* snapshot, `Dimension{Id=4}` (Social) was not in the identity map. EF fixup could not populate `led.Dimension`, so `Map()` threw a `NullReferenceException`.
+
+The controller's `try/catch` caught this, logged a Serilog error, and returned `500`. The client service received a non-success response and returned `null`, triggering the error toast.
+
+**Why the second save succeeded:** `SaveChangesAsync()` committed the dimension changes to the DB before the exception was thrown. On the second save, `GetByIdAsync` reloaded the log, this time eagerly loading both Mental and Social dimension entities. Both were in the identity map, EF fixup worked, and `Map()` succeeded.
+
+A secondary issue was also present: the `Clear()` + re-add pattern re-added `ActivityLogEntryDimension` rows for dimension IDs that were already in the snapshot, creating a risk of EF identity-map PK conflicts on those rows.
+
+### Resolution
+
+Two changes to `ActivityLogService.UpdateAsync`:
+
+1. **Re-fetch after `SaveChangesAsync()`** — matches the pattern already used by `CreateAsync`. The re-fetch runs `GetByIdAsync` with the full `ThenInclude(led => led.Dimension)` chain, ensuring all navigation properties are populated before `Map()` is called.
+
+2. **Diff-based dimension update** — instead of `Clear()` + re-add-all, the update now only removes dimensions being dropped and only adds dimensions that are truly new. Dimensions staying in the snapshot are left untouched in EF's change tracker, avoiding any identity-map conflict on shared PK values.
+
+```csharp
+// Before (Clear + re-add everything — caused NullRef on Dimension nav for newly added IDs)
+log.LogEntryDimensions.Clear();
+foreach (var dimId in dto.DimensionIds)
+    log.LogEntryDimensions.Add(new ActivityLogEntryDimension { DimensionId = dimId });
+await logRepo.SaveChangesAsync();
+return Map(log);  // ← NullReferenceException if any new DimensionId wasn't loaded into DbContext
+
+// After (diff update + re-fetch)
+var newIds      = dto.DimensionIds.ToHashSet();
+var existingIds = log.LogEntryDimensions.Select(led => led.DimensionId).ToHashSet();
+foreach (var led in log.LogEntryDimensions.Where(led => !newIds.Contains(led.DimensionId)).ToList())
+    log.LogEntryDimensions.Remove(led);
+foreach (var dimId in newIds.Where(id => !existingIds.Contains(id)))
+    log.LogEntryDimensions.Add(new ActivityLogEntryDimension { DimensionId = dimId });
+await logRepo.SaveChangesAsync();
+var updated = await logRepo.GetByIdAsync(log.Id, userId);  // ← re-fetch with full includes
+return Map(updated!);
+```
+
+Same diff-based pattern applied to the activity-change fallback path.
+
 ---
 
 *Momentum — Known Issues Log*  
-*Last updated: 2026-05-29*
+*Last updated: 2026-05-31*

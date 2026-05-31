@@ -105,46 +105,33 @@ See `Docs/migration-snapshots/README.md` for validation results.
 - Legacy `Category.cs` and `ActivityCategory.cs` domain entities deleted.
 - All production validation checks passed; all 6 smoke tests passed.
 
-### What was deferred (post-v2)
+### What was deferred (post-v2) — now complete (2026-05-31)
 
-- **Per-entry dimension overrides at log time** — the `ActivityLogEntryDimensions` snapshot is currently written from the activity's current dimensions. Allowing the user to override which dimensions apply to an individual log entry (e.g., "I logged Exercise but only want it to count for Mental today") is a planned future UX feature.
-- **User-facing terminology change** — internal architecture now uses "Dimension" everywhere. The user-facing label remains "Category" (CLAUDE.md §4, API DTOs, UI). Renaming the user-facing label is a separate decision.
+- **Per-entry dimension overrides at log time** ✅ — Users can now select which dimensions apply to a specific log entry when creating or editing. The selected dimensions are saved as the entry's `ActivityLogEntryDimensions` snapshot. Changing a log entry's dimensions does not affect the parent activity's defaults. `CreateActivityLogDto` and `UpdateActivityLogDto` accept an optional `DimensionIds: List<int>?`; when absent, defaults apply.
+- **User-facing terminology change** ✅ — All user-facing "Category" / "Categories" labels across the UI are now "Dimension" / "Dimensions". The internal-to-UI alignment is complete.
 
 ### Architecture state (current)
 
 - Activities are reusable templates with a set of `ActivityDimensions`.
-- Each `ActivityLog` entry has its own `ActivityLogEntryDimensions` snapshot, populated at creation time.
-- Historical reports read from `ActivityLogEntryDimensions` — stable regardless of future changes to an activity's dimension configuration.
+- Each `ActivityLog` entry has its own `ActivityLogEntryDimensions` snapshot. The snapshot defaults to the activity's current dimensions but can be overridden by the user at log time or when editing an entry.
+- Historical reports read from `ActivityLogEntryDimensions` — stable regardless of future changes to an activity's dimension configuration or to past edits of unrelated entries.
 
 Future log entries may additionally support:
-- per-entry dimension overrides at log time (deferred)
 - contextual meaning and richer metadata
 
 ---
 
 # Terminology Evolution
 
-Current user-facing terminology:
-- Category
-
-Potential future internal terminology:
-- Dimension
-- Aspect
-- Vector
-- Domain
-
-Rationale:
-Momentum models multidimensional impact rather than mutually-exclusive categorization.
+Current user-facing and internal terminology:
+- **Dimension** ✅ (complete — both UI and data layer now use "Dimension")
 
 Transition strategy:
-- internal architecture first ✅ (complete — "Dimension" is now the internal term at all layers)
-- user-facing terminology later (planned — UI still shows "Category")
+- internal architecture first ✅ (complete — "Dimension" is the internal term at all layers since v2)
+- user-facing terminology ✅ (complete — all UI labels updated 2026-05-31)
 
-Potential future UX benefits:
-- less task-manager language
-- more holistic/self-development framing
-- better support for overlapping behavioral impact
-- more psychologically resonant terminology
+Rationale:
+Momentum models multidimensional impact rather than mutually-exclusive categorization. "Dimension" is more psychologically resonant and better reflects the overlapping behavioral impact a single activity can have across multiple life areas.
 
 ---
 

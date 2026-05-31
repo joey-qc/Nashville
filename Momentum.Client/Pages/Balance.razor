@@ -58,7 +58,7 @@
             <div class="donut-wrap">
                 <svg class="donut-svg" viewBox="0 0 160 160"
                      xmlns="http://www.w3.org/2000/svg"
-                     role="img" aria-label="Category balance ring chart">
+                     role="img" aria-label="Dimension balance ring chart">
                     <circle cx="80" cy="80" r="56" fill="none"
                             stroke="var(--surface-3)" stroke-width="18"/>
                     @(new MarkupString(BuildDonutArcs()))
@@ -102,7 +102,7 @@
                 </svg>
             </div>
             <div class="insight-body">
-                <p class="insight-headline">Your @dominant.CategoryName.ToLower() category is dominating (@domPct%).</p>
+                <p class="insight-headline">Your @dominant.CategoryName.ToLower() dimension is dominating (@domPct%).</p>
                 <p class="insight-sub">
                     @if (secondWk is not null && weakest is not null && weakest.CategoryId != dominant.CategoryId)
                     {

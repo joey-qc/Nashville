@@ -6,9 +6,9 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** v2 Dimension Model Migration — Complete and Live in Production  
+**Phase:** Post-v2 — Dimension UI Terminology + Per-Entry Dimension Control  
 **Build Status:** ✅ All projects build clean (0 warnings, 0 errors)  
-**Last Updated:** 2026-05-29
+**Last Updated:** 2026-05-31
 
 ### v2 Migration Deployment Summary
 
@@ -53,19 +53,27 @@ The `Category` / `ActivityCategory` entities have been renamed and extended:
 
 | v1 (retired) | v2 (current) | Notes |
 |---|---|---|
-| `Categories` table | `Dimensions` table | 5 wellness dimensions; user-facing label still "Category" |
+| `Categories` table | `Dimensions` table | 5 wellness dimensions |
 | `ActivityCategories` table | `ActivityDimensions` table | Links activities to dimensions |
 | *(did not exist)* | `ActivityLogEntryDimensions` table | Point-in-time dimension snapshot per log entry |
 
-**`ActivityLogEntryDimensions`** is written at log creation time from the activity's current `ActivityDimensions`. This decouples historical reporting from future changes to an activity's dimension assignments — past report data is stable regardless of how an activity is reconfigured.
+**`ActivityLogEntryDimensions`** is written at log creation time. The user can now supply an explicit `DimensionIds` list to override the default (the activity's current dimensions). When editing a log entry, the saved snapshot is loaded and the user can add/remove dimensions for that specific entry only. Changing a log entry's dimensions never modifies the parent activity's defaults.
 
 Domain entities `Category.cs` and `ActivityCategory.cs` have been deleted. `Dimension`, `ActivityDimension`, and `ActivityLogEntryDimension` are the authoritative model.
 
-User-facing terminology remains "Category" — the internal rename to "Dimension" is an architectural change only.
+User-facing terminology across all pages is now **"Dimension / Dimensions"** — the UI-to-data-model alignment is complete.
 
 ---
 
 ## Completed Work
+
+### Phase 11: Dimension UI Terminology + Per-Entry Dimension Control (2026-05-31 — complete)
+- Renamed all user-facing "Category" / "Categories" text to "Dimension" / "Dimensions" across ManageActivities, ActivityDetail, Home, and Balance pages
+- Added `DimensionIds: List<int>?` to `CreateActivityLogDto` and `UpdateActivityLogDto`
+- Updated server-side `ActivityLogService.CreateAsync` to use client-supplied `DimensionIds` when provided, defaulting to activity's current dimensions otherwise
+- Updated `ActivityLogService.UpdateAsync` to replace the log entry's dimension snapshot when `DimensionIds` is supplied; falls back to re-deriving from the new activity if only the activity changed; preserves existing snapshot otherwise
+- Added dimension toggle selector UI to the Add Entry / Edit Log Entry page (`LogActivity.razor`) — preloads from selected activity on create, loads saved snapshot on edit, hint text distinguishes create vs. edit context
+- No database schema changes; no new migrations
 
 ### Phase 10: v2 Dimension Model Migration (2026-05-29 — complete)
 - Renamed `Category` → `Dimension` and `ActivityCategory` → `ActivityDimension` at all layers (entities, DTOs, repositories, services, API contracts, UI)
@@ -148,4 +156,4 @@ KI-013 is an **active data accuracy bug** confirmed in production. It is indepen
 
 ---
 
-*Momentum Handoff — Updated 2026-05-29 (v2 Dimension Model migration complete)*
+*Momentum Handoff — Updated 2026-05-31 (Dimension UI terminology complete; per-entry dimension control live)*
