@@ -227,12 +227,12 @@
 
     private DateTime GetPeriodFrom()
     {
-        var now = DateTime.UtcNow;
+        var localToday = DateTime.Today; // browser local midnight
         return _period switch
         {
-            "month" => new DateTime(now.Year, now.Month, 1),
-            "year"  => new DateTime(now.Year, 1, 1),
-            _       => now.Date.AddDays(-(int)now.DayOfWeek)   // Sunday of current week
+            "month" => localToday.AddDays(1 - localToday.Day).ToUniversalTime(),
+            "year"  => localToday.AddDays(1 - localToday.DayOfYear).ToUniversalTime(),
+            _       => localToday.AddDays(-(int)localToday.DayOfWeek).ToUniversalTime()
         };
     }
 

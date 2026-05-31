@@ -5,12 +5,16 @@ namespace Momentum.Application.Services;
 
 public class ScoreService(IActivityLogRepository logRepo) : IScoreService
 {
-    public async Task<ScoreSummaryDto> GetSummaryAsync(string userId)
+    public async Task<ScoreSummaryDto> GetSummaryAsync(string userId,
+        DateTime? todayStartUtc = null, DateTime? weekStartUtc = null, DateTime? monthStartUtc = null)
     {
-        var now = DateTime.UtcNow;
-        var todayStart = now.Date;
-        var weekStart = todayStart.AddDays(-(int)now.DayOfWeek);
-        var monthStart = new DateTime(now.Year, now.Month, 1);
+        // Prefer client-supplied UTC boundaries (derived from the user's local timezone in
+        // the browser) over server UTC.Now.Date, which would use UTC midnight regardless of
+        // the user's local timezone and produce wrong day/week/month totals for non-UTC users.
+        var now        = DateTime.UtcNow;
+        var todayStart = todayStartUtc  ?? now.Date;
+        var weekStart  = weekStartUtc   ?? todayStart.AddDays(-(int)now.DayOfWeek);
+        var monthStart = monthStartUtc  ?? new DateTime(now.Year, now.Month, 1);
 
         var monthLogs = await logRepo.GetByDateRangeAsync(userId, monthStart, now.AddDays(1));
         var list = monthLogs.ToList();

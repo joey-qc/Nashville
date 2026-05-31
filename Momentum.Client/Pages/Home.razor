@@ -422,11 +422,13 @@ else
                     ?? state.User.Identity?.Name
                     ?? "there";
 
-        var todayUtc = DateTime.UtcNow.Date;
+        var localToday   = DateTime.Today; // browser local midnight
+        var todayStartUtc = localToday.ToUniversalTime();
+        var todayEndUtc   = localToday.AddDays(1).ToUniversalTime();
 
         var tSummary     = ScoreService.GetSummaryAsync();
         var tCompare     = ScoreService.GetWeeklyComparisonAsync();
-        var tLogs        = LogService.GetByDateRangeAsync(todayUtc, todayUtc.AddDays(1));
+        var tLogs        = LogService.GetByDateRangeAsync(todayStartUtc, todayEndUtc);
         var tDaily       = ReportsService.GetDailyAsync(31);
         var tMonthly     = ReportsService.GetMonthlyAsync(2);
         var tWeekBalance = ReportsService.GetBalanceAsync("week");

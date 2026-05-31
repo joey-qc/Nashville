@@ -319,8 +319,8 @@
             var tAll      = ActivityService.GetAllAsync();
             var tFrequent = ActivityService.GetFrequentAsync(6);
             var tSummary  = ScoreService.GetSummaryAsync();
-            var todayUtc  = DateTime.UtcNow.Date;
-            var tLogs     = LogService.GetByDateRangeAsync(todayUtc, todayUtc.AddDays(1));
+            var localToday = DateTime.Today; // browser local midnight
+            var tLogs     = LogService.GetByDateRangeAsync(localToday.ToUniversalTime(), localToday.AddDays(1).ToUniversalTime());
             var tDims     = CategoryService.GetAllAsync();
 
             await Task.WhenAll(tAll, tFrequent, tSummary, tLogs, tDims);

@@ -199,12 +199,17 @@
 
     private (DateTime from, DateTime to) GetDateRange()
     {
-        var now = DateTime.UtcNow;
+        // DateTime.Today is the browser's local midnight (DateTimeKind.Local).
+        // ToUniversalTime() converts to the correct UTC equivalent so the API
+        // query uses inclusive-start / exclusive-end UTC boundaries that align
+        // with the user's local calendar day rather than UTC midnight.
+        var localToday = DateTime.Today;
+        var toUtc      = localToday.AddDays(1).ToUniversalTime();
         return _period switch
         {
-            "week"  => (now.Date.AddDays(-(int)now.DayOfWeek), now.Date.AddDays(1)),
-            "month" => (new DateTime(now.Year, now.Month, 1), now.Date.AddDays(1)),
-            _       => (now.Date, now.Date.AddDays(1))
+            "week"  => (localToday.AddDays(-(int)localToday.DayOfWeek).ToUniversalTime(), toUtc),
+            "month" => (localToday.AddDays(1 - localToday.Day).ToUniversalTime(),         toUtc),
+            _       => (localToday.ToUniversalTime(),                                      toUtc)
         };
     }
 

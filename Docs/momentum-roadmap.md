@@ -137,6 +137,32 @@ Momentum models multidimensional impact rather than mutually-exclusive categoriz
 
 # Future Enhancements
 
+## Mobile UX
+
+### Mobile-Friendly Dimension Labels
+
+**Status:** Planned · **Priority:** Medium
+
+Dimension names (Physical, Mental, Social, Spiritual, Housekeeping) consume significant horizontal space when displayed as chips, toggle buttons, filter pills, chart legends, or summary rows. On smaller mobile viewports this creates crowding across Add Entry, View Log, Balance, Trends, and Reports.
+
+**Goal:** Investigate and implement a responsive dimension display strategy that preserves clarity and accessibility while reducing horizontal footprint on narrow screens.
+
+**Approaches to evaluate:**
+
+- Responsive label length: full name on desktop, abbreviated on mobile (e.g. PHY / MEN / SOC / SPI / HSK)
+- Two-letter abbreviations
+- Icon + abbreviated label combinations
+- Tooltip or long-press expansion for full name
+
+**Requirements:**
+
+- No ambiguity between dimensions at any display size
+- Accessible (screen reader receives full name regardless of visual label)
+- Consistent across all screens that display dimension labels
+- Does not affect stored data, API contracts, or DTO field names
+
+---
+
 ## Logging UX
 
 ### Pinned Favorites
@@ -309,6 +335,51 @@ Momentum is intended to become:
 - a multidimensional life tracking platform
 - a reflective personal operating system
 - an emotionally reinforcing behavioral UX experience
+
+## Brand Identity
+
+### Momentum Logo and Application Icon
+
+**Status:** Planned · **Priority:** Medium · **Dependencies:** None
+
+Momentum currently uses the default Blazor favicon and no application logo. The product identity is now stable enough to warrant a dedicated visual brand.
+
+**Goal:** Design and implement a Momentum logo and icon suite that reinforces the product's emotional character.
+
+**Brand direction — reinforce:**
+- momentum, forward motion, accumulation
+- progress and growth over time
+- consistency and positive reinforcement
+
+**Brand direction — avoid:**
+- generic task-manager or checklist imagery
+- corporate dashboard / enterprise aesthetics
+- static or trophy-style iconography
+
+**Visual themes to explore:**
+- momentum wave or arc
+- stacked growth marks / accumulating path
+- upward trajectory
+- kinetic energy / motion concepts
+- forward arrow with layered depth
+
+**Deliverables:**
+- Favicon (`favicon.ico` / `favicon.png`)
+- Browser tab icon
+- Application manifest icons (PWA)
+- Login / Register page branding
+- Header / navbar logo mark
+- Mobile home screen icon assets
+- Social / share image (future)
+
+**Technical touch points:**
+- `Momentum.Client/wwwroot/favicon.ico`
+- `Momentum.Client/wwwroot/manifest.json` (icon entries)
+- `Momentum.Client/wwwroot/index.html` (manifest + apple-touch-icon links)
+- Login and Register page header markup
+- Main layout navbar logo area
+
+---
 
 ## Remaining MudBlazor / Legacy UI Work
 

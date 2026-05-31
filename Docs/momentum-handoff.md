@@ -6,7 +6,7 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** Post-v2 — Dimension UI Terminology + Per-Entry Dimension Control  
+**Phase:** Post-v2 — KI-013 UTC/Local timezone boundary fix complete  
 **Build Status:** ✅ All projects build clean (0 warnings, 0 errors)  
 **Last Updated:** 2026-05-31
 
@@ -67,6 +67,14 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 
 ## Completed Work
 
+### Phase 12: KI-013 UTC/Local Timezone Boundary Fix (2026-05-31 — complete)
+- Fixed View Log, Home, Add Entry, and Balance date boundaries to use `DateTime.Today.ToUniversalTime()` (browser local midnight → UTC) instead of `DateTime.UtcNow.Date` (UTC midnight)
+- Updated `ScoreService.GetSummaryAsync` to accept optional `todayStartUtc`/`weekStartUtc`/`monthStartUtc` params from the client; falls back to UTC.Now for backward compatibility
+- Added boundary params to `ScoresController.GetSummary` and the client `ScoreService`; client now computes and passes local-day UTC equivalents on every summary request
+- Added regression test: entry at 23:00 local (03:00 UTC next day) is correctly excluded from TodayTotal when local boundaries are supplied
+- No database changes; repository query was already correct (`>= from && < to`)
+- Known remaining limitation: Trends charts and weekly comparison still group by `l.LoggedAt.Date` (UTC date); entries within a few hours of UTC midnight may appear in the adjacent day's chart bucket — lower-impact, deferred
+
 ### Phase 11: Dimension UI Terminology + Per-Entry Dimension Control (2026-05-31 — complete)
 - Renamed all user-facing "Category" / "Categories" text to "Dimension" / "Dimensions" across ManageActivities, ActivityDetail, Home, and Balance pages
 - Added `DimensionIds: List<int>?` to `CreateActivityLogDto` and `UpdateActivityLogDto`
@@ -124,7 +132,7 @@ All pages converted from MudBlazor to custom HTML/CSS using design tokens from `
 |---|---|---|
 | KI-009 | Replace MudBlazor Snackbar with native Momentum Toast system (`ToastHost` + `ToastService`) | Deferred |
 | KI-010 | `Blazor-ApexCharts` NuGet leftover in `.csproj` | Open — safe to remove, no code uses it |
-| KI-013 | Daily log uses wrong local day due to UTC/local timezone mismatch — entries after ~8 PM Eastern appear in next day's log; "Today" can appear empty before midnight | **Open — High** |
+| KI-013 | Daily log uses wrong local day due to UTC/local timezone mismatch | **RESOLVED 2026-05-31** |
 
 Full detail: `Docs/momentum-known-issues.md`
 

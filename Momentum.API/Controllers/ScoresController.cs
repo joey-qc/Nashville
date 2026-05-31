@@ -13,11 +13,14 @@ public class ScoresController(IScoreService scoreService, ILogger<ScoresControll
     private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
     [HttpGet("summary")]
-    public async Task<IActionResult> GetSummary()
+    public async Task<IActionResult> GetSummary(
+        [FromQuery] DateTime? todayStartUtc = null,
+        [FromQuery] DateTime? weekStartUtc  = null,
+        [FromQuery] DateTime? monthStartUtc = null)
     {
         try
         {
-            var summary = await scoreService.GetSummaryAsync(UserId);
+            var summary = await scoreService.GetSummaryAsync(UserId, todayStartUtc, weekStartUtc, monthStartUtc);
             return Ok(summary);
         }
         catch (Exception ex)

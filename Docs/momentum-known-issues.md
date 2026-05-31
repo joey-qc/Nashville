@@ -393,10 +393,11 @@ Also added `aria-expanded` and `aria-controls` to the Reports toggle button for 
 | Field | Value |
 |---|---|
 | **ID** | KI-013 |
-| **Status** | OPEN |
+| **Status** | RESOLVED |
 | **Area** | Date/Time Handling — `Momentum.Client/Pages/`, `Momentum.Application/Services/ScoreService.cs`, `Momentum.Infrastructure/Repositories/` |
 | **Severity** | High — entries appear on the wrong day; daily scoring, View Log, and Home dashboard all show incorrect data |
 | **Discovered** | Live use testing, Eastern timezone |
+| **Resolved** | 2026-05-31 |
 
 ### Symptoms
 
@@ -405,99 +406,77 @@ Two distinct but related manifestations of the same underlying UTC/local boundar
 **Symptom A — Early rollover (View Log Today appears empty before midnight)**
 - "Today" in View Log and the Home dashboard appears empty after approximately 9 PM local Eastern time, even when entries were logged earlier the same evening.
 - App behaves as though the local calendar day has already ended before the clock reaches midnight.
-- Likely caused by UTC date boundaries (which advance 4–5 hours ahead of Eastern time) being used for "today" filtering instead of local date boundaries.
 
 **Symptom B — Prior-evening entries appear in the next day's log**
 - Entries logged the previous night appear in the *next* local day's View Log "Today" screen.
 - Observed example: "Programming" and "Salad" entries logged at **8:23 PM Eastern** on a given night appeared in the following day's "Today" view.
-- This confirms the issue is a bidirectional UTC/local date-boundary mismatch — UTC midnight does not align with local midnight, so entries near the boundary are misassigned to the wrong local day in both directions.
-
-### Likely Root Cause
-
-`ActivityLog.LoggedAt` is stored in UTC (correct). The bug is in how "today" date boundaries are computed for filtering:
-
-- The server-side or client-side code likely computes `DateTime.UtcNow.Date` as the start of "today" rather than converting to local time first.
-- For Eastern time (UTC-4 in summer / UTC-5 in winter), UTC midnight is 8–9 PM the *previous* evening local time. This means:
-  - Entries logged after ~8 PM Eastern are UTC-dated to the next day → appear tomorrow
-  - "Today" filters using UTC midnight exclude entries logged this evening → today looks empty
-
-Possible additional contributors:
-- Inconsistency between client browser time (local) and API server time (UTC)
-- `DateOnly.FromDateTime(l.LoggedAt)` without timezone conversion in client-side `DayScores` computation (`Balance.razor`)
-- `GetByDateRangeAsync(todayUtc, todayUtc.AddDays(1))` in `Home.OnInitializedAsync` using UTC boundaries for a local-day concept
-
-### Impact
-
-- **Home dashboard**: "Today's Momentum" ring and category breakdown show wrong or empty data after ~8 PM local
-- **View Log "Today"**: appears empty or shows prior-day entries
-- **Balance page "Best & worst days"**: day assignment can be wrong for late-evening entries
-- **Trends daily chart**: entries may land in the wrong day bucket
-- **Score totals** (Today/Week/Month): today's total can read 0 or be inflated with yesterday's late entries
 
 ### Production Reproduction (confirmed 2026-05-29)
 
-Observed after v2 Dimension Model deployment (unrelated to the migration):
-
 - **Balance page** reported Friday total: **+1**
 - **View Log "Today"** reported Friday total: **+26**
-- **Cause:** Prior-evening entries from Thursday night were included in Friday's "Today" view, inflating the View Log total. The Balance page used a different (possibly more correct) boundary, producing a lower number.
-- This confirms the bidirectional boundary mismatch — the same evening entries that are excluded from "Today" when logged late can appear the *next* morning as part of the prior day's total in one view but not another.
+- Cause: Prior-evening entries from Thursday night were included in Friday's "Today" view (UTC boundary mismatch).
 
-**This issue is unrelated to the v2 Dimension Model migration.** The migration is complete and all post-migration smoke tests passed. KI-013 is an independent date/time boundary bug that predates v2.
+### Root Cause
 
-### Investigation Areas (not yet root-caused)
+`ActivityLog.LoggedAt` is stored in UTC (correct). The bug was in how day boundaries were computed for filtering.
 
-- `ScoreService.GetSummaryAsync` — `todayStart` / `todayEnd` computation
-- `ScoreService.GetDailyTotalsAsync` — grouping logic for day buckets
-- `ActivityLogRepository.GetByDateRangeAsync` — caller-supplied `from`/`to` boundaries
-- `Home.OnInitializedAsync` — `todayUtc` variable passed to `LogService.GetByDateRangeAsync`
-- `Balance.razor` `DayScores` property — `DateOnly.FromDateTime(l.LoggedAt.ToLocalTime())` (may be correct; needs verification)
-- `ActivityDetail.razor` — period filter date boundary construction
-- `CreateActivityLogDto.LoggedAt` — whether the client sends UTC or local time on log creation
+Multiple locations used `DateTime.UtcNow.Date` as the start of "today":
 
-### Diagnostic Hypothesis (2026-05-31)
+- `ActivityDetail.razor` `GetDateRange()` — all three periods (day/week/month) used UTC date arithmetic
+- `Home.razor` `OnInitializedAsync` — `todayUtc = DateTime.UtcNow.Date` for today's log fetch
+- `LogActivity.razor` `OnInitializedAsync` — same pattern for "today so far" count
+- `Balance.razor` `GetPeriodFrom()` — UTC date for week/month/year period starts
+- `ScoreService.GetSummaryAsync` (server) — `todayStart = DateTime.UtcNow.Date` for TodayTotal and WeekTotal filtering
 
-The query retrieving a day's log entries likely relies on database-side or server-side date logic to determine "today" or to derive the selected calendar day's boundaries. Likely patterns:
+For Eastern time (UTC-4 in summer / UTC-5 in winter), UTC midnight is 8–9 PM of the *previous* local evening. This produced the bidirectional mismatch: entries logged after ~8 PM Eastern were UTC-dated to the next day (Symptom B) and "today" filters excluded entries logged that same evening (Symptom A).
 
-- `GETDATE()` or `GETUTCDATE()` called inside the SQL `WHERE` clause
-- SQL-side date truncation (e.g., `CAST(timestamp AS DATE)`)
-- `.Date` property comparison on a UTC `DateTime` without prior timezone conversion
-- EF Core translating a `.Date` comparison into a SQL date function that uses the database server's timezone
+`Balance.razor` `DayScores` was **already correct** — it used `DateOnly.FromDateTime(l.LoggedAt.ToLocalTime())` for per-day grouping.
 
-Because `ActivityLog.LoggedAt` is stored in UTC and the database/server operates in UTC, any "today" boundary derived server-side will be a UTC calendar-day boundary — not the user's local calendar-day boundary. That is the proximate cause of the bidirectional mismatch described in the Symptoms section.
+The `ActivityLogRepository.GetByDateRangeAsync` query is also correct — it uses `>= from && < to` — so no changes were needed in the repository or EF layer.
 
-### Proposed Fix Direction
+### Resolution
 
-Do not ask the database or server to determine "today." Instead:
-
-1. Determine the selected local date in the **application layer** (browser or client).
-2. Compute the local start (`00:00:00` local) and exclusive local end (`00:00:00` local of the following day) for that selected date.
-3. Convert those two boundaries to UTC using the user's intended timezone.
-4. Pass `startUtc` and `endUtc` as explicit parameters to the API or repository.
-5. Query using an inclusive start and exclusive end against the stored UTC timestamp:
+**Client-side (Blazor WASM):** `DateTime.Today` in the browser returns the user's local midnight as `DateTimeKind.Local`. Calling `.ToUniversalTime()` converts to the correct UTC equivalent. All client-side day boundary computations now use this pattern instead of `DateTime.UtcNow.Date`.
 
 ```csharp
-entry.TimestampUtc >= startUtc &&
-entry.TimestampUtc < endUtc
+// Before (wrong — UTC midnight used as day boundary)
+var todayUtc = DateTime.UtcNow.Date;
+LogService.GetByDateRangeAsync(todayUtc, todayUtc.AddDays(1));
+
+// After (correct — local midnight converted to UTC)
+var localToday = DateTime.Today; // browser local midnight
+LogService.GetByDateRangeAsync(localToday.ToUniversalTime(), localToday.AddDays(1).ToUniversalTime());
 ```
 
-This preserves UTC storage while ensuring the day boundary matches the user's local calendar day.
+**Server-side (Score Summary):** The API server has no timezone context. `ScoresController.GetSummary` now accepts optional `todayStartUtc`, `weekStartUtc`, and `monthStartUtc` query parameters. The client computes these from local date arithmetic and passes them on every summary request. The server uses them when present; falls back to UTC.Now boundaries when called without params (backward-compatible).
 
-### Patterns to Avoid in the Fix
+```csharp
+// Client ScoreService now sends:
+// GET /api/scores/summary?todayStartUtc=2026-05-31T04:00:00Z&weekStartUtc=...&monthStartUtc=...
 
-- `GETDATE()` or `GETUTCDATE()` in the `WHERE` clause
-- `GETUTCDATE()` or any SQL-side "today" derivation
-- SQL-side date truncation in the filter predicate
-- Comparing only `.Date` on a UTC `DateTime` without prior timezone conversion
-- Relying on the server or database timezone setting to produce the correct local day
+// Server ScoreService now accepts (optional, falls back to UTC.Now if absent):
+public async Task<ScoreSummaryDto> GetSummaryAsync(string userId,
+    DateTime? todayStartUtc = null, DateTime? weekStartUtc = null, DateTime? monthStartUtc = null)
+```
 
-### Patterns to Prefer in the Fix
+### Files Changed
 
-- Explicit `startUtc` / `endUtc` parameters derived in the application layer
-- App-layer timezone conversion before forming the query boundary
-- Inclusive start, exclusive end (`>=` / `<`)
-- Unit tests for entries logged near local midnight (both before and after)
-- Unit tests around DST boundaries if per-user timezone support is introduced
+| File | Change |
+|---|---|
+| `Momentum.Client/Pages/ActivityDetail.razor` | `GetDateRange()` uses `DateTime.Today.ToUniversalTime()` for all periods |
+| `Momentum.Client/Pages/Balance.razor` | `GetPeriodFrom()` uses local date arithmetic for week/month/year starts |
+| `Momentum.Client/Pages/Home.razor` | Day log fetch uses `DateTime.Today.ToUniversalTime()` boundaries |
+| `Momentum.Client/Pages/LogActivity.razor` | Same fix for "today so far" log count |
+| `Momentum.Client/Services/ScoreService.cs` | Computes and passes `todayStartUtc`, `weekStartUtc`, `monthStartUtc` on summary request |
+| `Momentum.Application/Interfaces/IScoreService.cs` | Added optional boundary params to `GetSummaryAsync` |
+| `Momentum.Application/Services/ScoreService.cs` | Uses client-supplied boundaries when provided |
+| `Momentum.API/Controllers/ScoresController.cs` | Accepts `[FromQuery]` boundary params, forwards to service |
+| `Momentum.Tests/ScoreServiceTests.cs` | Added regression test: entry at 23:00 local (03:00 UTC next day) excluded from local today |
+
+### Known Remaining Limitation
+
+`ScoreService.GetWeeklyComparisonAsync` and `GetTotalsAsync` (Trends charts) still group entries by `l.LoggedAt.Date` (UTC date). Entries logged within a few hours of UTC midnight may be bucketed into the adjacent day in trend charts. This affects the weekly comparison bar chart and Trends page charts, but only for entries near UTC midnight. These are lower-impact compared to the primary View Log / Score Summary symptoms and are deferred to a future fix.
 
 ---
 
@@ -567,5 +546,74 @@ Same diff-based pattern applied to the activity-change fallback path.
 
 ---
 
+## KI-015 — Trends daily chart buckets use UTC date instead of local date
+
+| Field | Value |
+|---|---|
+| **ID** | KI-015 |
+| **Status** | OPEN · DEFERRED |
+| **Area** | `Momentum.Application/Services/ScoreService.cs` — `GetWeeklyComparisonAsync`, `GetTotalsAsync` |
+| **Severity** | Low–Medium — daily chart bucket labeling/grouping can be off by one day for entries logged near local midnight; primary View Log and Score Summary symptoms from KI-013 are not affected |
+| **Discovered** | During KI-013 resolution (2026-05-31) |
+
+### Context
+
+KI-013 fixed the primary UTC/local boundary bug across View Log, Score Summary, Home Today totals, and Balance period starts. Two server-side methods were deferred from that fix:
+
+- `ScoreService.GetWeeklyComparisonAsync` — groups entries by day for the weekly comparison bar chart
+- `ScoreService.GetTotalsAsync` — groups entries into daily, weekly, or monthly buckets for the Trends page charts
+
+### Symptom
+
+Both methods use `l.LoggedAt.Date` for grouping, where `l.LoggedAt` is stored as UTC:
+
+```csharp
+// GetWeeklyComparisonAsync
+.Where(l => l.LoggedAt.Date == thisWeekStart.AddDays(i))
+
+// GetTotalsAsync — daily bucket grouping
+.GroupBy(l => l.LoggedAt.Date)
+```
+
+Because `LoggedAt` is UTC, `.Date` returns the UTC calendar date. For users in negative UTC offsets (Eastern, Central, Mountain, Pacific), entries logged in the late evening local time have a UTC timestamp that crosses into the following UTC date:
+
+- Local: 2026-05-31 23:00 EDT
+- Stored UTC: 2026-06-01 03:00Z
+- `l.LoggedAt.Date` = **June 1** (UTC)
+- Correct local date: **May 31** (EDT)
+
+Such entries appear in the wrong day bucket in Trends daily charts and the Home weekly comparison chart.
+
+### Impact
+
+- **Trends page daily chart** — an entry logged at 11 PM local appears in the next day's bar
+- **Home weekly comparison chart** — same late-evening entry may appear in the adjacent day's comparison column
+- **Weekly Trends** and **Monthly Trends** — not significantly affected; the offset only matters at day boundaries, which have less weight at week/month granularity
+- **View Log, Score Summary, Balance** — not affected; those were fixed by KI-013
+
+### Proposed Fix
+
+Local-day bucketing on the server requires knowing the user's UTC offset (or full timezone). Options:
+
+1. **Client supplies offset as a query parameter** — simplest: client sends `?localOffsetMinutes=-240` (e.g. EDT); server applies the offset when computing `.Date` on each `LoggedAt`:
+   ```csharp
+   var localDate = l.LoggedAt.AddMinutes(offsetMinutes).Date;
+   .GroupBy(l => l.LoggedAt.AddMinutes(offsetMinutes).Date)
+   ```
+2. **Client supplies explicit daily bucket boundaries** — client pre-computes the UTC start/end for each local day and passes them; server groups by matching bucket. More complex but handles DST correctly.
+3. **Client-side grouping** — fetch raw log entries and group locally in the browser. Feasible for small date ranges; not practical for Trends which spans months.
+
+Option 1 is the most pragmatic starting point. DST transitions would cause up to one hour of bucket misalignment on two dates per year; this is an acceptable limitation unless a full IANA timezone approach is added later.
+
+### Acceptance Criteria
+
+- Entries are bucketed under the correct local calendar date in Trends daily charts and the weekly comparison chart.
+- An entry at 23:00 local (next UTC day) appears in the same day's bar as an entry at 08:00 local.
+- Daily chart bucket edges use inclusive start / exclusive end UTC boundaries derived from local midnight.
+- Existing KI-013 fixes (View Log, Score Summary, Balance) remain intact.
+- Regression test: entry at 23:00 local time is grouped into the correct local day bucket, not the following UTC day bucket.
+
+---
+
 *Momentum — Known Issues Log*  
-*Last updated: 2026-05-31*
+*Last updated: 2026-05-31 (KI-013 resolved; KI-015 opened)*
