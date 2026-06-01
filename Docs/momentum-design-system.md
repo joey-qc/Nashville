@@ -70,14 +70,16 @@ All tokens are defined in `Momentum.Client/wwwroot/css/momentum-theme.css`.
 
 Never hardcode category colors in components. Always read `ColorHex` from `CategoryDto`.
 
-| Category | Token | Value |
+| Dimension (display name) | Token | Value |
 |---|---|---|
-| Physical | `--cat-physical` | `#76E04A` |
-| Mental | `--cat-mental` | `#5BC8FF` |
-| Spiritual | `--cat-spiritual` | `#B894FF` |
-| Social | `--cat-social` | `#F7B500` |
-| Housekeeping | `--cat-housekeeping` | `#FF9472` |
+| Body (was Physical) | `--cat-physical` | `#76E04A` |
+| Mind (was Mental) | `--cat-mental` | `#5BC8FF` |
+| Spirit (was Spiritual) | `--cat-spiritual` | `#B894FF` |
+| Connections (was Social) | `--cat-social` | `#F7B500` |
+| Responsibilities (was Housekeeping) | `--cat-housekeeping` | `#FF9472` |
 | All (filter default) | — | `#9E9E9E` |
+
+CSS token names (`--cat-physical` etc.) are **not renamed** — they remain stable identifiers regardless of display-name changes.
 
 ### Border Radius
 
@@ -597,7 +599,62 @@ On mobile (≤660px): collapses to `grid-template-columns: 1fr`.
 
 ---
 
-## 11. Category Chip Styling
+## 11. Dimension Display Names & Responsive Labels
+
+### Display Name Mapping
+
+User-facing dimension names differ from names stored in the database. `DimensionDisplayHelper` in `Momentum.Client/Services/` is the single source of truth for this mapping:
+
+| Stored (DB) | Display Name | Mobile Label (≤540px) |
+|---|---|---|
+| Physical | Body | Body |
+| Mental | Mind | Mind |
+| Spiritual | Spirit | Spirit |
+| Social | Connections | Con |
+| Housekeeping | Responsibilities | Rsp |
+
+Use `DimensionDisplayHelper.GetDisplayName(dim)` for full names and `GetMobileLabel(dim)` for abbreviated mobile labels. The helper maps by dimension ID (stable) with name as fallback.
+
+### Responsive Label Markup Pattern
+
+All dimension chips and labels use this two-span pattern so CSS can swap full vs. abbreviated text without JavaScript:
+
+```html
+<span class="dim-full">Connections</span>
+<span class="dim-abbr" aria-hidden="true">Con</span>
+```
+
+Global CSS in `momentum-theme.css`:
+- Desktop (>540px): `.dim-full` visible, `.dim-abbr` hidden (`display:none`)
+- Mobile (≤540px): `.dim-full` hidden, `.dim-abbr` visible
+
+Accessibility: the parent element (`<button>`, `<span>`, etc.) always carries `title=` and/or `aria-label=` with the full display name. `.dim-abbr` uses `aria-hidden="true"` so screen readers always receive the complete name.
+
+---
+
+## 12. Category Chip Styling
+
+### Filter Chips (View Log, Trends)
+
+All dimension filter chip rows (`.cat-chips`, `.cat-filter`) use the color-dot style — an 8px colored dot before the label:
+
+```html
+<!-- "All" chip -->
+<button class="cat-chip @(active ? "active all" : "")">
+    <span class="chip-dot" style="background:#9E9E9E"></span>All
+</button>
+
+<!-- Dimension chip -->
+<button class="cat-chip @(active ? "active" : "")"
+        style="@(active ? $"background:{cat.ColorHex}26;border-color:{cat.ColorHex};color:{cat.ColorHex}" : "")"
+        title="@DimensionDisplayHelper.GetDisplayName(cat)">
+    <span class="chip-dot" style="background:@cat.ColorHex"></span>
+    <span class="dim-full">@DimensionDisplayHelper.GetDisplayName(cat)</span>
+    <span class="dim-abbr" aria-hidden="true">@DimensionDisplayHelper.GetMobileLabel(cat)</span>
+</button>
+```
+
+`.cat-chip` must be `display: inline-flex; align-items: center; gap: 6px` to align the dot and label. `.chip-dot` is an 8px circle (`border-radius: 50%`). Active state uses inline styles (colored background + border) rather than a CSS class, because the color is dynamic per dimension.
 
 Used in Manage Activities modal for multi-select category toggles.
 
@@ -984,5 +1041,5 @@ Do not use `MudSnackbar` directly in markup. Use the `ISnackbar` service only.
 
 ---
 
-*Momentum Design System — v1.1*
-*Reflects UI state after Phase 4 redesign (all pages converted to custom HTML/CSS) plus report restructuring: Category Breakdown moved to Home; sparklines moved to Trends; Balance page simplified to full-width stacked layout; Top Periods labels include year; bwd-date-inline always visible*
+*Momentum Design System — v1.2*
+*Added §11: Dimension Display Names & Responsive Labels (DimensionDisplayHelper, .dim-full/.dim-abbr pattern, mobile abbreviations); updated §12 with color-dot filter chip pattern now used consistently across View Log and Trends; updated dimension color table with display name aliases*

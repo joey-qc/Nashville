@@ -176,10 +176,13 @@
                             <button type="button"
                                     class="dim-toggle-btn @(sel ? "dim-selected" : "")"
                                     style="@(sel ? $"border-color:{dim.ColorHex};background:{dim.ColorHex};color:rgba(0,0,0,0.78)" : $"border-color:{dim.ColorHex}55;color:{dim.ColorHex}CC")"
+                                    title="@DimensionDisplayHelper.GetDisplayName(dim)"
+                                    aria-label="@DimensionDisplayHelper.GetDisplayName(dim)"
                                     @onclick="@(() => ToggleDimension(dim.Id))">
                                 <span class="dim-toggle-dot"
                                       style="background:@(sel ? "rgba(0,0,0,0.22)" : dim.ColorHex)"></span>
-                                @dim.Name
+                                <span class="dim-full">@DimensionDisplayHelper.GetDisplayName(dim)</span>
+                                <span class="dim-abbr" aria-hidden="true">@DimensionDisplayHelper.GetMobileLabel(dim)</span>
                             </button>
                         }
                     </div>

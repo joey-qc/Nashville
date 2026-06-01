@@ -6,9 +6,9 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** Post-v2 — KI-013 UTC/Local timezone boundary fix complete  
+**Phase:** Post-v2 — Dimension rename (Body/Mind/Spirit/Connections/Responsibilities) + mobile-responsive labels  
 **Build Status:** ✅ All projects build clean (0 warnings, 0 errors)  
-**Last Updated:** 2026-05-31
+**Last Updated:** 2026-06-01
 
 ### v2 Migration Deployment Summary
 
@@ -66,6 +66,17 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 ---
 
 ## Completed Work
+
+### Phase 13: MOB-001 Dimension Rename + Mobile-Responsive Labels (2026-06-01 — complete)
+
+- **Dimension rename:** All user-facing dimension names updated throughout the UI:
+  - Physical → Body · Mental → Mind · Spiritual → Spirit · Social → Connections · Housekeeping → Responsibilities
+- **Responsive abbreviations:** On mobile (≤540px), long names abbreviate to Body / Mind / Spirit / Con / Rsp. Desktop always shows full names. Implemented via `.dim-full` / `.dim-abbr` CSS spans toggled by a global media query in `momentum-theme.css`.
+- **`DimensionDisplayHelper.cs`** — new static helper in `Momentum.Client/Services/`. Maps by stable dimension ID (primary) and stored name (fallback). Provides `GetDisplayName()` and `GetMobileLabel()`.
+- **Accessibility:** Every chip and toggle button carries `title=` and/or `aria-label=` with the full display name. `.dim-abbr` spans carry `aria-hidden="true"` so screen readers always receive the full label.
+- **View Log filter chips** now use the color-dot chip style (matching Trends page): `inline-flex` layout + 8px colored dot per dimension. "All" chip gets the gray dot + `.active.all` CSS class.
+- **Pages updated:** LogActivity.razor, ActivityDetail.razor, ManageActivities.razor, Reports.razor.
+- No database schema changes; no API contract changes; no scoring or data isolation changes.
 
 ### Phase 12: KI-013 UTC/Local Timezone Boundary Fix (2026-05-31 — complete)
 - Fixed View Log, Home, Add Entry, and Balance date boundaries to use `DateTime.Today.ToUniversalTime()` (browser local midnight → UTC) instead of `DateTime.UtcNow.Date` (UTC midnight)
@@ -164,4 +175,4 @@ KI-013 is an **active data accuracy bug** confirmed in production. It is indepen
 
 ---
 
-*Momentum Handoff — Updated 2026-05-31 (Dimension UI terminology complete; per-entry dimension control live)*
+*Momentum Handoff — Updated 2026-06-01 (MOB-001: dimension rename to Body/Mind/Spirit/Connections/Responsibilities; mobile-responsive abbreviations; View Log chip consistency)*

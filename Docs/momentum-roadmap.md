@@ -141,25 +141,17 @@ Momentum models multidimensional impact rather than mutually-exclusive categoriz
 
 ### Mobile-Friendly Dimension Labels
 
-**Status:** Planned · **Priority:** Medium
+**Status:** ✅ Complete (2026-06-01 — MOB-001) · **Priority:** Medium
 
-Dimension names (Physical, Mental, Social, Spiritual, Housekeeping) consume significant horizontal space when displayed as chips, toggle buttons, filter pills, chart legends, or summary rows. On smaller mobile viewports this creates crowding across Add Entry, View Log, Balance, Trends, and Reports.
+Dimension names were simultaneously renamed (Physical→Body, Mental→Mind, Spiritual→Spirit, Social→Connections, Housekeeping→Responsibilities) and given mobile-responsive display via `DimensionDisplayHelper`.
 
-**Goal:** Investigate and implement a responsive dimension display strategy that preserves clarity and accessibility while reducing horizontal footprint on narrow screens.
+**Implemented approach:** Responsive label spans (`.dim-full` / `.dim-abbr`) toggled by a global CSS media query at ≤540px. Both spans exist in the DOM; CSS hides the one not appropriate for the viewport. Desktop shows full names; mobile shows Body / Mind / Spirit / Con / Rsp.
 
-**Approaches to evaluate:**
+**Accessibility:** `title=`, `aria-label=`, or both on every chip/button. `.dim-abbr` spans carry `aria-hidden="true"`. Screen readers always receive the full display name.
 
-- Responsive label length: full name on desktop, abbreviated on mobile (e.g. PHY / MEN / SOC / SPI / HSK)
-- Two-letter abbreviations
-- Icon + abbreviated label combinations
-- Tooltip or long-press expansion for full name
+**Scope covered:** Add Entry (LogActivity), Edit Log Entry (LogActivity), New/Edit Activity (ManageActivities), View Log filter chips, View Log entry-level dimension metadata, Trends filter chips, Trends sparkline rows.
 
-**Requirements:**
-
-- No ambiguity between dimensions at any display size
-- Accessible (screen reader receives full name regardless of visual label)
-- Consistent across all screens that display dimension labels
-- Does not affect stored data, API contracts, or DTO field names
+**No stored data changes:** Database still holds Physical/Mental/Spiritual/Social/Housekeeping. `DimensionDisplayHelper` maps client-side. API contracts unchanged.
 
 ---
 

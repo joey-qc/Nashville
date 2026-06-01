@@ -93,9 +93,10 @@
                     <div class="row-cats">
                         @foreach (var cat in a.Categories)
                         {
-                            <span class="row-cat-chip">
+                            <span class="row-cat-chip" title="@DimensionDisplayHelper.GetDisplayName(cat)">
                                 <span class="row-cat-dot" style="background:@cat.ColorHex"></span>
-                                @cat.Name
+                                <span class="dim-full">@DimensionDisplayHelper.GetDisplayName(cat)</span>
+                                <span class="dim-abbr" aria-hidden="true">@DimensionDisplayHelper.GetMobileLabel(cat)</span>
                             </span>
                         }
                     </div>
@@ -226,9 +227,12 @@
                                 <button type="button"
                                         class="cat-toggle-btn @(selected ? "cat-selected" : "")"
                                         style="@(selected ? $"border-color:{cat.ColorHex};background:{cat.ColorHex};color:rgba(0,0,0,0.78)" : $"border-color:{cat.ColorHex}55;color:{cat.ColorHex}CC")"
+                                        title="@DimensionDisplayHelper.GetDisplayName(cat)"
+                                        aria-label="@DimensionDisplayHelper.GetDisplayName(cat)"
                                         @onclick="@(() => ToggleCategory(cat.Id))">
                                     <span class="cat-toggle-dot" style="background:@(selected ? "rgba(0,0,0,0.22)" : cat.ColorHex)"></span>
-                                    @cat.Name
+                                    <span class="dim-full">@DimensionDisplayHelper.GetDisplayName(cat)</span>
+                                    <span class="dim-abbr" aria-hidden="true">@DimensionDisplayHelper.GetMobileLabel(cat)</span>
                                 </button>
                             }
                         </div>

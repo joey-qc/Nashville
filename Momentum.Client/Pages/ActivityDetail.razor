@@ -50,14 +50,21 @@
         <!-- Category filter chips -->
         <div class="cat-chips">
             <button type="button"
-                    class="cat-chip @(_categoryFilter == null ? "active" : "")"
-                    @onclick="@(() => SetCategory(null))">All</button>
+                    class="cat-chip @(_categoryFilter == null ? "active all" : "")"
+                    @onclick="@(() => SetCategory(null))">
+                <span class="chip-dot" style="background:#9E9E9E"></span>All
+            </button>
             @foreach (var cat in _categories)
             {
                 <button type="button"
                         class="cat-chip @(_categoryFilter == cat.Id ? "active" : "")"
                         style="@CatChipStyle(cat)"
-                        @onclick="@(() => SetCategory(cat.Id))">@cat.Name</button>
+                        title="@DimensionDisplayHelper.GetDisplayName(cat)"
+                        @onclick="@(() => SetCategory(cat.Id))">
+                    <span class="chip-dot" style="background:@cat.ColorHex"></span>
+                    <span class="dim-full">@DimensionDisplayHelper.GetDisplayName(cat)</span>
+                    <span class="dim-abbr" aria-hidden="true">@DimensionDisplayHelper.GetMobileLabel(cat)</span>
+                </button>
             }
         </div>
 
@@ -103,7 +110,10 @@
                             @foreach (var cat in log.Categories)
                             {
                                 <span class="log-cat-dot" style="background:@cat.ColorHex"></span>
-                                <span class="log-cat-label">@cat.Name</span>
+                                <span class="log-cat-label" title="@DimensionDisplayHelper.GetDisplayName(cat)">
+                                    <span class="dim-full">@DimensionDisplayHelper.GetDisplayName(cat)</span>
+                                    <span class="dim-abbr" aria-hidden="true">@DimensionDisplayHelper.GetMobileLabel(cat)</span>
+                                </span>
                             }
                         </div>
                     </div>

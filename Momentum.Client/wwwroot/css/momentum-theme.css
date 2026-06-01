@@ -36,3 +36,13 @@ h1, h2, h3, h4, h5, h6 {
   font-family: 'Space Grotesk', sans-serif;
   outline: none; /* headings are not interactive; suppress browser focus ring */
 }
+
+/* Responsive dimension label spans used across all dimension chips and labels.
+   Desktop: full name visible (Body, Mind, Spirit, Connections, Responsibilities).
+   Mobile (≤540px): abbreviated label shown (Body, Mind, Spirit, Con, Rsp). */
+.dim-abbr { display: none; }
+
+@media (max-width: 540px) {
+  .dim-full  { display: none; }
+  .dim-abbr  { display: inline; }
+}

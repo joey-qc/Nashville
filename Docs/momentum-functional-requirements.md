@@ -40,14 +40,18 @@
 
 Activities belong to one or more of the following five wellness dimensions. Dimension colors are consistent across all screens, charts, lists, chips, and UI elements throughout the application.
 
-| Dimension | Color |
-|---|---|
-| Physical | Bright Green |
-| Mental | Sky Blue |
-| Spiritual | Soft Purple |
-| Social | Amber |
-| Housekeeping | Salmon |
-| All (used in reporting filters) | Medium Gray |
+| Dimension | Color | Mobile Label |
+|---|---|---|
+| Body | Bright Green | Body |
+| Mind | Sky Blue | Mind |
+| Spirit | Soft Purple | Spirit |
+| Connections | Amber | Con |
+| Responsibilities | Salmon | Rsp |
+| All (used in reporting filters) | Medium Gray | All |
+
+**Responsive display:** On mobile (≤540px), dimension chips and labels use the abbreviated form (Con, Rsp). Desktop and tablet always show the full name. Full name is always preserved in `title`, `aria-label`, or equivalent for accessibility.
+
+**Stored names:** The database stores the original dimension names (Physical/Mental/Spiritual/Social/Housekeeping). `DimensionDisplayHelper` in `Momentum.Client/Services/` maps these to display names and mobile abbreviations client-side. No database or API changes are required when display names evolve.
 
 ---
 
@@ -75,7 +79,7 @@ This is the first screen a user sees after successful login.
 - A full-width stacked proportional bar visualizes each dimension's relative share of the week's points using dimension colors.
 - Below the bar, a row per dimension shows: color dot · dimension name · point total · percentage · horizontal bar.
 - Only dimensions with at least one positive point entry for the current week are displayed.
-- Dimensions appear in canonical order: Physical → Mental → Spiritual → Social → Housekeeping.
+- Dimensions appear in canonical order: Body → Mind → Spirit → Connections → Responsibilities.
 
 ---
 
@@ -163,7 +167,7 @@ The user selects one of the following aggregation levels:
 - **Monthly** — monthly totals for the past 6 months
 
 #### 8.1.2 Dimension Filter
-The user can filter the chart by dimension (Physical, Mental, Spiritual, Social, Housekeeping, or **All**). When a specific dimension is selected, only points from activities in that dimension are shown, using that dimension's color.
+The user can filter the chart by dimension (Body, Mind, Spirit, Connections, Responsibilities, or **All**). When a specific dimension is selected, only points from activities in that dimension are shown, using that dimension's color.
 
 #### 8.1.3 Bar Chart
 - Stacked bar chart displaying point totals over time for the selected aggregation and category filter.
@@ -175,7 +179,7 @@ The user can filter the chart by dimension (Physical, Mental, Spiritual, Social,
 #### 8.1.4 Dimension Trend
 A sparkline panel showing each dimension's weekly point trend over the last 8 weeks. Displayed alongside the Top days/periods card.
 
-- One row per dimension (Physical → Mental → Spiritual → Social → Housekeeping)
+- One row per dimension (Body → Mind → Spirit → Connections → Responsibilities)
 - Each row shows: color dot · dimension name · sparkline area chart · 8-week total
 
 #### 8.1.5 Top Days / Top Periods
@@ -302,4 +306,4 @@ When a new user registers, the following starter activities are automatically ad
 ---
 
 *Momentum — Functional Requirements Document*
-*Version 1.5 — Renamed all Category/Categories user-facing terminology to Dimension/Dimensions throughout; added Dimensions field to §6.3 Log Activity form; updated §7.2 to reflect per-entry dimension editing; activity list in §7.1 now shows dimension labels*
+*Version 1.6 — Renamed all user-facing dimension names: Physical→Body, Mental→Mind, Spiritual→Spirit, Social→Connections, Housekeeping→Responsibilities; added mobile abbreviation table; documented DimensionDisplayHelper pattern and stored-name separation*

@@ -66,8 +66,11 @@
                 <button type="button"
                         class="cat-chip @(isActive ? "active" : "")"
                         style="@(isActive ? $"background:{cat.ColorHex}26;border-color:{cat.ColorHex};color:{cat.ColorHex}" : "")"
+                        title="@DimensionDisplayHelper.GetDisplayName(cat)"
                         @onclick="@(() => SetCategory(cat.Id))">
-                    <span class="chip-dot" style="background:@cat.ColorHex"></span>@cat.Name
+                    <span class="chip-dot" style="background:@cat.ColorHex"></span>
+                    <span class="dim-full">@DimensionDisplayHelper.GetDisplayName(cat)</span>
+                    <span class="dim-abbr" aria-hidden="true">@DimensionDisplayHelper.GetMobileLabel(cat)</span>
                 </button>
             }
         </div>
@@ -116,7 +119,10 @@
                         var areaPath  = BuildSparkArea(sparkVals);
                         <div class="trend-row">
                             <span class="trend-dot" style="background:@cat.ColorHex"></span>
-                            <span class="trend-name">@cat.Name</span>
+                            <span class="trend-name" title="@DimensionDisplayHelper.GetDisplayName(cat)">
+                                <span class="dim-full">@DimensionDisplayHelper.GetDisplayName(cat)</span>
+                                <span class="dim-abbr" aria-hidden="true">@DimensionDisplayHelper.GetMobileLabel(cat)</span>
+                            </span>
                             <div class="trend-spark-wrap">
                                 @if (linePath.Length > 0)
                                 {
