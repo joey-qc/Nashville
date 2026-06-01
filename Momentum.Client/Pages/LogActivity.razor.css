@@ -706,4 +706,13 @@
         font-size: 0.72rem;
         padding: 5px 10px;
     }
+
+    .dim-toggle-row {
+        gap: 5px;
+    }
+
+    .dim-toggle-btn {
+        padding: 5px 9px;
+        gap: 5px;
+    }
 }

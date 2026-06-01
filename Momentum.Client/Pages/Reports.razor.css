@@ -405,3 +405,14 @@
         grid-template-columns: 1fr;
     }
 }
+
+@media (max-width: 540px) {
+    .cat-filter {
+        gap: 4px;
+    }
+
+    .cat-chip {
+        padding: 4px 8px;
+        gap: 5px;
+    }
+}

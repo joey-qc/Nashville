@@ -912,3 +912,14 @@
         margin-top: 0;
     }
 }
+
+@media (max-width: 540px) {
+    .cat-toggle-row {
+        gap: 5px;
+    }
+
+    .cat-toggle-btn {
+        padding: 5px 9px;
+        gap: 5px;
+    }
+}

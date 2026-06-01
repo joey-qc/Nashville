@@ -396,4 +396,13 @@
     .log-pts {
         font-size: 1rem;
     }
+
+    .cat-chips {
+        gap: 4px;
+    }
+
+    .cat-chip {
+        padding: 4px 8px;
+        gap: 5px;
+    }
 }
