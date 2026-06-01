@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push *)",
+      "Bash(git commit -m ' *)",
+      "Bash(npm --version)",
+      "Bash(npx --version)",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "PowerShell(try { magick --version } catch {}; try { inkscape --version } catch {}; try { \\(Get-Command magick -ErrorAction Stop\\).Source } catch { \"magick: not found\" }; try { \\(Get-Command inkscape -ErrorAction Stop\\).Source } catch { \"inkscape: not found\" }; try { \\(Get-Command node -ErrorAction Stop\\).Source } catch { \"node: not found\" })"
+    ]
+  }
+}

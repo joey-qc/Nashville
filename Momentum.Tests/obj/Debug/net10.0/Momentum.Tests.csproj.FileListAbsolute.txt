@@ -165,10 +165,10 @@ C:\JL\Dev\Claude\Nashville\Momentum.Tests\obj\Debug\net10.0\Momentum.Tests.Gener
 C:\JL\Dev\Claude\Nashville\Momentum.Tests\obj\Debug\net10.0\Momentum.Tests.AssemblyInfoInputs.cache
 C:\JL\Dev\Claude\Nashville\Momentum.Tests\obj\Debug\net10.0\Momentum.Tests.AssemblyInfo.cs
 C:\JL\Dev\Claude\Nashville\Momentum.Tests\obj\Debug\net10.0\Momentum.Tests.csproj.CoreCompileInputs.cache
+C:\JL\Dev\Claude\Nashville\Momentum.Tests\obj\Debug\net10.0\Momentum.Tests.sourcelink.json
 C:\JL\Dev\Claude\Nashville\Momentum.Tests\obj\Debug\net10.0\Momentum.6BB04A19.Up2Date
 C:\JL\Dev\Claude\Nashville\Momentum.Tests\obj\Debug\net10.0\Momentum.Tests.dll
 C:\JL\Dev\Claude\Nashville\Momentum.Tests\obj\Debug\net10.0\refint\Momentum.Tests.dll
 C:\JL\Dev\Claude\Nashville\Momentum.Tests\obj\Debug\net10.0\Momentum.Tests.pdb
 C:\JL\Dev\Claude\Nashville\Momentum.Tests\obj\Debug\net10.0\Momentum.Tests.genruntimeconfig.cache
 C:\JL\Dev\Claude\Nashville\Momentum.Tests\obj\Debug\net10.0\ref\Momentum.Tests.dll
-C:\JL\Dev\Claude\Nashville\Momentum.Tests\obj\Debug\net10.0\Momentum.Tests.sourcelink.json
