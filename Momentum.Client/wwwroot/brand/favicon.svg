@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!--
+    Momentum favicon — two-peak mark
+    Designed exclusively for 16 / 20 / 32 px browser-tab rendering.
+
+    Design rationale:
+      • Single-polygon M (current) requires a 9-point outline whose inner
+        valley gap is too narrow to survive 16 px anti-aliasing.
+      • Two separate solid triangles with an explicit 14-unit gap (≈2.2 px at
+        16 px, ≈4.5 px at 32 px) guarantee a visually clear M / mountain read
+        at every target size with no sub-pixel artifacts.
+      • Left peak is intentionally taller than right (y=16 vs y=22) to maintain
+        the Momentum brand's directional / upward-right energy.
+      • No arrow: adds visual noise at small sizes without aiding recognition.
+  -->
+  <rect width="100" height="100" rx="18" fill="#76E04A"/>
+
+  <!-- Left peak — taller, leftward -->
+  <polygon fill="#1A2A44" points="8,82 42,82 22,16"/>
+
+  <!-- Right peak — slightly shorter, rightward -->
+  <polygon fill="#1A2A44" points="56,82 90,82 72,22"/>
+</svg>

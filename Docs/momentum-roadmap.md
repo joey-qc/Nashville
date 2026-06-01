@@ -387,6 +387,32 @@ All pages are now fully converted to custom HTML/CSS (Home, Add Entry, View Log,
 
 Remaining MudBlazor cleanup items:
 
+### Shorten Toast Notification Duration
+
+**Status:** Planned · **Priority:** Low
+
+Current toast notifications stay visible slightly too long, making the UI feel less responsive and more visually cluttered than it should.
+
+**Goal:** Reduce the default popup duration so toasts feel lighter and less intrusive, while remaining long enough to be readable on both mobile and desktop.
+
+**Suggested defaults:**
+- Success / info: ~2 seconds
+- Warning / error: ~3–4 seconds
+
+**Scope:**
+- Locate the current `ISnackbar` / `MudSnackbar` configuration (likely in `Program.cs` via `AddMudServices()` options or at each `Snackbar.Add(...)` call site)
+- Apply shorter durations centrally where possible rather than at each call site
+- Verify the chosen durations on mobile (smaller read window, users glance at toasts)
+- If the native `ToastService` (KI-009) is implemented first, bake these durations into its defaults instead
+
+**Acceptance criteria:**
+- Toasts dismiss faster than they do today
+- Success toasts dismiss faster than error/warning toasts
+- Duration is set in one place, not per call site
+- No other UI changes are introduced
+
+---
+
 - **Native Momentum toast system** — implement `ToastHost` + `ToastService` to replace `ISnackbar`; enables full MudBlazor removal (see KI-009)
 - **Remove `ISnackbar` calls** — replace all `ISnackbar.Add(...)` usages once custom toast is live
 - **Remove MudBlazor NuGet package** — after all `ISnackbar` references are eliminated
