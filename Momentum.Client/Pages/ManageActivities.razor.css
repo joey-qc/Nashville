@@ -250,15 +250,6 @@
     padding: 0;
 }
 
-.edit-btn {
-    color: var(--text-muted);
-}
-
-.edit-btn:hover {
-    background: var(--surface-3);
-    color: var(--text);
-}
-
 .trash-btn {
     color: var(--text-muted);
 }

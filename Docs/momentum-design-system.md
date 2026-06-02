@@ -529,7 +529,7 @@ The delete control sits at the far right, visually separated. On mobile the row 
 
 ### Icon-Only Delete Arm Pattern
 
-Used on: View Log entry rows, Edit Activity modal footer.
+Used on: View Log entry rows, Edit Activity modal footer, Edit Log Entry action row.
 
 **Normal state** — trash icon only, muted color:
 ```html

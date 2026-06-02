@@ -255,17 +255,49 @@
 
             <!-- ── Action buttons ── -->
             <div class="action-row">
-                <button type="submit" class="btn-submit" disabled="@_busy">
-                    @if (_busy)
-                    {
-                        @(EditId.HasValue ? "Saving…" : "Logging…")
-                    }
-                    else
-                    {
-                        @(EditId.HasValue ? "Save Changes" : "+ Log Activity")
-                    }
-                </button>
-                <button type="button" class="btn-text-cancel" @onclick="CancelEntry">CANCEL</button>
+                <div class="action-row-left">
+                    <button type="submit" class="btn-submit" disabled="@_busy">
+                        @if (_busy)
+                        {
+                            @(EditId.HasValue ? "Saving…" : "Logging…")
+                        }
+                        else
+                        {
+                            @(EditId.HasValue ? "Save Changes" : "+ Log Activity")
+                        }
+                    </button>
+                    <button type="button" class="btn-text-cancel" @onclick="CancelEntry">CANCEL</button>
+                </div>
+                @if (EditId.HasValue)
+                {
+                    <div class="action-row-right">
+                        @if (_deleteArmed)
+                        {
+                            <button type="button" class="act-btn confirm" title="Confirm delete"
+                                    @onclick="DeleteLogEntry">
+                                <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="act-btn cancel-del" title="Cancel delete"
+                                    @onclick="@(() => _deleteArmed = false)">
+                                <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button" class="act-btn delete" title="Delete log entry"
+                                    disabled="@_busy"
+                                    @onclick="@(() => _deleteArmed = true)">
+                                <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                        }
+                    </div>
+                }
             </div>
 
         </form>
@@ -287,6 +319,7 @@
     private bool                 _dropdownOpen;
     private string               _searchText        = "";
     private bool                 _busy;
+    private bool                 _deleteArmed;
 
     private readonly LogFormModel _model = new()
     {
@@ -362,6 +395,7 @@
         _model.Points         = log.PointsRecorded;
         _model.Notes          = log.Notes;
         _selectedDimensionIds = log.Categories.Select(c => c.Id).ToList();
+        _deleteArmed          = false;
         StateHasChanged();
         await JS.InvokeVoidAsync("scrollTo", 0, 0);
     }
@@ -516,6 +550,25 @@
             _model.Date           = DateTime.Today;
             _model.Time           = DateTime.Now.TimeOfDay;
             _selectedDimensionIds = [];
+        }
+    }
+
+    /* ── Delete (edit mode only) ─────────────────────────────── */
+    private async Task DeleteLogEntry()
+    {
+        if (!EditId.HasValue) return;
+        _busy = true;
+        var success = await LogService.DeleteAsync(EditId.Value);
+        _busy = false;
+        if (success)
+        {
+            Snackbar.Add("Log entry deleted.", Severity.Success);
+            Navigation.NavigateTo("/log/detail");
+        }
+        else
+        {
+            Snackbar.Add("Failed to delete log entry.", Severity.Error);
+            _deleteArmed = false;
         }
     }
 

@@ -589,8 +589,22 @@
 .action-row {
     display: flex;
     align-items: center;
-    gap: 16px;
+    justify-content: space-between;
+    gap: 12px;
     margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.action-row-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.action-row-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .btn-submit {
@@ -639,6 +653,55 @@
 
 .btn-text-cancel:hover {
     color: var(--text-dim);
+}
+
+/* ── Icon-only delete arm / confirm / cancel (edit mode only) */
+.act-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.12s ease, color 0.12s ease;
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 0;
+}
+
+.act-btn.delete {
+    color: var(--text-muted);
+}
+
+.act-btn.delete:hover:not(:disabled) {
+    background: rgba(255, 107, 107, 0.12);
+    color: var(--negative);
+}
+
+.act-btn.delete:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.act-btn.confirm {
+    color: var(--negative);
+    background: rgba(255, 107, 107, 0.12);
+}
+
+.act-btn.confirm:hover {
+    background: rgba(255, 107, 107, 0.22);
+}
+
+.act-btn.cancel-del {
+    color: var(--text-muted);
+}
+
+.act-btn.cancel-del:hover {
+    background: var(--surface-2);
+    color: var(--text);
 }
 
 /* ── Dimension toggle row ────────────────────────────────── */
