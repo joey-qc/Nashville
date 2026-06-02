@@ -6,7 +6,7 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** Post-v2 — Dimension naming fully aligned (DB names match user-facing names; DIM-001 pending deploy)  
+**Phase:** Post-v2 — DIM-001 complete and deployed to production; dimension naming fully aligned end-to-end  
 **Build Status:** ✅ All projects build clean (0 warnings, 0 errors)  
 **Last Updated:** 2026-06-02
 
@@ -67,7 +67,7 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 
 ## Completed Work
 
-### Phase 15: DIM-001 — Align Persisted Dimension Names with Display Names (2026-06-02 — complete, pending deploy)
+### Phase 15: DIM-001 — Align Persisted Dimension Names with Display Names (2026-06-02 — complete, deployed to production, verified)
 
 - **EF Core migration `20260602180710_DIM001_RenameDimensions`** — updates the 5 `Dimensions` rows in-place using `UpdateData` by stable ID. `Down()` fully reverses to old names. No schema changes; no data loss; no relationship changes.
 - **`AppDbContext.HasData`** updated: seed names now Body / Mind / Spirit / Connections / Responsibilities.
@@ -75,6 +75,13 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 - **`ActivitySeedService.cs`** comment updated to reflect new dimension names.
 - No API contracts changed. No DTO changes. No scoring, report, or date-handling changes. No CSS or markup changes required.
 - `DimensionDisplayHelper` overloads for `CategoryDto` and `CategoryTotalDto` both preserved.
+
+**Production deployment:**
+- Commit: `b7ac3b7`
+- Migration applied manually via idempotent SQL script (`DIM001_migration.sql`) to Azure SQL Serverless (West US 2)
+- Production `Dimensions` table confirmed: Body / Mind / Spirit / Connections / Responsibilities with original colors and IDs
+- `__EFMigrationsHistory` confirms `20260602180710_DIM001_RenameDimensions` present
+- Smoke test passed: Login, Home, Add Entry, Manage Activities, View Log, Trends, Balance — desktop full names and mobile abbreviations (Con / Rsp) verified correct
 
 ### Phase 14: MOB-002 + UX-001 + UX-001A — Edit/Delete Interaction Standardization (2026-06-02 — complete, deployed to production)
 
