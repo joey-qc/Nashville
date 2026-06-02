@@ -79,7 +79,7 @@ Never hardcode category colors in components. Always read `ColorHex` from `Categ
 | Responsibilities (was Housekeeping) | `--cat-housekeeping` | `#FF9472` |
 | All (filter default) | — | `#9E9E9E` |
 
-CSS token names (`--cat-physical` etc.) are **not renamed** — they remain stable identifiers regardless of display-name changes.
+CSS token names (`--cat-physical` etc.) are **not renamed** — they are internal style identifiers and do not need to track display name changes.
 
 ### Border Radius
 
@@ -529,7 +529,7 @@ The delete control sits at the far right, visually separated. On mobile the row 
 
 ### Icon-Only Delete Arm Pattern
 
-Used on: View Log entry rows, Edit Activity modal footer, Edit Log Entry action row.
+Used on: View Log entry rows, Edit Activity modal footer, Edit Log Entry action row, Manage Activities activity rows.
 
 **Normal state** — trash icon only, muted color:
 ```html
@@ -638,17 +638,19 @@ On mobile (≤660px): collapses to `grid-template-columns: 1fr`.
 
 ### Display Name Mapping
 
-User-facing dimension names differ from names stored in the database. `DimensionDisplayHelper` in `Momentum.Client/Services/` is the single source of truth for this mapping:
+Since migration `DIM001_RenameDimensions`, persisted database names match user-facing display names exactly. No client-side name translation is needed.
 
-| Stored (DB) | Display Name | Mobile Label (≤540px) |
-|---|---|---|
-| Physical | Body | Body |
-| Mental | Mind | Mind |
-| Spiritual | Spirit | Spirit |
-| Social | Connections | Con |
-| Housekeeping | Responsibilities | Rsp |
+| ID | Persisted Name (DB) | Display Name | Mobile Label (≤540px) |
+|---|---|---|---|
+| 1 | Body | Body | Body |
+| 2 | Mind | Mind | Mind |
+| 3 | Spirit | Spirit | Spirit |
+| 4 | Connections | Connections | Con |
+| 5 | Responsibilities | Responsibilities | Rsp |
 
-Use `DimensionDisplayHelper.GetDisplayName(dim)` for full names and `GetMobileLabel(dim)` for abbreviated mobile labels. The helper maps by dimension ID (stable) with name as fallback.
+`DimensionDisplayHelper` in `Momentum.Client/Services/` is simplified post-DIM-001:
+- `GetDisplayName(dim)` returns `dim.Name` directly — no lookup needed.
+- `GetMobileLabel(dim)` applies abbreviations only to IDs 4 and 5 (the two long names); all others return `dim.Name`.
 
 ### Responsive Label Markup Pattern
 
@@ -1076,5 +1078,5 @@ Do not use `MudSnackbar` directly in markup. Use the `ISnackbar` service only.
 
 ---
 
-*Momentum Design System — v1.3*
-*Updated §9: Destructive Action Conventions — delete now uses icon-only arm/confirm/cancel pattern (replaces bare text button); added `.act-btn` style reference and single-pattern rule; updated §8 Modal Footer to show new right-group icon layout*
+*Momentum Design System — v1.4*
+*DIM-001: §11 Display Name Mapping updated — persisted names now match display names; DimensionDisplayHelper simplified to mobile-label-only helper; color table note updated*

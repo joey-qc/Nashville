@@ -6,7 +6,7 @@ namespace Momentum.Infrastructure.Services;
 
 public class ActivitySeedService(AppDbContext context) : IActivitySeedService
 {
-    // Dimension IDs match HasData seed: 1=Physical, 2=Mental, 3=Spiritual, 4=Social, 5=Housekeeping
+    // Dimension IDs match HasData seed: 1=Body, 2=Mind, 3=Spirit, 4=Connections, 5=Responsibilities
     private static readonly (string Name, int Points, int[] CategoryIds)[] _defaults =
     [
         ("Exercise / Gym",           8,  [1]),

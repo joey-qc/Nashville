@@ -61,13 +61,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             .HasForeignKey(led => led.DimensionId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Seed data — same IDs and values as old Category seed
+        // Seed data — IDs are stable; names align with user-facing display names
         builder.Entity<Dimension>().HasData(
-            new Dimension { Id = 1, Name = "Physical",     ColorHex = "#76E04A" },
-            new Dimension { Id = 2, Name = "Mental",       ColorHex = "#5BC8FF" },
-            new Dimension { Id = 3, Name = "Spiritual",    ColorHex = "#B894FF" },
-            new Dimension { Id = 4, Name = "Social",       ColorHex = "#F7B500" },
-            new Dimension { Id = 5, Name = "Housekeeping", ColorHex = "#FF9472" }
+            new Dimension { Id = 1, Name = "Body",             ColorHex = "#76E04A" },
+            new Dimension { Id = 2, Name = "Mind",             ColorHex = "#5BC8FF" },
+            new Dimension { Id = 3, Name = "Spirit",           ColorHex = "#B894FF" },
+            new Dimension { Id = 4, Name = "Connections",      ColorHex = "#F7B500" },
+            new Dimension { Id = 5, Name = "Responsibilities", ColorHex = "#FF9472" }
         );
     }
 }

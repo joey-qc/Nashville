@@ -51,7 +51,7 @@ Activities belong to one or more of the following five wellness dimensions. Dime
 
 **Responsive display:** On mobile (≤540px), dimension chips and labels use the abbreviated form (Con, Rsp). Desktop and tablet always show the full name. Full name is always preserved in `title`, `aria-label`, or equivalent for accessibility.
 
-**Stored names:** The database stores the original dimension names (Physical/Mental/Spiritual/Social/Housekeeping). `DimensionDisplayHelper` in `Momentum.Client/Services/` maps these to display names and mobile abbreviations client-side. No database or API changes are required when display names evolve.
+**Stored names:** Database persisted names now match display names (Body/Mind/Spirit/Connections/Responsibilities), aligned by migration `DIM001_RenameDimensions`. `DimensionDisplayHelper` in `Momentum.Client/Services/` no longer needs to translate names — it only provides mobile abbreviations for the two longer names (Connections→Con, Responsibilities→Rsp).
 
 ---
 
@@ -266,20 +266,20 @@ When a new user registers, the following starter activities are automatically ad
 
 | Activity | Dimensions | Default Points |
 |---|---|---|
-| Exercise / Gym | Physical | +8 |
-| Hiking (Solo) | Physical | +8 |
-| Hiking (With Others) | Physical, Social | +9 |
-| Meditation | Mental, Spiritual | +7 |
-| Reading (Nonfiction) | Mental | +5 |
-| Journaling | Mental, Spiritual | +6 |
-| Cooking a Healthy Meal | Physical, Housekeeping | +5 |
-| Cleaning / Organizing | Housekeeping | +4 |
-| Socializing with Friends | Social | +6 |
-| Calling Family | Social | +5 |
-| Travel (Solo) | Mental, Spiritual | +7 |
-| Travel (With Others) | Mental, Spiritual, Social | +9 |
-| Watching Excessive TV | Mental | -3 |
-| Skipping Sleep | Physical, Mental | -6 |
+| Exercise / Gym | Body | +8 |
+| Hiking (Solo) | Body | +8 |
+| Hiking (With Others) | Body, Connections | +9 |
+| Meditation | Mind, Spirit | +7 |
+| Reading (Nonfiction) | Mind | +5 |
+| Journaling | Mind, Spirit | +6 |
+| Cooking a Healthy Meal | Body, Responsibilities | +5 |
+| Cleaning / Organizing | Responsibilities | +4 |
+| Socializing with Friends | Connections | +6 |
+| Calling Family | Connections | +5 |
+| Travel (Solo) | Mind, Spirit | +7 |
+| Travel (With Others) | Mind, Spirit, Connections | +9 |
+| Watching Excessive TV | Mind | -3 |
+| Skipping Sleep | Body, Mind | -6 |
 
 ---
 
@@ -306,4 +306,4 @@ When a new user registers, the following starter activities are automatically ad
 ---
 
 *Momentum — Functional Requirements Document*
-*Version 1.6 — Renamed all user-facing dimension names: Physical→Body, Mental→Mind, Spiritual→Spirit, Social→Connections, Housekeeping→Responsibilities; added mobile abbreviation table; documented DimensionDisplayHelper pattern and stored-name separation*
+*Version 1.7 — DIM-001: persisted DB names now match display names (Body/Mind/Spirit/Connections/Responsibilities); updated starter activities table; updated DimensionDisplayHelper note to reflect name-translation removal*

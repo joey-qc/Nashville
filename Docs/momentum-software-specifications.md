@@ -74,15 +74,15 @@ The application is structured as a **Visual Studio Solution** containing multipl
 
 ### 5.1 Domain Entities (Momentum.Domain/Entities)
 
-> **Note:** The `Category` C# enum has been removed. Categories are now a first-class database entity, seeded at migration time and returned to the client as `CategoryDto`.
+> **Note:** Dimensions are a first-class database entity seeded at migration time. The old `Category` C# enum has been removed. Dimensions are returned to the client as `CategoryDto` (the DTO retains its original name for API compatibility). Persisted names now match user-facing names (Body / Mind / Spirit / Connections / Responsibilities) since migration `DIM001_RenameDimensions`.
 
 ### 5.2 Entity Models (Momentum.Domain/Entities)
 
-#### Category
-Represents a wellness category. Seeded at migration time — not user-editable.
+#### Dimension
+Represents a wellness dimension. Seeded at migration time — not user-editable.
 ```
-- Id       : int (PK) — Physical=1, Mental=2, Spiritual=3, Social=4, Housekeeping=5
-- Name     : string
+- Id       : int (PK) — Body=1, Mind=2, Spirit=3, Connections=4, Responsibilities=5
+- Name     : string   — persisted name matches user-facing display name (aligned by DIM-001 migration)
 - ColorHex : string  (hex color code, e.g. "#76E04A")
 ```
 
@@ -99,17 +99,17 @@ Represents an activity in the user's library.
 - UserId        : string (FK to ApplicationUser)
 - Name          : string
 - Description   : string? (optional, max 500 chars)
-- Categories    : List<ActivityCategory> (join table)
+- Dimensions    : List<ActivityDimension> (join table)
 - DefaultPoints : int (positive or negative)
 - IsArchived    : bool (soft delete flag)
 - CreatedAt     : DateTime
 - UpdatedAt     : DateTime
 ```
 
-#### ActivityCategory (Join Table)
+#### ActivityDimension (Join Table)
 ```
 - ActivityId  : int (FK to Activity)
-- CategoryId  : int (FK to Category)
+- DimensionId : int (FK to Dimension)
 ```
 
 #### ActivityLog
@@ -136,7 +136,7 @@ Key DTOs include:
 - `UserSettingsDto` — for profile and settings
 - `LoginRequestDto` / `LoginResponseDto` — for authentication
 - `RegisterRequestDto` — for new user registration
-- `CreateActivityDto` / `UpdateActivityDto` — include optional `Description` (`[MaxLength(500)]`), use `List<int> CategoryIds` (not enum values)
+- `CreateActivityDto` / `UpdateActivityDto` — include optional `Description` (`[MaxLength(500)]`), use `List<int> CategoryIds` for dimension selection (field named `CategoryIds` for historical compatibility)
 - `CreateActivityLogDto` — includes optional `List<int>? DimensionIds`; when provided the submitted IDs become the log entry's dimension snapshot; when null the activity's current dimensions are used as the default
 - `UpdateActivityLogDto` — includes optional `List<int>? DimensionIds`; when provided the entry's snapshot is fully replaced; when null and the activity changed, snapshot is re-derived from the new activity; when null and activity unchanged, existing snapshot is preserved
 
@@ -148,7 +148,7 @@ Key DTOs include:
 - `AppDbContext` (in `Momentum.Infrastructure`) inherits from `IdentityDbContext<ApplicationUser>`.
 - Registered in the API project's dependency injection container.
 - Connection string is read from configuration (see Section 9).
-- `Category` rows are seeded via `HasData` — five fixed rows matching the color scheme table.
+- `Dimension` rows are seeded via `HasData` — five fixed rows. Persisted names (Body/Mind/Spirit/Connections/Responsibilities) now match user-facing display names. IDs and colors are immutable.
 
 ### 6.2 Repository Pattern
 - Each entity has a corresponding repository interface and implementation.

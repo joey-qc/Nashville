@@ -123,12 +123,14 @@ Future log entries may additionally support:
 
 # Terminology Evolution
 
-Current user-facing and internal terminology:
+Current user-facing, internal, and persisted terminology:
 - **Dimension** ✅ (complete — both UI and data layer now use "Dimension")
+- **Dimension names aligned end-to-end** ✅ (complete 2026-06-02 — DIM-001)
 
 Transition strategy:
 - internal architecture first ✅ (complete — "Dimension" is the internal term at all layers since v2)
 - user-facing terminology ✅ (complete — all UI labels updated 2026-05-31)
+- persisted names aligned ✅ (complete — `DIM001_RenameDimensions` migration updates DB rows to Body/Mind/Spirit/Connections/Responsibilities; `DimensionDisplayHelper` simplified to mobile-abbreviation-only helper)
 
 Rationale:
 Momentum models multidimensional impact rather than mutually-exclusive categorization. "Dimension" is more psychologically resonant and better reflects the overlapping behavioral impact a single activity can have across multiple life areas.
@@ -152,6 +154,27 @@ Dimension names were simultaneously renamed (Physical→Body, Mental→Mind, Spi
 **Scope covered:** Add Entry (LogActivity), Edit Log Entry (LogActivity), New/Edit Activity (ManageActivities), View Log filter chips, View Log entry-level dimension metadata, Trends filter chips, Trends sparkline rows.
 
 **No stored data changes:** Database still holds Physical/Mental/Spiritual/Social/Housekeeping. `DimensionDisplayHelper` maps client-side. API contracts unchanged.
+
+---
+
+## UX Consistency
+
+### Standardize Edit Screen Action Layout
+
+**Status:** ✅ Complete (2026-06-02 — MOB-002)
+
+Edit screens (Edit Activity, Edit Log Entry) use a consistent action row layout: Save + Cancel left-aligned, icon-only delete control right-aligned. The "DELETE ACTIVITY" bare text button was replaced with the arm/confirm/cancel trash icon pattern to match View Log row deletion. Mobile no longer requires scrolling to reach delete controls.
+
+---
+
+### Standardize Activity and Log Entry Edit/Delete Interactions
+
+**Status:** ✅ Complete (2026-06-02 — UX-001 + UX-001A)
+
+- Removed the redundant pencil edit icon from Manage Activities activity rows. Row tap is the single edit affordance, matching View Log behavior.
+- Added delete controls to the Edit Log Entry screen. Activities and Log Entries now share identical edit/delete UX: trash icon → arm → red check to confirm / gray X to cancel.
+- Manage Activities row-level trash icon now uses the arm/confirm/cancel pattern (UX-001A). Previously it immediately triggered the delete flow; now it requires a confirmation step identical to View Log row deletion.
+- The arm/confirm/cancel pattern is now the single, consistent destructive-action UX across all three deletion surfaces: View Log rows, Edit Activity, Edit Log Entry, and Manage Activities rows.
 
 ---
 

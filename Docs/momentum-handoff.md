@@ -6,7 +6,7 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** Post-v2 — Dimension rename rollout complete across all user-facing pages  
+**Phase:** Post-v2 — Dimension naming fully aligned (DB names match user-facing names; DIM-001 pending deploy)  
 **Build Status:** ✅ All projects build clean (0 warnings, 0 errors)  
 **Last Updated:** 2026-06-02
 
@@ -66,6 +66,38 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 ---
 
 ## Completed Work
+
+### Phase 15: DIM-001 — Align Persisted Dimension Names with Display Names (2026-06-02 — complete, pending deploy)
+
+- **EF Core migration `20260602180710_DIM001_RenameDimensions`** — updates the 5 `Dimensions` rows in-place using `UpdateData` by stable ID. `Down()` fully reverses to old names. No schema changes; no data loss; no relationship changes.
+- **`AppDbContext.HasData`** updated: seed names now Body / Mind / Spirit / Connections / Responsibilities.
+- **`DimensionDisplayHelper.cs` simplified**: `GetDisplayName()` now returns `dim.Name` directly (no lookup table needed). Mobile abbreviation table reduced to the two long names only: Connections→Con (Id=4), Responsibilities→Rsp (Id=5). The `_byName` legacy-name fallback dictionary removed entirely.
+- **`ActivitySeedService.cs`** comment updated to reflect new dimension names.
+- No API contracts changed. No DTO changes. No scoring, report, or date-handling changes. No CSS or markup changes required.
+- `DimensionDisplayHelper` overloads for `CategoryDto` and `CategoryTotalDto` both preserved.
+
+### Phase 14: MOB-002 + UX-001 + UX-001A — Edit/Delete Interaction Standardization (2026-06-02 — complete, deployed to production)
+
+**MOB-002 — Standardize Edit Screen Action Layout**
+- Edit Activity modal footer refactored: Save + Cancel grouped left, delete control isolated right
+- Replaced bare "DELETE ACTIVITY" text button with icon-only arm/confirm/cancel pattern (matches View Log row delete)
+- Normal state: trash icon. Armed state: red check (confirm) + gray X (cancel)
+- Mobile no longer requires extra scrolling to reach delete actions — footer stays on one row
+- CSS: added `.act-btn`, `.act-btn.confirm`, `.act-btn.cancel-del` to `ManageActivities.razor.css`; removed `.btn-text-delete`; removed mobile `flex-direction: column` override
+
+**UX-001 — Standardize Activity and Log Entry Edit/Delete Interactions**
+- Removed redundant pencil/edit icon button from Manage Activities activity rows — row tap remains the edit action
+- Added delete to Edit Log Entry screen: same trash → arm → confirm/cancel pattern as Edit Activity
+- `LogActivity.razor`: added `_deleteArmed` state, `DeleteLogEntry()` method, action row split into `action-row-left` (Save + Cancel) and `action-row-right` (delete icon, edit mode only)
+- Activities and Log Entries now share identical edit/delete UX
+
+**UX-001A — Armed Delete Confirmation on Activity Rows**
+- Manage Activities row-level trash icon no longer immediately triggers delete
+- First click arms the row (`_pendingDeleteActivityId = a.Id`); armed state shows red check + gray X
+- Red check invokes existing `DeleteActivity(a)` — all archive/cascade/conflict logic preserved
+- Gray X cancels armed state. Only one row can be armed at a time
+- Opening create or edit form clears any armed row state
+- No CSS changes required — `.act-btn` styles already scoped in `ManageActivities.razor.css` from MOB-002
 
 ### Phase 13A: MOB-001A Dimension Rename Rollout — Home + Balance (2026-06-02 — complete)
 - Added `CategoryTotalDto` overloads to `DimensionDisplayHelper` (Home and Balance pages use `CategoryTotalDto`, not `CategoryDto`)
@@ -185,4 +217,4 @@ KI-013 is an **active data accuracy bug** confirmed in production. It is indepen
 
 ---
 
-*Momentum Handoff — Updated 2026-06-01 (MOB-001: dimension rename to Body/Mind/Spirit/Connections/Responsibilities; mobile-responsive abbreviations; View Log chip consistency)*
+*Momentum Handoff — Updated 2026-06-02 (Phase 14: MOB-002 + UX-001 + UX-001A edit/delete interaction standardization deployed to production)*
