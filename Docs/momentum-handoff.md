@@ -67,6 +67,13 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 
 ## Completed Work
 
+### Phase 16: Update New-User Seeded Activity Library (2026-06-02 — complete)
+- Seed list updated in `ActivitySeedService.cs` (applies to new registrations only; existing users unchanged)
+- 14 → 13 activities: consolidated Hiking (Solo/With Others) → Hiking, Socializing with Friends → Socializing, Travel (Solo/With Others) → Travel, Reading (Nonfiction) → Reading/Learning
+- Added: Alcohol / Drinking (−5 pts, Body + Mind)
+- Points revised: Exercise/Gym +8→+15; most activities unified to +10; negatives −3/−6 → −5
+- No migration created; no backfill; no schema changes
+
 ### Phase 15: DIM-001 — Align Persisted Dimension Names with Display Names (2026-06-02 — complete, deployed to production, verified)
 
 - **EF Core migration `20260602180710_DIM001_RenameDimensions`** — updates the 5 `Dimensions` rows in-place using `UpdateData` by stable ID. `Down()` fully reverses to old names. No schema changes; no data loss; no relationship changes.

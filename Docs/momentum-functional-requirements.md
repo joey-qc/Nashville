@@ -266,20 +266,19 @@ When a new user registers, the following starter activities are automatically ad
 
 | Activity | Dimensions | Default Points |
 |---|---|---|
-| Exercise / Gym | Body | +8 |
-| Hiking (Solo) | Body | +8 |
-| Hiking (With Others) | Body, Connections | +9 |
-| Meditation | Mind, Spirit | +7 |
-| Reading (Nonfiction) | Mind | +5 |
-| Journaling | Mind, Spirit | +6 |
-| Cooking a Healthy Meal | Body, Responsibilities | +5 |
-| Cleaning / Organizing | Responsibilities | +4 |
-| Socializing with Friends | Connections | +6 |
+| Exercise / Gym | Body | +15 |
+| Hiking | Body | +10 |
+| Meditation | Mind, Spirit | +10 |
+| Reading/Learning | Mind | +10 |
+| Journaling | Mind, Spirit | +10 |
+| Cooking a Healthy Meal | Body, Responsibilities | +10 |
+| Cleaning / Organizing | Responsibilities | +5 |
+| Socializing | Connections | +10 |
 | Calling Family | Connections | +5 |
-| Travel (Solo) | Mind, Spirit | +7 |
-| Travel (With Others) | Mind, Spirit, Connections | +9 |
-| Watching Excessive TV | Mind | -3 |
-| Skipping Sleep | Body, Mind | -6 |
+| Travel | Mind, Spirit | +10 |
+| Watching Excessive TV | Mind | -5 |
+| Skipping Sleep | Body, Mind | -5 |
+| Alcohol / Drinking | Body, Mind | -5 |
 
 ---
 
@@ -306,4 +305,4 @@ When a new user registers, the following starter activities are automatically ad
 ---
 
 *Momentum — Functional Requirements Document*
-*Version 1.7 — DIM-001: persisted DB names now match display names (Body/Mind/Spirit/Connections/Responsibilities); updated starter activities table; updated DimensionDisplayHelper note to reflect name-translation removal*
+*Version 1.8 — Updated boilerplate starter activities: 14→13 entries, consolidated Hiking/Travel/Socializing variants, updated points, added Alcohol/Drinking*

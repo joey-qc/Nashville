@@ -9,20 +9,19 @@ public class ActivitySeedService(AppDbContext context) : IActivitySeedService
     // Dimension IDs match HasData seed: 1=Body, 2=Mind, 3=Spirit, 4=Connections, 5=Responsibilities
     private static readonly (string Name, int Points, int[] CategoryIds)[] _defaults =
     [
-        ("Exercise / Gym",           8,  [1]),
-        ("Hiking (Solo)",            8,  [1]),
-        ("Hiking (With Others)",     9,  [1, 4]),
-        ("Meditation",               7,  [2, 3]),
-        ("Reading (Nonfiction)",     5,  [2]),
-        ("Journaling",               6,  [2, 3]),
-        ("Cooking a Healthy Meal",   5,  [1, 5]),
-        ("Cleaning / Organizing",    4,  [5]),
-        ("Socializing with Friends", 6,  [4]),
+        ("Exercise / Gym",          15,  [1]),
+        ("Hiking",                  10,  [1]),
+        ("Meditation",              10,  [2, 3]),
+        ("Reading/Learning",        10,  [2]),
+        ("Journaling",              10,  [2, 3]),
+        ("Cooking a Healthy Meal",  10,  [1, 5]),
+        ("Cleaning / Organizing",    5,  [5]),
+        ("Socializing",             10,  [4]),
         ("Calling Family",           5,  [4]),
-        ("Travel (Solo)",            7,  [2, 3]),
-        ("Travel (With Others)",     9,  [2, 3, 4]),
-        ("Watching Excessive TV",   -3,  [2]),
-        ("Skipping Sleep",          -6,  [1, 2]),
+        ("Travel",                  10,  [2, 3]),
+        ("Watching Excessive TV",   -5,  [2]),
+        ("Skipping Sleep",          -5,  [1, 2]),
+        ("Alcohol / Drinking",      -5,  [1, 2]),
     ];
 
     public async Task SeedDefaultActivitiesAsync(string userId)

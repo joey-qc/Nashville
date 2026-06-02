@@ -184,24 +184,23 @@ This is a critical business rule — implement exactly as described:
 
 ## 10. Boilerplate Seed Data
 
-When a new user registers, the following activities must be automatically seeded into their activity library. This is triggered in the registration flow via `ActivitySeedService`, not via EF Core seed data. Category IDs: Physical=1, Mental=2, Spiritual=3, Social=4, Housekeeping=5.
+When a new user registers, the following activities must be automatically seeded into their activity library. This is triggered in the registration flow via `ActivitySeedService`, not via EF Core seed data. Dimension IDs: Body=1, Mind=2, Spirit=3, Connections=4, Responsibilities=5.
 
-| Activity Name | Categories | Default Points |
+| Activity Name | Dimensions | Default Points |
 |---|---|---|
-| Exercise / Gym | Physical | +8 |
-| Hiking (Solo) | Physical | +8 |
-| Hiking (With Others) | Physical, Social | +9 |
-| Meditation | Mental, Spiritual | +7 |
-| Reading (Nonfiction) | Mental | +5 |
-| Journaling | Mental, Spiritual | +6 |
-| Cooking a Healthy Meal | Physical, Housekeeping | +5 |
-| Cleaning / Organizing | Housekeeping | +4 |
-| Socializing with Friends | Social | +6 |
-| Calling Family | Social | +5 |
-| Travel (Solo) | Mental, Spiritual | +7 |
-| Travel (With Others) | Mental, Spiritual, Social | +9 |
-| Watching Excessive TV | Mental | -3 |
-| Skipping Sleep | Physical, Mental | -6 |
+| Exercise / Gym | Body | +15 |
+| Hiking | Body | +10 |
+| Meditation | Mind, Spirit | +10 |
+| Reading/Learning | Mind | +10 |
+| Journaling | Mind, Spirit | +10 |
+| Cooking a Healthy Meal | Body, Responsibilities | +10 |
+| Cleaning / Organizing | Responsibilities | +5 |
+| Socializing | Connections | +10 |
+| Calling Family | Connections | +5 |
+| Travel | Mind, Spirit | +10 |
+| Watching Excessive TV | Mind | -5 |
+| Skipping Sleep | Body, Mind | -5 |
+| Alcohol / Drinking | Body, Mind | -5 |
 
 Note: negative default points are intentional — they track detrimental habits. The scoring model supports negative `DefaultPoints` and negative `PointsRecorded`.
 
