@@ -473,7 +473,7 @@ The primary button is **not** full-width; it takes only the width of its content
 
 ### Modal Footer (with Destructive Action)
 
-When a modal has both save/cancel and a potential delete action, use a `space-between` footer layout:
+When a modal has both save/cancel and a potential delete action, use a `space-between` footer layout with the icon-only arm/confirm pattern (see §9):
 
 ```html
 <div class="modal-footer">
@@ -483,10 +483,17 @@ When a modal has both save/cancel and a potential delete action, use a `space-be
     </div>
     @if (isEditing)
     {
-        <button type="button" class="btn-text-delete">
-            <!-- trash SVG icon -->
-            DELETE ACTIVITY
-        </button>
+        <div class="modal-footer-right">
+            @if (_deleteArmed)
+            {
+                <button class="act-btn confirm" title="Confirm delete" @onclick="ConfirmDelete"><!-- ✓ --></button>
+                <button class="act-btn cancel-del" title="Cancel delete" @onclick="@(() => _deleteArmed = false)"><!-- ✕ --></button>
+            }
+            else
+            {
+                <button class="act-btn delete" title="Delete activity" @onclick="@(() => _deleteArmed = true)"><!-- 🗑 --></button>
+            }
+        </div>
     }
 </div>
 ```
@@ -502,26 +509,54 @@ When a modal has both save/cancel and a potential delete action, use a `space-be
     flex-wrap: wrap;
 }
 
-.modal-footer-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
+.modal-footer-left  { display: flex; align-items: center; gap: 16px; }
+.modal-footer-right { display: flex; align-items: center; gap: 4px; }
 ```
 
-The delete action is **separated** to the far right, visually distinct from the primary action cluster.
+The delete control sits at the far right, visually separated. On mobile the row stays intact — no column-stacking needed because the icon is compact enough to coexist with Save + Cancel on a single line.
 
 ---
 
 ## 9. Destructive Action Conventions
 
 1. **Never show a destructive button unless a user-initiated action has created a context** (user has clicked Edit, selected a row, etc.)
-2. Delete is always a **Tier 4 text action** (`var(--negative)`, `opacity: 0.6` at rest)
+2. Delete uses an **icon-only two-step arm/confirm pattern** — not a visible text button. This is the single consistent destructive-action UX across the application.
 3. For activities with log history, a 409 response triggers a **confirmation dialog** with two options:
    - **Hide from future logging** (archive — preserves data)
    - **Delete this activity and all history** (cascade — permanent, clearly warned)
 4. The cascade option should use `var(--negative)` or be visually marked as irreversible
 5. Never auto-proceed after a destructive action — always require explicit user confirmation
+
+### Icon-Only Delete Arm Pattern
+
+Used on: View Log entry rows, Edit Activity modal footer.
+
+**Normal state** — trash icon only, muted color:
+```html
+<button class="act-btn delete" title="Delete" @onclick="@(() => _armed = true)">
+    <!-- trash SVG, width/height 15 -->
+</button>
+```
+
+**Armed state** — red confirm check + gray cancel X:
+```html
+<button class="act-btn confirm" title="Confirm delete" @onclick="ConfirmDelete">
+    <!-- checkmark SVG -->
+</button>
+<button class="act-btn cancel-del" title="Cancel" @onclick="@(() => _armed = false)">
+    <!-- X SVG -->
+</button>
+```
+
+```css
+.act-btn          { width:30px; height:30px; border-radius:var(--radius-sm); border:none; background:transparent; }
+.act-btn.delete   { color:var(--text-muted); }
+.act-btn.delete:hover { background:rgba(255,107,107,0.12); color:var(--negative); }
+.act-btn.confirm  { color:var(--negative); background:rgba(255,107,107,0.12); }
+.act-btn.cancel-del { color:var(--text-muted); }
+```
+
+The `.act-btn` styles are **scoped per component** (ActivityDetail.razor.css, ManageActivities.razor.css) — not global — to avoid class-name collisions across Blazor's CSS isolation scope.
 
 ---
 
@@ -1041,5 +1076,5 @@ Do not use `MudSnackbar` directly in markup. Use the `ISnackbar` service only.
 
 ---
 
-*Momentum Design System — v1.2*
-*Added §11: Dimension Display Names & Responsive Labels (DimensionDisplayHelper, .dim-full/.dim-abbr pattern, mobile abbreviations); updated §12 with color-dot filter chip pattern now used consistently across View Log and Trends; updated dimension color table with display name aliases*
+*Momentum Design System — v1.3*
+*Updated §9: Destructive Action Conventions — delete now uses icon-only arm/confirm/cancel pattern (replaces bare text button); added `.act-btn` style reference and single-pattern rule; updated §8 Modal Footer to show new right-group icon layout*

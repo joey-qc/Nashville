@@ -611,10 +611,9 @@
 
 /* ── Modal action buttons ────────────────────────────────── */
 /*
- * Footer: [ Save changes ]  CANCEL  ·············  DELETE ACTIVITY
+ * Footer: [ Save changes ]  CANCEL  ·············  🗑 / ✓ ✕
  * Left group = compact green CTA + text Cancel.
- * Right group = bare-text destructive action isolated far right.
- * No bordered buttons — feels intentional and premium.
+ * Right group = icon-only delete arm → confirm / cancel (matches View Log pattern).
  */
 .modal-footer {
     display: flex;
@@ -683,34 +682,59 @@
     color: var(--text-dim);
 }
 
-/* Bare text Delete (far right, edit mode only) */
-.btn-text-delete {
+/* Icon-only delete arm / confirm / cancel (right side of footer — mirrors View Log pattern) */
+.modal-footer-right {
     display: flex;
     align-items: center;
-    gap: 5px;
-    background: transparent;
+    gap: 4px;
+}
+
+.act-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
     border: none;
-    color: var(--negative);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
+    background: transparent;
     cursor: pointer;
-    padding: 4px 0;
-    opacity: 0.6;
-    white-space: nowrap;
-    transition: opacity 0.12s ease;
+    transition: background 0.12s ease, color 0.12s ease;
     -webkit-appearance: none;
     appearance: none;
+    padding: 0;
 }
 
-.btn-text-delete:hover:not(:disabled) {
-    opacity: 1;
+.act-btn.delete {
+    color: var(--text-muted);
 }
 
-.btn-text-delete:disabled {
+.act-btn.delete:hover:not(:disabled) {
+    background: rgba(255, 107, 107, 0.12);
+    color: var(--negative);
+}
+
+.act-btn.delete:disabled {
     opacity: 0.3;
     cursor: not-allowed;
+}
+
+.act-btn.confirm {
+    color: var(--negative);
+    background: rgba(255, 107, 107, 0.12);
+}
+
+.act-btn.confirm:hover {
+    background: rgba(255, 107, 107, 0.22);
+}
+
+.act-btn.cancel-del {
+    color: var(--text-muted);
+}
+
+.act-btn.cancel-del:hover {
+    background: var(--surface-2);
+    color: var(--text);
 }
 
 /* ── Conflict dialog ─────────────────────────────────────── */
@@ -877,24 +901,8 @@
         margin-bottom: 20px;
     }
 
-    /* Mobile modal footer: stack to two rows — Save+Cancel, then Delete */
-    .modal-footer {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-    }
-
-    .modal-footer-left {
-        flex: 1;
-    }
-
     .btn-save {
         padding: 12px 20px;
-    }
-
-    .btn-text-delete {
-        justify-content: center;
-        opacity: 0.75;
     }
 
     .pts-spinner {
