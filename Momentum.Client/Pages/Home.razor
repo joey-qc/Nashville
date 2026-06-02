@@ -62,7 +62,7 @@ else
                         @foreach (var cat in PositiveCats)
                         {
                             <div class="cat-bar-row">
-                                <span class="cat-bar-name">@cat.CategoryName</span>
+                                <span class="cat-bar-name">@DimensionDisplayHelper.GetDisplayName(cat)</span>
                                 <div class="cat-bar-track">
                                     <div class="cat-bar-fill"
                                          style="width:@(CatPct(cat.Total).ToString("F1"))%;background:@cat.ColorHex">
@@ -216,7 +216,7 @@ else
                             <div class="activity-cats">
                                 @foreach (var cat in log.Categories.Take(2))
                                 {
-                                    <span class="cat-tag" style="background:@(cat.ColorHex)1A;color:@cat.ColorHex">@cat.Name</span>
+                                    <span class="cat-tag" style="background:@(cat.ColorHex)1A;color:@cat.ColorHex">@DimensionDisplayHelper.GetDisplayName(cat)</span>
                                 }
                             </div>
                             <span class="pts-pill @(log.PointsRecorded >= 0 ? "pos" : "neg")">
@@ -256,7 +256,7 @@ else
                         ? (cat.Total * 100.0 / GrandWeekTotal).ToString("F1", System.Globalization.CultureInfo.InvariantCulture)
                         : "0.0";
                     <div class="wkb-seg" style="width:@segPct%;background:@cat.ColorHex"
-                         title="@cat.CategoryName: @cat.Total pts"></div>
+                         title="@DimensionDisplayHelper.GetDisplayName(cat): @cat.Total pts"></div>
                 }
             </div>
             <!-- Category rows -->
@@ -269,7 +269,7 @@ else
                     <div class="wkb-row">
                         <span class="wkb-dot" style="background:@cat.ColorHex"></span>
                         <div class="wkb-info">
-                            <span class="wkb-name">@cat.CategoryName</span>
+                            <span class="wkb-name">@DimensionDisplayHelper.GetDisplayName(cat)</span>
                             <span class="wkb-sub">@cat.Total pts</span>
                         </div>
                         <span class="wkb-pct">@pct%</span>

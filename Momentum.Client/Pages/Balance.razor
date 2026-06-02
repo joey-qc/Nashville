@@ -80,7 +80,7 @@
                     <div class="cat-row">
                         <span class="cat-dot" style="background:@cat.ColorHex"></span>
                         <div class="cat-info">
-                            <span class="cat-name">@cat.CategoryName</span>
+                            <span class="cat-name">@DimensionDisplayHelper.GetDisplayName(cat)</span>
                             <span class="cat-pts-sub">@cat.Total pts</span>
                         </div>
                         <span class="cat-pct">@pct%</span>
@@ -102,15 +102,15 @@
                 </svg>
             </div>
             <div class="insight-body">
-                <p class="insight-headline">Your @dominant.CategoryName.ToLower() dimension is dominating (@domPct%).</p>
+                <p class="insight-headline">Your @DimensionDisplayHelper.GetDisplayName(dominant).ToLower() dimension is dominating (@domPct%).</p>
                 <p class="insight-sub">
                     @if (secondWk is not null && weakest is not null && weakest.CategoryId != dominant.CategoryId)
                     {
-                        @($"Adding two {secondWk.CategoryName} or {weakest.CategoryName} entries this {PeriodWord} would bring you closer to an even balance.")
+                        @($"Adding two {DimensionDisplayHelper.GetDisplayName(secondWk)} or {DimensionDisplayHelper.GetDisplayName(weakest)} entries this {PeriodWord} would bring you closer to an even balance.")
                     }
                     else if (weakest is not null && weakest.CategoryId != dominant.CategoryId)
                     {
-                        @($"Adding more {weakest.CategoryName} entries this {PeriodWord} would bring you closer to an even balance.")
+                        @($"Adding more {DimensionDisplayHelper.GetDisplayName(weakest)} entries this {PeriodWord} would bring you closer to an even balance.")
                     }
                 </p>
             </div>
