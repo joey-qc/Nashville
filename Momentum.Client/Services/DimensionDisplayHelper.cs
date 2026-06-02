@@ -42,4 +42,19 @@ public static class DimensionDisplayHelper
         if (_byName.TryGetValue(dim.Name, out var byN)) return byN.Mobile;
         return GetDisplayName(dim);
     }
+
+    // Overloads for CategoryTotalDto (used on Home and Balance pages)
+    public static string GetDisplayName(CategoryTotalDto dim)
+    {
+        if (_byId.TryGetValue(dim.CategoryId, out var byId))   return byId.Display;
+        if (_byName.TryGetValue(dim.CategoryName, out var byN)) return byN.Display;
+        return dim.CategoryName;
+    }
+
+    public static string GetMobileLabel(CategoryTotalDto dim)
+    {
+        if (_byId.TryGetValue(dim.CategoryId, out var byId))   return byId.Mobile;
+        if (_byName.TryGetValue(dim.CategoryName, out var byN)) return byN.Mobile;
+        return GetDisplayName(dim);
+    }
 }

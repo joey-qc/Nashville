@@ -6,9 +6,9 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** Post-v2 — Dimension rename (Body/Mind/Spirit/Connections/Responsibilities) + mobile-responsive labels  
+**Phase:** Post-v2 — Dimension rename rollout complete across all user-facing pages  
 **Build Status:** ✅ All projects build clean (0 warnings, 0 errors)  
-**Last Updated:** 2026-06-01
+**Last Updated:** 2026-06-02
 
 ### v2 Migration Deployment Summary
 
@@ -66,6 +66,16 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 ---
 
 ## Completed Work
+
+### Phase 13A: MOB-001A Dimension Rename Rollout — Home + Balance (2026-06-02 — complete)
+- Added `CategoryTotalDto` overloads to `DimensionDisplayHelper` (Home and Balance pages use `CategoryTotalDto`, not `CategoryDto`)
+- **Home page — Today's Momentum** category bar names now use new display names with mobile responsive spans
+- **Home page — activity-row cat-tags** now use new display names with mobile responsive spans
+- **Home page — This Week by Dimension** wkb-row names + wkb-stack tooltips use new display names
+- **Balance page — dimension list** (`cat-name`) uses new display names with mobile responsive spans
+- **Balance page — insight headline** "Your mind dimension is dominating…" uses new lowercased display name
+- **Balance page — insight sub-text** recommendation text uses new display names (Connections, Responsibilities, etc.)
+- No database, API, DTO, scoring, or calculation changes
 
 ### Phase 13: MOB-001 Dimension Rename + Mobile-Responsive Labels (2026-06-01 — complete)
 
