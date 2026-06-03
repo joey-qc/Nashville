@@ -6,9 +6,9 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** Post-v2 — DIM-001 complete and deployed to production; dimension naming fully aligned end-to-end  
+**Phase:** Rich Notes v1 design + implementation planning complete on `feature/rich-notes-v1`  
 **Build Status:** ✅ All projects build clean (0 warnings, 0 errors)  
-**Last Updated:** 2026-06-02
+**Last Updated:** 2026-06-03
 
 ### v2 Migration Deployment Summary
 
@@ -66,6 +66,40 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 ---
 
 ## Completed Work
+
+### Rich Notes v1 — Design + Planning (2026-06-03 — on feature/rich-notes-v1)
+
+**Reflection v1 (separate feature) abandoned before commit.**
+- A separate Reflection table / entity / API / navigation was explored but deferred indefinitely.
+- No Reflection code was ever written. No Reflection documentation exists on the current branch.
+
+**Rich Notes v1 is the current direction.**
+- Enhances the existing `ActivityLog.Notes` field with rich text formatting.
+- No new tables, no new API endpoints, no new navigation items.
+- Supports journaling via the existing Journaling activity + rich Notes field.
+
+**Design specification created:** `Docs/rich-notes-v1-design-spec.md`
+- Content stored as sanitized HTML in existing `nvarchar(max)` column
+- Custom `contenteditable` + toolbar editor (no third-party libraries)
+- Bold, italic, underline, bullet list for v1
+- 240-char UI limit removed; DTO limit raised to 10,000; DB column unchanged
+- Blank notes normalized to `NULL` server-side
+- Paste strips external formatting to plain text
+- View Log "Show Notes" toggle (hidden when no notes present; toggle OFF = today's behavior)
+- Notes rendered as formatted HTML when toggle is ON
+- Search deferred to future release
+- 5 open technical questions (sanitization library, `execCommand` vs Range API, blank-detection logic, toolbar active-state detection, toggle placement on mobile)
+
+**Implementation plan created:** `Docs/rich-notes-v1-implementation-plan.md`
+- Files affected (server + client)
+- DTO changes, sanitization helper, HtmlSanitizer NuGet recommendation
+- `RichNotesEditor.razor` component design + JS interop (`richNotesEditor.js`)
+- `ActivityDetail.razor` View Log toggle changes
+- Blank normalization algorithm
+- 5 unit/integration tests + full manual QA checklist
+- 15-step sequenced implementation order
+
+**No implementation code has been written.** Work is isolated on `feature/rich-notes-v1` — not merged to main.
 
 ### Phase 16: Update New-User Seeded Activity Library (2026-06-02 — complete)
 - Seed list updated in `ActivitySeedService.cs` (applies to new registrations only; existing users unchanged)
