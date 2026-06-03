@@ -141,7 +141,7 @@ Not allowed in v1:
 
 ### Implementation approach
 
-See §3 of the implementation plan for concrete options. Recommended: **server-side HtmlSanitizer NuGet package** applied in `ActivityLogService` before the entity is written to the database.
+**Decided:** `Ganss.Xss.HtmlSanitizer` NuGet package, applied server-side in `ActivityLogService` before the entity is written to the database. See §3 of the implementation plan for the full algorithm.
 
 ---
 
@@ -225,13 +225,20 @@ Documented as a future enhancement:
 
 ## 10. Open Technical Questions
 
-Product decisions are fully resolved. The following are implementation questions to settle during the build.
+Product decisions are fully resolved. TQ-1 and TQ-3 are now resolved. The following implementation questions remain open.
+
+### Resolved
+
+| # | Question | Decision |
+|---|---|---|
+| ~~TQ-1~~ | ~~HTML sanitization library~~ | **`Ganss.Xss.HtmlSanitizer` NuGet, server-side.** Allowlist: `p`, `br`, `strong`, `em`, `u`, `ul`, `ol`, `li`. No attributes. No links. No images. No inline styles. |
+| ~~TQ-3~~ | ~~Blank-note normalization logic~~ | **Server-side, after sanitization:** (1) sanitize HTML, (2) strip tags, (3) decode HTML entities, (4) trim whitespace — if result is empty, store `NULL`. Applies to both create and update. |
+
+### Open
 
 | # | Question | Notes |
 |---|---|---|
-| TQ-1 | **HTML sanitization library** | HtmlSanitizer NuGet (recommended) vs. custom regex/parsing; exact attribute allowlist configuration |
 | TQ-2 | **`execCommand` vs. Range API** | `document.execCommand` is deprecated but has near-universal support and is the pragmatic choice for v1; `Selection`/`Range` API is the long-term alternative |
-| TQ-3 | **Blank-note normalization logic** | Normalize in the Razor component before sending, in the service after sanitization, or both; define the exact "is-blank" check (empty after strip-tags) |
 | TQ-4 | **Toolbar active-state detection** | `document.queryCommandState` (deprecated but works) vs. inspecting cursor position in the DOM for format detection |
 | TQ-5 | **View Log toggle placement** | Exact position within the existing View Log filter bar; how it interacts with the period pill and dimension filter chips at narrow viewport widths |
 

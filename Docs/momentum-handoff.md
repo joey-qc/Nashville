@@ -99,6 +99,8 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 - 5 unit/integration tests + full manual QA checklist
 - 15-step sequenced implementation order
 
+**Rich Notes v1 docs updated (2026-06-03):** TQ-1 (sanitization library) and TQ-3 (blank-note normalization) resolved. Design spec and implementation plan updated. Remaining open: TQ-2 (`execCommand` vs Range API), TQ-4 (toolbar active-state detection), TQ-5 (View Log toggle mobile placement).
+
 **No implementation code has been written.** Work is isolated on `feature/rich-notes-v1` — not merged to main.
 
 ### Phase 16: Update New-User Seeded Activity Library (2026-06-02 — complete)

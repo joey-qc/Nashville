@@ -18,7 +18,7 @@ No implementation code has been written yet.
 | `Momentum.Shared/CreateActivityLogDto.cs` | `[MaxLength(1000)]` → `[MaxLength(10000)]` on `Notes` |
 | `Momentum.Shared/UpdateActivityLogDto.cs` | `[MaxLength(1000)]` → `[MaxLength(10000)]` on `Notes` |
 | `Momentum.Infrastructure/Services/ActivityLogService.cs` | Add sanitization + blank-note normalization before `SaveChanges` in `CreateAsync` and `UpdateAsync` |
-| `Momentum.Infrastructure/Momentum.Infrastructure.csproj` | Add HtmlSanitizer NuGet reference (if Option A chosen — see §3) |
+| `Momentum.Infrastructure/Momentum.Infrastructure.csproj` | Add `Ganss.Xss.HtmlSanitizer` NuGet reference |
 
 ### Client-side
 
@@ -77,35 +77,33 @@ No other DTO changes required.
 
 Sanitization runs **server-side** in `ActivityLogService`, applied to `dto.Notes` before any entity is created or updated. Client content is never trusted directly.
 
-### Option A — HtmlSanitizer NuGet (recommended)
-
-Add `Ganss.Xss.HtmlSanitizer` NuGet to `Momentum.Infrastructure`.
+**Decided:** Use `Ganss.Xss.HtmlSanitizer` NuGet (`Momentum.Infrastructure.csproj`). Allowlist-only: `p`, `br`, `strong`, `em`, `u`, `ul`, `ol`, `li`. No attributes. Custom sanitizers are not used.
 
 ```csharp
-// In ActivityLogService.CreateAsync and UpdateAsync:
+// In ActivityLogService — called from CreateAsync and UpdateAsync
 private static string? SanitizeNotes(string? raw)
 {
     if (string.IsNullOrWhiteSpace(raw)) return null;
 
+    // Step 1: Sanitize — strip disallowed tags and all attributes
     var sanitizer = new HtmlSanitizer();
     sanitizer.AllowedTags.Clear();
     sanitizer.AllowedTags.UnionWith(new[] { "p", "br", "strong", "em", "u", "ul", "ol", "li" });
-    sanitizer.AllowedAttributes.Clear();  // no attributes permitted
-
+    sanitizer.AllowedAttributes.Clear();
     var sanitized = sanitizer.Sanitize(raw);
 
-    // Normalize: if stripping HTML leaves only whitespace, treat as null
-    return string.IsNullOrWhiteSpace(StripTags(sanitized)) ? null : sanitized;
+    // Step 2: Strip remaining HTML tags
+    var stripped = Regex.Replace(sanitized, "<[^>]+>", "");
+
+    // Step 3: Decode HTML entities (e.g. &nbsp; → space, &amp; → &)
+    var decoded = System.Net.WebUtility.HtmlDecode(stripped);
+
+    // Step 4: Trim whitespace — if nothing remains, store NULL
+    return string.IsNullOrWhiteSpace(decoded) ? null : sanitized;
 }
 ```
 
-HtmlSanitizer is well-maintained, actively used in production .NET apps, and has a clean allowlist API.
-
-### Option B — Custom tag stripping (simpler but fragile)
-
-Regex or manual parsing to remove disallowed tags. Not recommended — HTML parsing with regex is notoriously incomplete and XSS-prone.
-
-**Recommendation: Option A.** The library is purpose-built for exactly this use case.
+The return value is `sanitized` (formatted HTML for storage), not `decoded` — the strip/decode/trim path is used only to determine whether the note is blank.
 
 ---
 
@@ -314,22 +312,27 @@ private bool HasAnyNotes => FilteredLogs.Any(l => !string.IsNullOrWhiteSpace(l.N
 
 ## 8. Blank-Note Normalization
 
-Blank normalization must happen **server-side in the service layer**, regardless of what the client sends.
+**Decided:** Normalize server-side in `ActivityLogService.SanitizeNotes`, applied to both create and update paths.
 
-```csharp
-// In ActivityLogService.SanitizeNotes:
-if (string.IsNullOrWhiteSpace(raw)) return null;
-var sanitized = sanitizer.Sanitize(raw);
-// Strip all tags and check if any text content remains
-var textOnly = System.Text.RegularExpressions.Regex.Replace(sanitized, "<[^>]+>", "");
-return string.IsNullOrWhiteSpace(textOnly) ? null : sanitized;
+The exact algorithm (steps 1–4 run in sequence):
+
+```
+1. Sanitize the submitted HTML (HtmlSanitizer allowlist pass)
+2. Strip HTML tags (regex remove all <...> elements)
+3. Decode HTML entities (&nbsp; → space, &amp; → &, etc.)
+4. Trim whitespace
+→ If the resulting string is empty or whitespace-only: store NULL
+→ Otherwise: store the sanitized HTML from step 1
 ```
 
-This catches:
-- `null` input
-- `""` (empty string)
-- `"   "` (whitespace-only)
-- `"<p></p>"` or `"<p><br></p>"` (editor empty state that produces HTML whitespace)
+This catches all blank cases:
+- `null` or `""` — caught by the early `string.IsNullOrWhiteSpace(raw)` guard
+- `"   "` — whitespace-only string
+- `"<p></p>"` — empty paragraph (editor initial state)
+- `"<p><br></p>"` — single empty line (common editor empty state)
+- `"&nbsp;"` or `"&#160;"` — non-breaking space entities that survive tag stripping
+
+The `SanitizeNotes` implementation in §3 reflects this algorithm exactly. No separate normalization step is needed — blank detection is embedded in the sanitization helper.
 
 ---
 
