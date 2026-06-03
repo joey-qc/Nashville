@@ -13,7 +13,7 @@ public class UpdateActivityLogDto
     [Required]
     public int PointsRecorded { get; set; }
 
-    [MaxLength(1000)]
+    [MaxLength(10000)]
     public string? Notes { get; set; }
 
     public List<int>? DimensionIds { get; set; }

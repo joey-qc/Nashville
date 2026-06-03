@@ -1,0 +1,114 @@
+/* ═══════════════════════════════════════════════════════════
+   RichNotesEditor component — scoped styles
+   Matches the existing field-input / field-textarea visual language.
+═══════════════════════════════════════════════════════════ */
+
+.rne-wrap {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    transition: border-color 0.15s ease;
+}
+
+.rne-wrap:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+/* ── Toolbar ──────────────────────────────────────────────── */
+.rne-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.rne-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.1s ease, color 0.1s ease;
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.rne-btn:hover {
+    background: var(--surface-3);
+    color: var(--text);
+}
+
+/* ── Editable content area ───────────────────────────────── */
+.rne-editor {
+    padding: 10px 12px;
+    min-height: 80px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    color: var(--text);
+    line-height: 1.55;
+    outline: none;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Placeholder — shown when the div is truly empty */
+.rne-editor:empty::before {
+    content: attr(data-placeholder);
+    color: var(--text-muted);
+    pointer-events: none;
+    display: block;
+}
+
+/* ── Rendered formatting ─────────────────────────────────────────────
+   These elements are inserted into the contenteditable by the browser
+   (document.execCommand), NOT rendered by Blazor — so they do not carry
+   the component's CSS-isolation scope attribute. Scoped selectors like
+   `.rne-editor ul` therefore never match them. `::deep` drops the scope
+   requirement for descendants so the styling applies. (Same isolation
+   gotcha as KI-005 / design-system §12.)
+   ──────────────────────────────────────────────────────────────────── */
+.rne-editor ::deep p {
+    margin: 0 0 6px;
+}
+
+.rne-editor ::deep p:last-child {
+    margin-bottom: 0;
+}
+
+.rne-editor ::deep ul,
+.rne-editor ::deep ol {
+    margin: 0 0 6px;
+    padding-left: 24px;
+    list-style-position: outside;
+}
+
+.rne-editor ::deep ul {
+    list-style-type: disc;
+}
+
+.rne-editor ::deep ol {
+    list-style-type: decimal;
+}
+
+.rne-editor ::deep li {
+    margin-bottom: 2px;
+}
+
+/* ── Mobile ──────────────────────────────────────────────── */
+@media (max-width: 540px) {
+    .rne-editor {
+        min-height: 70px;
+        font-size: 0.875rem; /* preserve font size on mobile per spec */
+    }
+}

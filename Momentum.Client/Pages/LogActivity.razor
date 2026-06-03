@@ -241,16 +241,11 @@
 
             <!-- ── Notes ── -->
             <div class="field-group">
-                <div class="field-label-row">
-                    <label class="field-label">NOTES</label>
-                    <span class="field-hint">Optional · @(_model.Notes?.Length ?? 0)/240</span>
-                </div>
-                <textarea class="field-textarea"
-                          maxlength="240"
-                          rows="3"
-                          placeholder="How did it feel? Anything to remember?"
-                          value="@_model.Notes"
-                          @oninput="@(e => _model.Notes = e.Value?.ToString())"></textarea>
+                <label class="field-label">NOTES</label>
+                @if (_notesReady)
+                {
+                    <RichNotesEditor @ref="_notesEditor" InitialValue="@_model.Notes" />
+                }
             </div>
 
             <!-- ── Action buttons ── -->
@@ -320,6 +315,11 @@
     private string               _searchText        = "";
     private bool                 _busy;
     private bool                 _deleteArmed;
+    private RichNotesEditor?     _notesEditor;
+    // Gate the editor's first render until _model.Notes is populated. The editor
+    // initializes its contenteditable from InitialValue on its first render only,
+    // so it must not render before edit-mode data is loaded (otherwise it inits empty).
+    private bool                 _notesReady;
 
     private readonly LogFormModel _model = new()
     {
@@ -377,6 +377,10 @@
             _allDimensions = tDims.Result.ToList();
             await LoadEditEntryAsync(EditId.Value);
         }
+
+        // Notes (_model.Notes) is now populated for both add (null) and edit (loaded)
+        // modes — safe to render the editor, which inits from InitialValue on first render.
+        _notesReady = true;
     }
 
     private async Task LoadEditEntryAsync(int logId)
@@ -409,7 +413,7 @@
     }
 
     // Tapping an already-selected quick-pick tile deselects it and clears the form.
-    private void ToggleQuickPick(ActivityDto a)
+    private async Task ToggleQuickPick(ActivityDto a)
     {
         if (_selectedActivity?.Id == a.Id)
         {
@@ -417,6 +421,7 @@
             _model.Points         = 0;
             _model.Notes          = null;
             _selectedDimensionIds = [];
+            if (_notesEditor is not null) await _notesEditor.ClearAsync();
         }
         else
         {
@@ -493,6 +498,10 @@
             return;
         }
 
+        // Read current editor HTML before building the DTO — contenteditable content
+        // is managed by JS so it must be extracted explicitly on submit.
+        _model.Notes = await (_notesEditor?.GetContentAsync() ?? Task.FromResult<string?>(null));
+
         _busy = true;
         var loggedAt = DateTime.SpecifyKind(
             (_model.Date ?? DateTime.Today).Add(_model.Time ?? TimeSpan.Zero),
@@ -550,6 +559,7 @@
             _model.Date           = DateTime.Today;
             _model.Time           = DateTime.Now.TimeOfDay;
             _selectedDimensionIds = [];
+            if (_notesEditor is not null) await _notesEditor.ClearAsync();
         }
     }
 

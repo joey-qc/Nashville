@@ -18,16 +18,38 @@
 
         @if (!_loading)
         {
-            <p class="detail-stats">
-                @FilteredLogs.Count() @(FilteredLogs.Count() == 1 ? "entry" : "entries")
-                · <span class="stat-pos">+@Earned earned</span>
-                @if (Setbacks > 0)
+            <div class="detail-stats-row">
+                <p class="detail-stats">
+                    @FilteredLogs.Count() @(FilteredLogs.Count() == 1 ? "entry" : "entries")
+                    · <span class="stat-pos">+@Earned earned</span>
+                    @if (Setbacks > 0)
+                    {
+                        <span class="stat-sep"> · </span>
+                        <span class="stat-neg">-@Setbacks setbacks</span>
+                    }
+                    · <span class="@(NetTotal >= 0 ? "stat-pos" : "stat-neg")">@(NetTotal > 0 ? "+" : "")@NetTotal pts</span>
+                </p>
+
+                <!-- Notes toggle — only shown when a displayed entry has notes -->
+                @if (HasDisplayedNotes)
                 {
-                    <span class="stat-sep"> · </span>
-                    <span class="stat-neg">-@Setbacks setbacks</span>
+                    <button type="button"
+                            class="notes-toggle @(_showNotes ? "active" : "")"
+                            aria-pressed="@(_showNotes ? "true" : "false")"
+                            aria-label="@(_showNotes ? "Hide notes" : "Show notes")"
+                            title="@(_showNotes ? "Hide notes" : "Show notes")"
+                            @onclick="@(() => _showNotes = !_showNotes)">
+                        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"
+                             fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h13a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4z"/>
+                            <line x1="8" y1="8" x2="14" y2="8"/>
+                            <line x1="8" y1="12" x2="14" y2="12"/>
+                        </svg>
+                        Notes
+                    </button>
                 }
-                · <span class="@(NetTotal >= 0 ? "stat-pos" : "stat-neg")">@(NetTotal > 0 ? "+" : "")@NetTotal pts</span>
-            </p>
+            </div>
         }
     </div>
 
@@ -96,63 +118,74 @@
         <div class="log-list">
             @foreach (var log in FilteredLogs)
             {
-                <div class="log-card" @onclick="@(() => Navigation.NavigateTo($"/log?editId={log.Id}"))">
+                <div class="log-card">
 
-                    <!-- Badge -->
-                    <div class="log-badge" style="background:@BadgeBg(log);color:@BadgeColor(log)">
-                        @(string.IsNullOrEmpty(log.ActivityName) ? "?" : log.ActivityName[..1].ToUpper())
-                    </div>
+                    <!-- Clickable row → edit -->
+                    <div class="log-card-row" @onclick="@(() => Navigation.NavigateTo($"/log?editId={log.Id}"))">
 
-                    <!-- Name + category tags -->
-                    <div class="log-info">
-                        <span class="log-name" title="@log.ActivityName">@log.ActivityName</span>
-                        <div class="log-cats">
-                            @foreach (var cat in log.Categories)
+                        <!-- Badge -->
+                        <div class="log-badge" style="background:@BadgeBg(log);color:@BadgeColor(log)">
+                            @(string.IsNullOrEmpty(log.ActivityName) ? "?" : log.ActivityName[..1].ToUpper())
+                        </div>
+
+                        <!-- Name + category tags -->
+                        <div class="log-info">
+                            <span class="log-name" title="@log.ActivityName">@log.ActivityName</span>
+                            <div class="log-cats">
+                                @foreach (var cat in log.Categories)
+                                {
+                                    <span class="log-cat-dot" style="background:@cat.ColorHex"></span>
+                                    <span class="log-cat-label" title="@DimensionDisplayHelper.GetDisplayName(cat)">
+                                        <span class="dim-full">@DimensionDisplayHelper.GetDisplayName(cat)</span>
+                                        <span class="dim-abbr" aria-hidden="true">@DimensionDisplayHelper.GetMobileLabel(cat)</span>
+                                    </span>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Time + points -->
+                        <div class="log-right">
+                            <span class="log-time">@LogTimestamp(log)</span>
+                            <span class="log-pts @(log.PointsRecorded >= 0 ? "pos" : "neg")">
+                                @(log.PointsRecorded > 0 ? "+" : "")@log.PointsRecorded
+                            </span>
+                        </div>
+
+                        <!-- Delete controls -->
+                        <div class="log-actions" @onclick:stopPropagation>
+                            @if (_pendingDeleteId == log.Id)
                             {
-                                <span class="log-cat-dot" style="background:@cat.ColorHex"></span>
-                                <span class="log-cat-label" title="@DimensionDisplayHelper.GetDisplayName(cat)">
-                                    <span class="dim-full">@DimensionDisplayHelper.GetDisplayName(cat)</span>
-                                    <span class="dim-abbr" aria-hidden="true">@DimensionDisplayHelper.GetMobileLabel(cat)</span>
-                                </span>
+                                <button type="button" class="act-btn confirm" title="Confirm delete"
+                                        @onclick="@(() => ConfirmDelete(log.Id))">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
+                                    </svg>
+                                </button>
+                                <button type="button" class="act-btn cancel-del" title="Cancel"
+                                        @onclick="@(() => _pendingDeleteId = null)">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                                    </svg>
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="button" class="act-btn delete" title="Delete"
+                                        @onclick="@(() => _pendingDeleteId = log.Id)">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                                    </svg>
+                                </button>
                             }
                         </div>
+
                     </div>
 
-                    <!-- Time + points -->
-                    <div class="log-right">
-                        <span class="log-time">@LogTimestamp(log)</span>
-                        <span class="log-pts @(log.PointsRecorded >= 0 ? "pos" : "neg")">
-                            @(log.PointsRecorded > 0 ? "+" : "")@log.PointsRecorded
-                        </span>
-                    </div>
-
-                    <!-- Delete controls -->
-                    <div class="log-actions" @onclick:stopPropagation>
-                        @if (_pendingDeleteId == log.Id)
-                        {
-                            <button type="button" class="act-btn confirm" title="Confirm delete"
-                                    @onclick="@(() => ConfirmDelete(log.Id))">
-                                <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
-                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
-                                </svg>
-                            </button>
-                            <button type="button" class="act-btn cancel-del" title="Cancel"
-                                    @onclick="@(() => _pendingDeleteId = null)">
-                                <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
-                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
-                                </svg>
-                            </button>
-                        }
-                        else
-                        {
-                            <button type="button" class="act-btn delete" title="Delete"
-                                    @onclick="@(() => _pendingDeleteId = log.Id)">
-                                <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
-                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
-                                </svg>
-                            </button>
-                        }
-                    </div>
+                    <!-- Formatted note (only when toggle ON and entry has notes) -->
+                    @if (_showNotes && !string.IsNullOrWhiteSpace(log.Notes))
+                    {
+                        <div class="log-note-body">@((MarkupString)log.Notes!)</div>
+                    }
 
                 </div>
             }
@@ -170,6 +203,7 @@
     private int? _categoryFilter;
     private bool _loading;
     private int? _pendingDeleteId;
+    private bool _showNotes;
 
     private string DateDisplay => DateTime.Now.ToString("d MMM ddd");
 
@@ -177,6 +211,9 @@
         _categoryFilter.HasValue
             ? _logs.Where(l => l.Categories.Any(c => c.Id == _categoryFilter))
             : _logs;
+
+    // Toggle is shown only when at least one currently displayed entry has notes.
+    private bool HasDisplayedNotes => FilteredLogs.Any(l => !string.IsNullOrWhiteSpace(l.Notes));
 
     private int Earned   => FilteredLogs.Where(l => l.PointsRecorded > 0).Sum(l => l.PointsRecorded);
     private int Setbacks => Math.Abs(FilteredLogs.Where(l => l.PointsRecorded < 0).Sum(l => l.PointsRecorded));

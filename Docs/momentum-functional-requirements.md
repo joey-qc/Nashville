@@ -104,7 +104,7 @@ Accessible via the persistent "+" button from any screen.
 | Date | Defaults to today's date; user can change it |
 | Time | Defaults to current time; user can change it |
 | Points | Pre-populated with the activity's default point value; user can adjust up or down using a **spinner control** |
-| Notes | Optional free-text field for additional context |
+| Notes | Optional rich text field for personal context, observations, or journaling. Supports bold, italic, underline, and bullet lists. Stored as sanitized HTML. No character limit shown in UI; API validates up to 10,000 characters. |
 
 ### 6.4 Submission
 - User submits the form to log the activity.
@@ -133,7 +133,11 @@ Accessible by clicking on a score total (Today, This Week, This Month) from the 
   - Dimensions (displayed as color-coded dots and labels matching the entry's saved dimension snapshot)
   - Points earned (the adjusted value at time of logging, not the default)
   - Date and time logged
-  - Notes (if any)
+
+#### Show Notes toggle
+- A **Show Notes** toggle appears in the filter bar **only when at least one currently displayed entry has notes**. If the displayed set has no notes (including after filtering by period or dimension), the toggle is hidden.
+- The toggle defaults **OFF**. When OFF, entries appear exactly as they do without notes — no icon, badge, or extra row.
+- When **ON**, each entry that has notes shows its full formatted note (bold, italic, underline, paragraphs, bullet lists) rendered directly beneath the entry as inline secondary detail — no truncation, no "show more," no separate panel. Entries without notes are unchanged.
 
 ### 7.2 Editing a Log Entry
 - Each activity entry is **clickable/editable**.
@@ -305,4 +309,4 @@ When a new user registers, the following starter activities are automatically ad
 ---
 
 *Momentum — Functional Requirements Document*
-*Version 1.8 — Updated boilerplate starter activities: 14→13 entries, consolidated Hiking/Travel/Socializing variants, updated points, added Alcohol/Drinking*
+*Version 1.10 — Rich Notes v1 Phase 3: §7.1 adds the View Log Show Notes toggle (conditional visibility, default OFF, formatted note rendering beneath entries)*

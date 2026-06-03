@@ -1,3 +1,6 @@
+using System.Net;
+using System.Text.RegularExpressions;
+using Ganss.Xss;
 using Momentum.Application.Interfaces;
 using Momentum.Domain.Entities;
 using Momentum.Shared;
@@ -35,7 +38,7 @@ public class ActivityLogService(IActivityLogRepository logRepo, IActivityReposit
             ActivityId = dto.ActivityId,
             LoggedAt = DateTime.SpecifyKind(dto.LoggedAt, DateTimeKind.Utc),
             PointsRecorded = dto.PointsRecorded,
-            Notes = dto.Notes,
+            Notes = SanitizeNotes(dto.Notes),
             CreatedAt = DateTime.UtcNow,
             LogEntryDimensions = dimensions
         };
@@ -84,7 +87,7 @@ public class ActivityLogService(IActivityLogRepository logRepo, IActivityReposit
         log.ActivityId = dto.ActivityId;
         log.LoggedAt = DateTime.SpecifyKind(dto.LoggedAt, DateTimeKind.Utc);
         log.PointsRecorded = dto.PointsRecorded;
-        log.Notes = dto.Notes;
+        log.Notes = SanitizeNotes(dto.Notes);
 
         await logRepo.SaveChangesAsync();
 
@@ -102,6 +105,36 @@ public class ActivityLogService(IActivityLogRepository logRepo, IActivityReposit
         await logRepo.DeleteAsync(log);
         await logRepo.SaveChangesAsync();
         return true;
+    }
+
+    // Sanitizes submitted HTML notes and normalizes blank content to null.
+    // Public to allow direct testing without mocking repositories.
+    public static string? SanitizeNotes(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+
+        // Step 1: Strip disallowed tags and all attributes.
+        // KeepChildNodes = true unwraps disallowed structural tags (div/span) while
+        // preserving their allowed children. The browser's execCommand wraps a list
+        // in a <div> when text precedes it (e.g. "text<div><ul><li>…</ul></div>"); with
+        // the default KeepChildNodes=false the whole div — including the list — is dropped.
+        // Script/style tags are still fully removed (no executable content survives;
+        // only inert text could remain, which is never rendered as markup).
+        var sanitizer = new HtmlSanitizer { KeepChildNodes = true };
+        sanitizer.AllowedTags.Clear();
+        // Allow both semantic (strong/em) and browser execCommand output (b/i)
+        sanitizer.AllowedTags.UnionWith(["p", "br", "strong", "em", "b", "i", "u", "ul", "ol", "li"]);
+        sanitizer.AllowedAttributes.Clear();
+        var sanitized = sanitizer.Sanitize(raw);
+
+        // Step 2: Strip remaining HTML tags
+        var stripped = Regex.Replace(sanitized, "<[^>]+>", "");
+
+        // Step 3: Decode HTML entities (&nbsp; → space, &amp; → & etc.)
+        var decoded = WebUtility.HtmlDecode(stripped);
+
+        // Step 4: Trim — if nothing remains, store NULL; otherwise return the sanitized HTML
+        return string.IsNullOrWhiteSpace(decoded) ? null : sanitized;
     }
 
     private static ActivityLogDto Map(ActivityLog l) => new()

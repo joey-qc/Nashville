@@ -1078,5 +1078,67 @@ Do not use `MudSnackbar` directly in markup. Use the `ISnackbar` service only.
 
 ---
 
-*Momentum Design System — v1.4*
-*DIM-001: §11 Display Name Mapping updated — persisted names now match display names; DimensionDisplayHelper simplified to mobile-label-only helper; color table note updated*
+## 18. RichNotesEditor Component
+
+Used on the Add/Edit Log Entry form in place of the plain `<textarea>` for the Notes field.
+
+### Structure
+
+```html
+<div class="rne-wrap">         <!-- outer wrapper; receives focus-within border highlight -->
+    <div class="rne-toolbar">  <!-- button strip: Bold · Italic · Underline · Bullet list -->
+        <button class="rne-btn" @onmousedown:preventDefault @onclick="...">...</button>
+    </div>
+    <div id="@_id" class="rne-editor" contenteditable="true"
+         data-placeholder="Add optional notes about this activity..."
+         role="textbox" aria-multiline="true">
+    </div>
+</div>
+```
+
+### Key behaviors
+
+- **Toolbar buttons** use `@onmousedown:preventDefault` so the `contenteditable` div never loses focus when a format button is clicked. Format commands run via `document.execCommand()` (JS interop).
+- **Paste** is intercepted in JS: strips incoming HTML, inserts plain text only via `document.execCommand('insertText')`.
+- **Placeholder** rendered via CSS `::before` on `.rne-editor:empty`.
+- **Submit** — the parent form reads HTML via `RichNotesEditor.GetContentAsync()` before building the DTO. Content is never pushed to the parent on every keystroke.
+- **Reset** — parent calls `RichNotesEditor.ClearAsync()` after successful add-mode submission or activity deselect.
+- **Edit mode** — `InitialValue` is set at render time; `OnAfterRenderAsync(firstRender)` hydrates the div via JS. `ShouldRender()` returns `false` after first render to prevent Blazor from overwriting user edits.
+
+### CSS tokens used
+
+- Border/background: `var(--surface-2)`, `var(--border)`, `var(--border-soft)`, `var(--primary-glow)`
+- Text: `var(--text)`, `var(--text-muted)`
+- Hover: `var(--surface-3)`
+
+### Styling contenteditable content requires `::deep`
+
+The `<p>`, `<ul>`, `<li>` elements inside the editor are inserted by the browser via `document.execCommand`, not rendered by Blazor. They therefore do **not** receive the component's CSS-isolation scope attribute (`b-xxxxxxxx`), so an ordinary scoped selector like `.rne-editor ul` never matches them — the global/UA list style wins and bullets render outside the box. Use the `::deep` combinator so the descendant part of the selector drops the scope requirement:
+
+```css
+.rne-editor ::deep ul { padding-left: 24px; list-style-position: outside; }
+.rne-editor ::deep li { margin-bottom: 2px; }
+```
+
+This is the same CSS-isolation gotcha documented for `MarkupString` SVG in §12 / KI-005 — any DOM not rendered by the Blazor renderer must be styled via `::deep` or a global stylesheet.
+
+### View Log note display (read-only)
+
+The View Log page (`ActivityDetail.razor`) renders saved notes as read-only formatted HTML when the **Show Notes** toggle is ON.
+
+- **Toggle** (`.notes-toggle`) is a compact chip labeled **Notes** with a notebook icon, placed on the entry-count / score-summary line (`.detail-stats-row`) and **right-aligned** via `margin-left: auto` (stays right-aligned even when it wraps to its own line on very narrow screens). It uses the same chip language as the dimension filter chips (`--border`, `--text-dim`; active = `--primary-glow` bg + `--primary` border/text), slightly smaller (`0.72rem`, `4px 10px`). Rendered only when at least one displayed entry has notes; defaults OFF. Accessibility: dynamic `aria-label`/`title` ("Show notes" / "Hide notes") and `aria-pressed`.
+- **Card structure:** `.log-card` is a flex **column**. The clickable row (`.log-card-row`, holding badge · info · time/points · delete, with the edit `@onclick` and `cursor:pointer`) is the first child; the note (`.log-note-body`) is an optional second child. When the toggle is OFF the note element is not rendered, so the card is visually identical to a no-notes entry.
+- **Note body** (`.log-note-body`) is inline secondary detail — muted (`--text-dim`), smaller font, indented under the text column, **no border/background/panel**. Rendered via `@((MarkupString)log.Notes)`.
+- **`::deep` is required** for the note's child elements (`p`, `ul`, `ol`, `li`, `strong`, `b`, `em`, `i`, `u`) for the same isolation reason — `MarkupString` content has no scope attribute.
+
+```css
+.log-card        { display: flex; flex-direction: column; }
+.log-card-row    { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.log-note-body   { margin-top: 10px; padding-left: 50px; color: var(--text-dim); font-size: 0.82rem; }
+.log-note-body ::deep ul { padding-left: 22px; list-style-position: outside; }
+```
+
+---
+
+*Momentum Design System — v1.7*
+*Rich Notes v1 Phase 3 refinement: Notes toggle moved to the summary line (.detail-stats-row), right-aligned, compact, relabeled "Notes"*

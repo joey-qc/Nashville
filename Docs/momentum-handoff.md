@@ -6,7 +6,7 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** Rich Notes v1 design + implementation planning complete on `feature/rich-notes-v1`  
+**Phase:** Rich Notes v1 complete (Phases 1–3) on `feature/rich-notes-v1` — pending merge to main  
 **Build Status:** ✅ All projects build clean (0 warnings, 0 errors)  
 **Last Updated:** 2026-06-03
 
@@ -99,9 +99,48 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 - 5 unit/integration tests + full manual QA checklist
 - 15-step sequenced implementation order
 
-**Rich Notes v1 docs updated (2026-06-03):** TQ-1 (sanitization library) and TQ-3 (blank-note normalization) resolved. Design spec and implementation plan updated. Remaining open: TQ-2 (`execCommand` vs Range API), TQ-4 (toolbar active-state detection), TQ-5 (View Log toggle mobile placement).
+**Rich Notes v1 Phase 2 — Rich text editor UI complete (2026-06-03):**
+- `Momentum.Client/Components/RichNotesEditor.razor` + `.css` created
+- `Momentum.Client/wwwroot/js/richNotesEditor.js` created (init, getContent, format, focus helpers)
+- `index.html` updated: `richNotesEditor.js` script tag added before Blazor runtime
+- `_Imports.razor` updated: `@using Momentum.Client.Components` added
+- `LogActivity.razor` updated: `<textarea>` replaced with `<RichNotesEditor @ref="_notesEditor" InitialValue="@_model.Notes" />`; `HandleSubmit` reads from editor via `GetContentAsync()` before building DTO; editor cleared via `ClearAsync()` after successful add-mode log; `ToggleQuickPick` made async to call `ClearAsync()` on deselect
+- Sanitizer allowlist expanded to include `b` and `i` (browser `execCommand("bold")` / `execCommand("italic")` produce these tags)
+- 2 new sanitizer tests for `<b>` and `<i>` preservation; all 31 tests pass
 
-**No implementation code has been written.** Work is isolated on `feature/rich-notes-v1` — not merged to main.
+**Rich Notes v1 Phase 2 — defect fixes (2026-06-03):**
+- **Bug 1 (bullets off-screen left):** `RichNotesEditor.razor.css` list/paragraph rules changed to use the `::deep` combinator. The `<ul>`/`<li>`/`<p>` nodes are inserted into the `contenteditable` by `execCommand`, so they never receive the component's CSS-isolation scope attribute; the scoped `.rne-editor ul` rule never matched them (same gotcha as KI-005). `::deep` drops the scope requirement and the 24px indent now applies.
+- **Bug 2 (existing note blank in Edit):** The editor initialized its `contenteditable` from `InitialValue` on first render, but that first render happened at the first `await` in `OnInitializedAsync` — before `LoadEditEntryAsync` populated `_model.Notes`. Added a `_notesReady` gate (`@if (_notesReady)`) set to `true` only at the end of `OnInitializedAsync`, so the editor's first render (and init) happens after the note is loaded.
+- **Bug 3 (text-then-bullet list not saved):** When text precedes a list, the browser's `execCommand` wraps the list in a `<div>` (`text<div><ul>…</ul></div>`). `HtmlSanitizer` defaulted to `KeepChildNodes = false`, which removed the disallowed `<div>` together with its children — dropping the list. Set `KeepChildNodes = true`: structural wrappers are unwrapped while allowed children (ul/li) survive. Script/style tags are still removed (no executable content survives; only inert text could remain, which is never rendered as markup).
+- Sanitizer tests updated for `KeepChildNodes = true` semantics (script tag removed though inert text may remain; anchor unwrapped keeping text) and 2 regression tests added for div-wrapped and bare text-then-list. All 33 tests pass.
+
+**Rich Notes v1 Phase 3 — View Log note display complete (2026-06-03):**
+- `ActivityDetail.razor`: added a **Show Notes** toggle to the filter bar (chip style matching dimension filters). Toggle is rendered only when `HasDisplayedNotes` (at least one currently-filtered entry has a non-empty `Notes`); defaults OFF (`_showNotes = false`).
+- When ON, the formatted note renders directly beneath each entry that has notes via `@((MarkupString)log.Notes!)` — no truncation, no "show more," no separate card.
+- `.log-card` restructured into a column: existing flex row moved into `.log-card-row` (which keeps the click-to-edit handler and `cursor:pointer`); the note (`.log-note-body`) sits beneath it inside the same card. OFF state is visually identical to before — when `_showNotes` is false no note element renders.
+- Note body styled as inline secondary detail (muted, indented under the text column, no border/panel). Child elements (`p`/`ul`/`ol`/`li`/`strong`/`b`/`em`/`i`/`u`) are styled via `::deep` because `MarkupString` content carries no CSS-isolation scope attribute (same pattern as RichNotesEditor Bug 1).
+- Toggle visibility tracks the filtered set: changing period/dimension re-evaluates `HasDisplayedNotes`. `_showNotes` is sticky across filter changes (notes simply don't render when none are present).
+- No DTO/API/schema changes — `ActivityLogDto.Notes` already carried the sanitized HTML. Build clean; 33/33 tests pass.
+- **Rich Notes v1 feature complete** (Phases 1–3). Notes search remains a documented future enhancement (out of v1 scope).
+
+**Rich Notes v1 Phase 3 — toggle placement refinement (2026-06-03):**
+- Moved the notes toggle from the filter bar (where it wrapped to its own row on mobile) to the entry-count / score-summary line (`.detail-stats-row`), right-aligned via `margin-left: auto`.
+- Relabeled "Show Notes" → "Notes"; kept the notebook icon; made the chip more compact (`0.72rem`, `4px 10px`).
+- Improved accessibility: dynamic `aria-label`/`title` ("Show notes" / "Hide notes") in addition to `aria-pressed`.
+- Visibility (only when displayed entries have notes), default OFF, and ON/OFF rendering behavior all unchanged. No editor, sanitization, or note-rendering changes. Build clean; 33/33 tests pass.
+
+**Rich Notes v1 Phase 1 — Infrastructure complete (2026-06-03):**
+- `HtmlSanitizer` NuGet (v9.0.892) added to `Momentum.Application`
+- `CreateActivityLogDto` and `UpdateActivityLogDto` Notes limit raised from 1,000 → 10,000 characters
+- UI 240-char `maxlength` and `0/240` counter removed from `LogActivity.razor`
+- `ActivityLogService.SanitizeNotes()` implemented: allowlist sanitization (p/br/strong/em/u/ul/ol/li; no attributes) + 4-step blank normalization (sanitize → strip tags → decode entities → trim → NULL if empty)
+- Wired into both `CreateAsync` and `UpdateAsync` before entity persistence
+- 19 new sanitization tests added (`ActivityLogSanitizationTests.cs`); all 29 tests pass
+- **Phase 2 (rich text editor + View Log toggle) not yet started.** Rich text editor component (`RichNotesEditor.razor`), JS interop, and View Log Show Notes toggle remain pending.
+
+**Note on HtmlSanitizer v9 behavior:** `<a>` tags and their child text are both discarded (not just the tag). Documented in test. This is correct: the editor never produces `<a>` tags (paste strips to plain text); the security requirement (no href in storage) is met.
+
+Work remains isolated on `feature/rich-notes-v1` — not merged to main.
 
 ### Phase 16: Update New-User Seeded Activity Library (2026-06-02 — complete)
 - Seed list updated in `ActivitySeedService.cs` (applies to new registrations only; existing users unchanged)

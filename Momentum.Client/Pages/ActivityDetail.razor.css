@@ -35,7 +35,14 @@
     white-space: nowrap;
 }
 
-/* Stats line */
+/* Stats line — summary text on the left, Notes toggle right-aligned */
+.detail-stats-row {
+    display: flex;
+    align-items: center;
+    gap: 8px 12px;
+    flex-wrap: wrap;
+}
+
 .detail-stats {
     font-size: 0.8rem;
     color: var(--text-dim);
@@ -44,6 +51,11 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 3px;
+}
+
+/* Push the toggle to the right; stays right-aligned even when it wraps to its own line */
+.detail-stats-row .notes-toggle {
+    margin-left: auto;
 }
 
 .stat-pos  { color: var(--primary); font-weight: 600; }
@@ -158,6 +170,38 @@
     display: inline-block;
 }
 
+/* Notes toggle — compact chip on the summary line; same chip language as dimension filters */
+.notes-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+    -webkit-appearance: none;
+    appearance: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.notes-toggle:hover {
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.notes-toggle.active {
+    background: var(--primary-glow);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
 /* ── Log cards ───────────────────────────────────────────── */
 .log-list {
     display: flex;
@@ -167,13 +211,11 @@
 
 .log-card {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    flex-direction: column;
     padding: 14px 16px;
     background: var(--surface);
     border: 1px solid var(--border-soft);
     border-radius: var(--radius);
-    cursor: pointer;
     transition: border-color 0.15s ease, background 0.15s ease;
 }
 
@@ -181,6 +223,61 @@
     border-color: var(--border);
     background: var(--surface-2);
 }
+
+/* The clickable row holding badge · info · time/points · delete.
+   Flex layout (formerly on .log-card) lives here so the note can sit beneath it. */
+.log-card-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+/* ── Formatted note body (Show Notes ON) ──────────────────────────────
+   Rendered via MarkupString, so child elements (p/ul/li/b/i/u/strong/em)
+   carry no CSS-isolation scope attribute — style them via ::deep. Inline
+   secondary detail: muted, indented under the text column, no card/border. */
+.log-note-body {
+    margin-top: 10px;
+    padding-left: 50px;        /* aligns under the activity name (badge 38px + gap 12px) */
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.55;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.log-note-body ::deep p {
+    margin: 0 0 6px;
+}
+
+.log-note-body ::deep p:last-child {
+    margin-bottom: 0;
+}
+
+.log-note-body ::deep ul,
+.log-note-body ::deep ol {
+    margin: 0 0 6px;
+    padding-left: 22px;
+    list-style-position: outside;
+}
+
+.log-note-body ::deep ul { list-style-type: disc; }
+.log-note-body ::deep ol { list-style-type: decimal; }
+
+.log-note-body ::deep li {
+    margin-bottom: 2px;
+}
+
+/* strong/em/b/i/u render with their native semantics — no overrides needed,
+   but declared via ::deep so any future token-based styling can attach here. */
+.log-note-body ::deep strong,
+.log-note-body ::deep b { font-weight: 700; }
+
+.log-note-body ::deep em,
+.log-note-body ::deep i { font-style: italic; }
+
+.log-note-body ::deep u { text-decoration: underline; }
 
 /* Badge */
 .log-badge {
@@ -385,6 +482,9 @@
 
     .log-card {
         padding: 12px 14px;
+    }
+
+    .log-card-row {
         gap: 10px;
     }
 
@@ -404,5 +504,10 @@
     .cat-chip {
         padding: 4px 8px;
         gap: 5px;
+    }
+
+    /* Tighter note indent on narrow screens (badge 34px + gap 10px = 44px) */
+    .log-note-body {
+        padding-left: 44px;
     }
 }

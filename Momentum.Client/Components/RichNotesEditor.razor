@@ -1,0 +1,105 @@
+@inject IJSRuntime JS
+
+<div class="rne-wrap">
+
+    <!-- ── Toolbar ── -->
+    <div class="rne-toolbar" role="toolbar" aria-label="Text formatting">
+        <button type="button" class="rne-btn" title="Bold"
+                @onmousedown:preventDefault
+                @onclick='() => FormatAsync("bold")'>
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                <path d="M6 4h8a4 4 0 0 1 0 8H6V4zm0 8h9a4 4 0 0 1 0 8H6v-8z"
+                      stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+        </button>
+        <button type="button" class="rne-btn" title="Italic"
+                @onmousedown:preventDefault
+                @onclick='() => FormatAsync("italic")'>
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                <line x1="19" y1="4" x2="10" y2="4"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="14" y1="20" x2="5" y2="20"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="15" y1="4" x2="9" y2="20"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </button>
+        <button type="button" class="rne-btn" title="Underline"
+                @onmousedown:preventDefault
+                @onclick='() => FormatAsync("underline")'>
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"
+                      stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <line x1="4" y1="21" x2="20" y2="21"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </button>
+        <button type="button" class="rne-btn" title="Bullet list"
+                @onmousedown:preventDefault
+                @onclick='() => FormatAsync("insertUnorderedList")'>
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                <line x1="9" y1="6" x2="20" y2="6"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="9" y1="12" x2="20" y2="12"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="9" y1="18" x2="20" y2="18"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="4" cy="6" r="1.5" fill="currentColor"/>
+                <circle cx="4" cy="12" r="1.5" fill="currentColor"/>
+                <circle cx="4" cy="18" r="1.5" fill="currentColor"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- ── Editable area ── -->
+    <div id="@_id"
+         class="rne-editor"
+         contenteditable="true"
+         data-placeholder="@Placeholder"
+         role="textbox"
+         aria-multiline="true"
+         aria-label="Notes">
+    </div>
+
+</div>
+
+@code {
+    [Parameter] public string? InitialValue { get; set; }
+    [Parameter] public string  Placeholder  { get; set; } = "Add optional notes about this activity...";
+
+    private readonly string _id = $"rne-{Guid.NewGuid():N}";
+    private bool _initialized;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("richNotesEditor.init", _id, InitialValue);
+            _initialized = true;
+        }
+    }
+
+    // Prevent Blazor from re-rendering the component after the first render —
+    // this ensures the browser never overwrites the user's contenteditable content.
+    protected override bool ShouldRender() => !_initialized;
+
+    // Called by the parent form before submit to read the current editor HTML.
+    public async Task<string?> GetContentAsync()
+    {
+        if (!_initialized) return InitialValue;
+        var html = await JS.InvokeAsync<string?>("richNotesEditor.getContent", _id);
+        return string.IsNullOrWhiteSpace(html) ? null : html;
+    }
+
+    // Called by the parent to reset the editor (e.g. after successful log submission).
+    public async Task ClearAsync()
+    {
+        if (_initialized)
+            await JS.InvokeVoidAsync("richNotesEditor.init", _id, null);
+    }
+
+    private async Task FormatAsync(string command) =>
+        await JS.InvokeVoidAsync("richNotesEditor.format", command);
+}

@@ -120,7 +120,7 @@ Represents a single logged occurrence of an activity.
 - ActivityId      : int (FK to Activity)
 - LoggedAt        : DateTime (date and time of the activity)
 - PointsRecorded  : int (actual points at time of logging, may differ from default)
-- Notes           : string? (optional)
+- Notes           : string? (optional) — stored as sanitized HTML; blank/whitespace-only is normalized to NULL by ActivityLogService
 - CreatedAt       : DateTime
 ```
 
@@ -137,8 +137,10 @@ Key DTOs include:
 - `LoginRequestDto` / `LoginResponseDto` — for authentication
 - `RegisterRequestDto` — for new user registration
 - `CreateActivityDto` / `UpdateActivityDto` — include optional `Description` (`[MaxLength(500)]`), use `List<int> CategoryIds` for dimension selection (field named `CategoryIds` for historical compatibility)
-- `CreateActivityLogDto` — includes optional `List<int>? DimensionIds`; when provided the submitted IDs become the log entry's dimension snapshot; when null the activity's current dimensions are used as the default
-- `UpdateActivityLogDto` — includes optional `List<int>? DimensionIds`; when provided the entry's snapshot is fully replaced; when null and the activity changed, snapshot is re-derived from the new activity; when null and activity unchanged, existing snapshot is preserved
+- `CreateActivityLogDto` — includes optional `List<int>? DimensionIds`; when provided the submitted IDs become the log entry's dimension snapshot; when null the activity's current dimensions are used as the default; `Notes` has `[MaxLength(10000)]`
+- `UpdateActivityLogDto` — includes optional `List<int>? DimensionIds`; when provided the entry's snapshot is fully replaced; when null and the activity changed, snapshot is re-derived from the new activity; when null and activity unchanged, existing snapshot is preserved; `Notes` has `[MaxLength(10000)]`
+- `ActivityLogService.SanitizeNotes()` — `public static` helper; applied to Notes on every create and update; strips disallowed HTML tags/attributes via `HtmlSanitizer` (allowlist: p, br, strong, em, b, i, u, ul, ol, li — includes `b`/`i` because browser `execCommand` outputs these); uses `KeepChildNodes = true` so structural wrappers (e.g. the `<div>` `execCommand` puts around a list when text precedes it) are unwrapped while allowed children survive; script/style tags are still removed; normalizes blank content to null
+- `RichNotesEditor` — Blazor component (`Momentum.Client/Components/`) replacing the plain textarea on Add/Edit Log Entry; `contenteditable` + custom toolbar; JS interop via `wwwroot/js/richNotesEditor.js`; parent reads content via `GetContentAsync()` at submit time; `ShouldRender()` returns false after first render to prevent Blazor from overwriting user edits
 
 ---
 
