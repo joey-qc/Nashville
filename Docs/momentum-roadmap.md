@@ -507,8 +507,6 @@ Current toast notifications stay visible slightly too long, making the UI feel l
 - **Native Momentum toast system** — implement `ToastHost` + `ToastService` to replace `ISnackbar`; enables full MudBlazor removal (see KI-009)
 - **Remove `ISnackbar` calls** — replace all `ISnackbar.Add(...)` usages once custom toast is live
 - **Remove MudBlazor NuGet package** — after all `ISnackbar` references are eliminated
-- **Remove ApexCharts NuGet package** — unused leftover from charting migration (see KI-010)
-
 ## Planned View Log Enhancements
 
 Status: Planned

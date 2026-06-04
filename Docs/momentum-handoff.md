@@ -303,7 +303,7 @@ All pages converted from MudBlazor to custom HTML/CSS using design tokens from `
 | ID | Issue | Status |
 |---|---|---|
 | KI-009 | Replace MudBlazor Snackbar with native Momentum Toast system (`ToastHost` + `ToastService`) | Deferred |
-| KI-010 | `Blazor-ApexCharts` NuGet leftover in `.csproj` | Open — safe to remove, no code uses it |
+| KI-010 | `Blazor-ApexCharts` NuGet leftover in `.csproj` | **RESOLVED 2026-06-04** · commit `6b4c29f` |
 | KI-013 | Daily log uses wrong local day due to UTC/local timezone mismatch | **RESOLVED 2026-05-31** |
 
 Full detail: `Docs/momentum-known-issues.md`
@@ -333,11 +333,10 @@ KI-013 is an **active data accuracy bug** confirmed in production. It is indepen
 | Check-In reminders (PWA / push) | Low | Deferred long-term. Azure Function timer job sends push directly without waking the API (see design spec §16) |
 | Body/Energy/Mood reporting & correlation | Low | Future — depends on Check-In data; activity-input → check-in-outcome analytics (see design spec §17) |
 | Custom toast component | Medium | Prerequisite for removing MudBlazor NuGet |
-| Remove `Blazor-ApexCharts` NuGet | Low | Safe to remove now — no code references it |
 | Password change in Settings | Low | Planned but not implemented |
 | Screen-reader chart descriptions | Low | SVG charts have `role="img"` + `aria-label` but no `<title>` child |
 | Social login (Google/Apple) | Deferred | UI stubs exist on Login page; backend not implemented |
 
 ---
 
-*Momentum Handoff — Updated 2026-06-04 (AUTH-001 near-term session persistence complete — 7-day JWT lifetime, stale-token cleanup, inert checkbox removed)*
+*Momentum Handoff — Updated 2026-06-04 (KI-010 resolved — Blazor-ApexCharts package fully removed; deployed to production commit `6b4c29f`)*

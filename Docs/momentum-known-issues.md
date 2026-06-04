@@ -307,17 +307,24 @@ public enum ToastType { Success, Error, Warning, Info }
 | Field | Value |
 |---|---|
 | **ID** | KI-010 |
-| **Status** | OPEN |
-| **Area** | `Momentum.Client.csproj` |
+| **Status** | RESOLVED |
+| **Area** | `Momentum.Client.csproj`, `Momentum.Client/Program.cs`, `Momentum.Client/wwwroot/index.html` |
 | **Severity** | Low — unused package bloats build output; no runtime impact |
+| **Resolved** | 2026-06-04 · commit `6b4c29f` · branch `feature/ki-010-remove-apexcharts` · merged to `main` · deployed to production |
 
 ### Description
-The `Blazor-ApexCharts` NuGet package is referenced in `Momentum.Client.csproj` but is no longer used anywhere in the codebase. All charts are rendered as custom inline SVG (see CLAUDE.md §3.2). The package was retained as a leftover during the charting migration.
+The `Blazor-ApexCharts` NuGet package was referenced in `Momentum.Client.csproj` but was no longer used anywhere in the codebase. All charts are rendered as custom inline SVG (see CLAUDE.md §3.2). The package was retained as a leftover during the charting migration.
 
-### Resolution Path
-Remove `<PackageReference Include="Blazor-ApexCharts" .../>` from `Momentum.Client.csproj`. Verify no remaining `@using ApexCharts` directives exist in any `.razor` file before removing.
+### Resolution
+All ApexCharts references removed. No chart rendering code was changed — existing custom SVG charts continue to function correctly.
 
-> **Prerequisite check:** `grep -r "@using ApexCharts" --include="*.razor"` should return no results before removing the package.
+| File | Change |
+|---|---|
+| `Momentum.Client/Momentum.Client.csproj` | Removed `<PackageReference Include="Blazor-ApexCharts" .../>` |
+| `Momentum.Client/Program.cs` | Removed `using ApexCharts` and `builder.Services.AddApexCharts()` |
+| `Momentum.Client/wwwroot/index.html` | Removed Blazor-ApexCharts `<script>` tag |
+
+**Post-deployment verification:** Chart pages (Trends, Balance, Home weekly breakdown) confirmed rendering correctly in production after merge and deploy.
 
 ---
 
@@ -616,4 +623,4 @@ Option 1 is the most pragmatic starting point. DST transitions would cause up to
 ---
 
 *Momentum — Known Issues Log*  
-*Last updated: 2026-05-31 (KI-013 resolved; KI-015 opened)*
+*Last updated: 2026-06-04 (KI-010 resolved — Blazor-ApexCharts package, service registration, namespace import, and script tag removed)*

@@ -25,7 +25,7 @@ The application is structured as a **Visual Studio Solution** containing multipl
 | MudBlazor (`ISnackbar` only) | Toast notifications only — retained until a custom `ToastHost` component is implemented; no other MudBlazor components are used |
 | C# | Primary programming language |
 
-> **Important:** All pages use custom HTML/CSS — MudBlazor page components have been fully removed. Bootstrap must NOT be included. All data visualizations use custom SVG — do not introduce ApexCharts.Blazor or any other charting library. The `Blazor-ApexCharts` NuGet package is a leftover reference and should be removed (KI-010).
+> **Important:** All pages use custom HTML/CSS — MudBlazor page components have been fully removed. Bootstrap must NOT be included. All data visualizations use custom SVG — do not introduce ApexCharts.Blazor or any other charting library. The `Blazor-ApexCharts` NuGet package has been fully removed (KI-010, commit `6b4c29f`).
 
 ### 3.2 Backend
 
