@@ -1,11 +1,11 @@
 # Rich Notes v1 — Implementation Plan
 
-**Branch:** `feature/rich-notes-v1`  
-**Status:** Planning · Pre-implementation  
+**Branch:** `feature/rich-notes-v1` (merged to `main`)  
+**Status:** ✅ COMPLETE · DEPLOYED TO PRODUCTION (commit `97093de`)  
 **Last Updated:** 2026-06-03  
 **Design spec:** `Docs/rich-notes-v1-design-spec.md`
 
-No implementation code has been written yet.
+All three phases are implemented, merged to `main`, and deployed to production. Build clean; 33/33 tests pass; manual QA passed.
 
 ---
 
@@ -403,4 +403,4 @@ Work is isolated on `feature/rich-notes-v1`. Build and test after each step.
 ---
 
 *Rich Notes v1 Implementation Plan — created 2026-06-03 on `feature/rich-notes-v1`*  
-*Status: Planning · No implementation code written*
+*Status: ✅ COMPLETE — all phases implemented, merged to main (commit `97093de`), deployed to production*

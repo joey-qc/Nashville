@@ -1,7 +1,7 @@
 # Rich Notes v1 — Design Specification
 
-**Branch:** `feature/rich-notes-v1`  
-**Status:** Design Final · Implementation Planning  
+**Branch:** `feature/rich-notes-v1` (merged to `main`)  
+**Status:** ✅ COMPLETE · DEPLOYED TO PRODUCTION (commit `97093de`)  
 **Last Updated:** 2026-06-03
 
 ---
@@ -245,4 +245,4 @@ Product decisions are fully resolved. TQ-1 and TQ-3 are now resolved. The follow
 ---
 
 *Rich Notes v1 Design Specification — created 2026-06-03 on `feature/rich-notes-v1`*  
-*Status: Design Final · Implementation Planning in progress*
+*Status: ✅ COMPLETE — implemented, merged to main (commit `97093de`), deployed to production*
