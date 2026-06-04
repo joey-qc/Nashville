@@ -90,19 +90,8 @@
                 </div>
             </div>
 
-            <!-- Remember me + forgot password -->
+            <!-- Forgot password -->
             <div class="auth-meta-row">
-                <label class="auth-check-label">
-                    <input type="checkbox" class="auth-check" @bind="_rememberMe" />
-                    <span class="auth-check-box" aria-hidden="true">
-                        <svg viewBox="0 0 12 10" width="11" height="9" fill="none"
-                             stroke="currentColor" stroke-width="2"
-                             stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="1.5 5 4.5 8 10.5 2"/>
-                        </svg>
-                    </span>
-                    <span>Keep me signed in</span>
-                </label>
                 <a href="#" class="auth-link" @onclick:preventDefault>Forgot password?</a>
             </div>
 
@@ -172,7 +161,6 @@
     private IEnumerable<string> errors = [];
     private bool busy;
     private bool _showPassword;
-    private bool _rememberMe;
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }

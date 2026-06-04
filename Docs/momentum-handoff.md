@@ -6,9 +6,9 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** Rich Notes v1 complete (Phases 1–3) on `feature/rich-notes-v1` — pending merge to main  
-**Build Status:** ✅ All projects build clean (0 warnings, 0 errors)  
-**Last Updated:** 2026-06-03
+**Phase:** AUTH-001 Session Persistence complete — JWT lifetime extended to 7 days, stale-token cleanup, inert checkbox removed  
+**Build Status:** ✅ All projects build clean (0 warnings, 0 errors); 33/33 tests pass  
+**Last Updated:** 2026-06-04
 
 ### v2 Migration Deployment Summary
 
@@ -66,6 +66,36 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 ---
 
 ## Completed Work
+
+### AUTH-001 Session Persistence — COMPLETE (2026-06-04)
+
+- **Status:** ✅ Complete — near-term plan fully implemented.
+- **Build/tests:** ✅ Clean build (0 warnings, 0 errors); 33/33 tests pass.
+- **Design spec:** `Docs/session-persistence-design-spec.md`
+- **What shipped:**
+  - `Momentum.API/appsettings.json` — `Jwt:ExpiryMinutes` raised from `"60"` to `"10080"` (7 days). No code change required; `AuthService.GenerateToken()` already reads this value dynamically.
+  - `Momentum.Client/Auth/JwtAuthStateProvider.cs` — `GetAuthenticationStateAsync` now calls `localStorage.removeItem("authToken")` before returning `Anonymous` when `BuildPrincipal` detects an expired token. Eliminates the stale-token gap where a dead token persisted in localStorage until the next 401.
+  - `Momentum.Client/Pages/Login.razor` — Removed the inert "Keep me signed in" checkbox (`<label>` block and SVG checkmark) and the `_rememberMe` bool field from `@code`. The "Forgot password?" stub link remains.
+  - `Momentum.Client/wwwroot/css/auth-pages.css` — `.auth-meta-row` updated to `justify-content: flex-end` (single remaining element). The `auth-check*` CSS rules are retained — they are used by `Register.razor` for the terms checkbox.
+- **Not implemented:** refresh tokens. Long-term refresh-token plan remains documented in §6 of the design spec for future pre-PWA work.
+
+### Check-In Feature — DESIGN/PLANNING DOCUMENTED (2026-06-04 — not implemented)
+
+- **Status:** 📝 Planned — design documented only. **No application code, schema, migration, DTO, API, or UI has been implemented.**
+- **Design spec:** `Docs/check-in-feature-design-spec.md`
+- **Summary:** A planned new "Check-In" domain capturing user **state/outcomes** (Body / Energy / Mood, each `-5`…`+5`, `0` = baseline), complementing Activity Logs which capture **behaviors/inputs**. Planned `CheckIn` entity with user-editable `CheckedInAt` (analytics/display) + internal `CreatedAt` (audit), optional nullable `ActivityLogId` parent (one log → many check-ins), smart defaults (preload from most recent, else `0`), no notes in v1. Includes View Log "Notes"→"Details" toggle rename, a first-class Check-Ins history screen, a persistent "Check In" action button, future nav direction, and a mobile masthead concern (shorten "Manage Activities"→"Manage").
+- **Deferred within this plan:** PWA / push-notification check-in reminders (Azure Function timer job sending push directly without waking the API), and Body/Energy/Mood reporting & correlation analytics. See design spec §16–§17.
+- Roadmap updated with the Check-In feature, deferred PWA/push reminders, and future B/E/M reporting/correlation concept.
+- Functional requirements and software specifications intentionally **not** updated — the feature is planned, not implemented.
+
+### Rich Notes v1 — COMPLETE & DEPLOYED TO PRODUCTION (2026-06-03)
+
+- **Status:** ✅ Complete — all three phases implemented, merged to `main`, deployed to production.
+- **Commit:** `97093de` ("Implement Rich Notes v1")
+- **Build/tests:** ✅ Clean build (0 warnings, 0 errors); 33/33 tests pass
+- **Manual QA:** ✅ Passed (Add/Edit editor formatting, edit-mode load, bullet rendering, View Log Show Notes toggle, mobile)
+- **What shipped:** rich text Notes (`contenteditable` + custom toolbar: bold/italic/underline/bullets) on Add/Edit Log Entry; server-side HTML sanitization with blank→NULL normalization (10,000-char limit); View Log "Notes" toggle (summary line, right-aligned, default OFF) rendering formatted notes beneath entries. No new tables, API, or navigation — built on the existing `ActivityLog.Notes` field.
+- Detailed phase-by-phase history retained below.
 
 ### Rich Notes v1 — Design + Planning (2026-06-03 — on feature/rich-notes-v1)
 
@@ -298,6 +328,10 @@ KI-013 is an **active data accuracy bug** confirmed in production. It is indepen
 
 | Item | Priority | Notes |
 |---|---|---|
+| AUTH-001 refresh tokens (long-term) | Low | Near-term done. Long-term: `RefreshToken` entity/table, `/api/auth/refresh` endpoint, rotation, revocation — implement before PWA/mobile work. See `Docs/session-persistence-design-spec.md` §6. |
+| **Check-In feature implementation** | Medium | Design documented (`Docs/check-in-feature-design-spec.md`); not started. Needs `CheckIn` entity + migration, `CheckInDto`/request DTOs, repository/service (scoped by `UserId`), API controller, Check-In form, persistent "Check In" button, Check-Ins history screen, View Log "Notes"→"Details" toggle rename, Edit Log Entry associated-check-in list |
+| Check-In reminders (PWA / push) | Low | Deferred long-term. Azure Function timer job sends push directly without waking the API (see design spec §16) |
+| Body/Energy/Mood reporting & correlation | Low | Future — depends on Check-In data; activity-input → check-in-outcome analytics (see design spec §17) |
 | Custom toast component | Medium | Prerequisite for removing MudBlazor NuGet |
 | Remove `Blazor-ApexCharts` NuGet | Low | Safe to remove now — no code references it |
 | Password change in Settings | Low | Planned but not implemented |
@@ -306,4 +340,4 @@ KI-013 is an **active data accuracy bug** confirmed in production. It is indepen
 
 ---
 
-*Momentum Handoff — Updated 2026-06-02 (Phase 14: MOB-002 + UX-001 + UX-001A edit/delete interaction standardization deployed to production)*
+*Momentum Handoff — Updated 2026-06-04 (AUTH-001 near-term session persistence complete — 7-day JWT lifetime, stale-token cleanup, inert checkbox removed)*

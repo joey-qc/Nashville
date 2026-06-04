@@ -18,7 +18,10 @@ public class JwtAuthStateProvider(IJSRuntime js, TokenProvider tokenProvider) : 
 
         var principal = BuildPrincipal(token);
         if (principal is null)
+        {
+            await js.InvokeVoidAsync("localStorage.removeItem", TokenKey);
             return Anonymous;
+        }
 
         tokenProvider.Token = token;
         return new AuthenticationState(principal);

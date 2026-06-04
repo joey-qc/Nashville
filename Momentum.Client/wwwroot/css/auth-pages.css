@@ -223,12 +223,11 @@
     color: var(--text-dim);
 }
 
-/* ── Meta row: checkbox + forgot ─────────────────────────── */
+/* ── Meta row: forgot password ───────────────────────────── */
 .auth-meta-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    justify-content: flex-end;
     margin: 14px 0 20px;
 }
 

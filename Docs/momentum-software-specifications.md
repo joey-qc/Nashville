@@ -65,8 +65,11 @@ The application is structured as a **Visual Studio Solution** containing multipl
 - Blazor routes are protected; unauthenticated users are redirected to the login page.
 
 ### 4.4 Token Management
-- Tokens are stored client-side (in-memory or local storage — choose the more secure option per current Blazor best practices).
-- Token expiration and refresh strategy should follow ASP.NET Core Identity best practices.
+- Tokens are stored in **`localStorage`** under the key `"authToken"` — persists across browser sessions until expiry or explicit logout.
+- **JWT lifetime:** 10,080 minutes (7 days), configured via `Jwt:ExpiryMinutes` in `appsettings.json`; overridable via Azure App Service environment variable `Jwt__ExpiryMinutes`.
+- `JwtAuthStateProvider.GetAuthenticationStateAsync` checks `jwt.ValidTo < DateTime.UtcNow` on every auth-state evaluation. Expired tokens are immediately removed from `localStorage` and the user is treated as anonymous.
+- `AuthMessageHandler` intercepts any API 401 response and calls `MarkUserAsLoggedOut()`, which removes the token from `localStorage` and broadcasts logged-out state.
+- **Refresh tokens are not implemented.** Long-term plan documented in `Docs/session-persistence-design-spec.md` §6 — to be implemented before PWA/mobile work.
 
 ---
 
@@ -331,4 +334,4 @@ The following are noted for future development and should be kept in mind when m
 ---
 
 *Momentum — Software Specifications Document*
-*Version 1.5 — §3.1: replaced MudBlazor-as-primary-UI with custom HTML/CSS direction; noted ISnackbar as sole remaining MudBlazor dependency; §8.4: replaced MudBlazor theming references with momentum-theme.css CSS custom property system; §10.2: updated notification reference from MudBlazor Snackbar to ISnackbar (temporary)*
+*Version 1.6 — §4.4: updated token management to reflect AUTH-001 — 7-day JWT lifetime, localStorage storage confirmed, stale-token proactive cleanup, refresh tokens documented as not-yet-implemented*

@@ -139,6 +139,78 @@ Momentum models multidimensional impact rather than mutually-exclusive categoriz
 
 # Future Enhancements
 
+## Authentication & Session
+
+### AUTH-001 — Session Persistence Improvements
+
+**Status:** ✅ Near-term complete (2026-06-04) · **Design spec:** `Docs/session-persistence-design-spec.md`
+
+The current 60-minute JWT-only session causes daily re-authentication friction and conflicts with the low-friction capture philosophy. A "Keep me signed in" checkbox exists in the Login UI but is currently inert. This enhancement should be implemented before Check-In to avoid session expiry disrupting the post-activity Check-In flow.
+
+**Near-term plan (AUTH-001):**
+- Increase `Jwt:ExpiryMinutes` from 60 to **10080** (7 days) via `appsettings.json` and Azure App Service config override — zero schema or code changes required for the lifetime change itself.
+- Fix stale-token cleanup in `JwtAuthStateProvider.BuildPrincipal`: remove the expired `authToken` from `localStorage` immediately when expiry is detected, rather than waiting for a 401.
+- Resolve the inert "Keep me signed in" checkbox: either remove it from the Login UI or clearly document that it has no differential effect until refresh tokens are implemented. Do not leave it appearing functional when it does nothing.
+- No new endpoints, no schema changes, no EF migrations.
+
+**Long-term plan (pre-PWA/mobile):**
+- Implement refresh tokens before any serious PWA/push notification/mobile-native work.
+- Short-lived access token (~15 min) + longer-lived rotating refresh token (~30 days).
+- `RefreshToken` entity/table with hashed token, user ID, created/expiry/revoked timestamps, and rotation chain tracking.
+- `/api/auth/refresh` endpoint; token rotation on every refresh; replay detection (revoke entire family on reuse of a revoked token).
+- `AuthMessageHandler` extended to retry once on 401 via silent refresh before logging the user out.
+- "Keep me signed in" becomes real: short refresh-token TTL (1 day) vs. long (30 days) based on login-time choice.
+
+---
+
+## Check-Ins
+
+### Check-In Feature (State / Outcome Capture)
+
+**Status:** Planned (design documented) · **Priority:** Medium · **Design spec:** `Docs/check-in-feature-design-spec.md`
+
+A planned new domain that captures the user's **current state / outcomes** (Body / Energy / Mood), complementing Activity Logs which capture **behaviors / inputs**. This directly supports the long-standing "Fast Capture + Reflective Analytics" philosophy: lightweight outcome snapshots that can later be correlated against behavioral inputs.
+
+Key planned characteristics (full detail in the design spec):
+- Three metrics — **Body, Energy, Mood** — each on a `-5`…`+5` scale (`0` = baseline).
+- A **separate model from Dimensions** — Check-In metrics describe user state, not activity impact areas; they do not reuse the `Dimensions` table.
+- New `CheckIn` entity with a user-editable `CheckedInAt` (used for analytics/display) and an internal `CreatedAt` (audit only).
+- **Optional ActivityLog association** — a check-in can be standalone (e.g. morning) or linked to one activity log (e.g. post-Exercise). One activity log can have many check-ins.
+- **Post-activity flow** — saving an activity log automatically navigates to the Check-In form with the new `ActivityLogId` pre-populated (`Save Activity Log → Check-In form opens → user saves or cancels`). The post-activity check-in is the expected next step; creating the check-in record is optional because the user can cancel.
+- **Smart defaults** — preload from the most recent check-in, or default all scores to `0` if none exists.
+- **No check-in notes in v1** — capture stays lightweight.
+- **View Log integration** — rename the existing "Notes" toggle to **"Details"**; when ON, show both notes and linked check-ins.
+- **First-class Check-Ins history screen** — period-based, similar to View Log; shows all check-ins; linked check-ins display contextual text like `After: Exercise / Gym`, standalone ones show no extra label.
+- **Persistent "Check In" action button** on authenticated pages (alongside Add Entry); creation flows stay on persistent buttons, not in the nav.
+- **Future nav direction:** Home · View Log · Check-Ins · Trends · Balance · (future) Body/Energy/Mood reporting · Manage · Settings.
+- **Mobile masthead concern:** when both Add Entry and Check In buttons are present, shorten "Manage Activities" → "Manage" at the mobile breakpoint to prevent header wrapping.
+
+### Check-In Reminders via PWA / Push Notifications
+
+**Status:** Deferred (long-term) · **Priority:** Low · **Design spec:** `Docs/check-in-feature-design-spec.md` §16
+
+Long-term reminder delivery for check-ins, explicitly **not** part of the near-term Check-In implementation. Planned architecture:
+- PWA installable app experience.
+- Browser push notifications for check-in reminders.
+- An **Azure Function timer job** queries notification recipients and sends push notifications **directly**, without requiring the main API to stay awake (accommodates the Azure SQL Serverless cold-start / idle model).
+- The API wakes only when the user opens the app or responds to a notification.
+
+### Body / Energy / Mood Reporting & Correlation
+
+**Status:** Future concept · **Priority:** Low · **Design spec:** `Docs/check-in-feature-design-spec.md` §17
+
+Reporting and analytics enabled once Check-In data exists — correlating behavioral inputs against state outcomes:
+- Body / Energy / Mood over time (trend lines).
+- Average mood after specific activities.
+- Energy changes after morning exercise.
+- Next-day Body score after resistance training.
+- Effects of meals / alcohol / meditation / socializing on subsequent check-in metrics.
+- General activity-input → check-in-outcome correlation analysis.
+
+A dedicated Body/Energy/Mood reporting page is anticipated in the future nav structure.
+
+---
+
 ## Mobile UX
 
 ### Mobile-Friendly Dimension Labels
@@ -194,7 +266,11 @@ Suggest activities based on:
 Surface recently-used activities for fast repeat logging.
 
 ### Progressive Log Detail
-Allow optional deeper behavioral annotation while preserving low-friction logging.
+**Status:** ✅ Delivered by Rich Notes v1 (2026-06-03 — commit `97093de`, deployed to production).
+
+Rich Notes v1 added optional rich text annotation to the existing `ActivityLog.Notes` field (bold/italic/underline/bullets, sanitized HTML) with a View Log "Notes" toggle — deeper behavioral annotation without adding friction to fast logging. A separate Reflection domain (table/page/API) was explored and deferred in favor of this lower-footprint approach. See `Docs/rich-notes-v1-design-spec.md`.
+
+Future extension (not in v1): notes full-text search/filtering.
 
 ---
 
