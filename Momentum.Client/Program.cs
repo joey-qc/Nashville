@@ -1,4 +1,3 @@
-using ApexCharts;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -36,7 +35,6 @@ builder.Services.AddScoped(sp =>
 
 builder.Services.AddAuthorizationCore();
 builder.Services.AddMudServices();
-builder.Services.AddApexCharts();
 
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<ActivityService>();
