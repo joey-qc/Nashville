@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Momentum.Client;
 using Momentum.Client.Auth;
 using Momentum.Client.Services;
-using MudBlazor.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -34,7 +33,7 @@ builder.Services.AddScoped(sp =>
 });
 
 builder.Services.AddAuthorizationCore();
-builder.Services.AddMudServices();
+builder.Services.AddSingleton<ToastService>();
 
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<ActivityService>();

@@ -29,16 +29,15 @@ Momentum is moving away from MudBlazor toward fully custom Razor markup, plain H
 - Use plain HTML elements (`<button>`, `<input>`, `<textarea>`, `<select>`, etc.) styled with scoped CSS classes.
 - Use CSS variables from `Momentum.Client/wwwroot/css/momentum-theme.css` — never hardcode colors, radii, or spacing.
 - Use inline SVG for all icons and charts — no icon font or third-party icon library.
-- **Do NOT introduce any new MudBlazor components.** All pages are now fully converted.
-- The one permitted MudBlazor exception is `ISnackbar` / `MudSnackbar` for toast notifications — until a custom global toast is implemented, after which the MudBlazor NuGet package should be removed entirely.
+- **Do NOT introduce any MudBlazor components or packages.** MudBlazor has been fully removed (KI-009, 2026-06-04). No exceptions.
 - **Bootstrap must NEVER be used or referenced** anywhere in the project — not in markup, not in CSS, not in NuGet packages.
 
-**Converted pages (custom HTML/CSS only):** Home, Add Entry (`/log`), View Log (`/log/detail`), Trends (`/reports`), Balance (`/reports/balance`), Manage Activities (`/activities`), Settings (`/settings`), Login (`/login`), Register (`/register`).
-**Legacy pages (MudBlazor still present):** None — all pages converted. `ISnackbar`/`MudSnackbar` remains only for toast notifications.
+**All pages use custom HTML/CSS:** Home, Add Entry (`/log`), View Log (`/log/detail`), Trends (`/reports`), Balance (`/reports/balance`), Manage Activities (`/activities`), Settings (`/settings`), Login (`/login`), Register (`/register`).
+**Toast notifications** use the native `ToastService` + `ToastHost`. Inject `ToastService` and call `Toast.Show("message", ToastType.Success/Error/Warning/Info)`. Never use MudBlazor.
 
 ### 3.2 Charting — Custom SVG
 - All charts (bar, line, donut, sparkline) are implemented as **custom inline SVG** rendered directly in Razor components.
-- ApexCharts.Blazor, Chart.js, Plotly, and all third-party charting libraries must NOT be used — the `Blazor-ApexCharts` NuGet package is a leftover reference that should be removed.
+- ApexCharts.Blazor, Chart.js, Plotly, and all third-party charting libraries must NOT be used. The `Blazor-ApexCharts` NuGet package has been removed (KI-010, 2026-06-04).
 - Chart data is fetched via `ReportsService` and `ScoreService`; rendering is done with SVG markup and C# computed layout values.
 
 ### 3.3 Backend Framework
@@ -149,9 +148,9 @@ These colors are the single source of truth for category representation througho
 - All API calls from the client go through service classes in `Momentum.Client/Services/` — never call `HttpClient` directly from a page or component.
 - Protected routes use `[Authorize]` attribute or `<AuthorizeView>` component — never implement manual auth checks in page code.
 
-### 7.1 MudBlazor Type Aliases
-- All pages use unqualified `Color`, `Size`, and `Align` which resolve to MudBlazor by default via `_Imports.razor`.
-- ApexCharts is no longer used; there is no namespace conflict to resolve.
+### 7.1 Namespace Notes
+- MudBlazor has been fully removed. `@using MudBlazor` no longer exists in `_Imports.razor`. Do not reference MudBlazor types.
+- ApexCharts has been removed. No namespace conflicts exist.
 
 ---
 
@@ -162,7 +161,7 @@ These colors are the single source of truth for category representation througho
 - Return `404 Not Found` when a resource doesn't exist.
 - Return `409 Conflict` for the activity deletion scenario where logs exist.
 - Return `500 Internal Server Error` only for unexpected exceptions — log the full exception with Serilog before returning.
-- Client-side: display user-friendly error messages using MudBlazor `MudSnackbar` — never show raw exception messages to the user.
+- Client-side: display user-friendly error messages using `ToastService.Show(message, ToastType.Error)` — never show raw exception messages to the user.
 
 ---
 
@@ -217,7 +216,7 @@ Note: negative default points are intentional — they track detrimental habits.
 ---
 
 *Momentum — CLAUDE.md Skills File*
-*Version 1.4 — Updated category colors to new palette; replaced ApexCharts with custom SVG charting; removed ApexCharts namespace conflict rules; replaced MudBlazor-only rule with phased-migration directive*
+*Version 1.5 — MudBlazor fully removed (KI-009); ToastService + ToastHost replace ISnackbar; §3.1, §3.2, §7.1, §8 updated accordingly*
 
 
 ## Documentation Maintenance Rule

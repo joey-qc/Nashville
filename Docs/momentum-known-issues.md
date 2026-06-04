@@ -227,78 +227,29 @@ Removed the `var cats = await CategoryService.GetAllAsync();` line. No functiona
 | Field | Value |
 |---|---|
 | **ID** | KI-009 |
-| **Status** | DEFERRED |
+| **Status** | RESOLVED |
 | **Area** | UI Infrastructure — `Momentum.Client/Components/`, `MainLayout.razor`, `Program.cs`, MudBlazor NuGet |
 | **Severity** | Low — fully functional today; MudBlazor snackbar works correctly; this is a clean-up and design-consistency initiative |
-| **Target** | Prioritize when MudBlazor NuGet is being removed (see KI-010) |
+| **Resolved** | 2026-06-04 |
 
-### Description
+### Resolution
 
-All pages and components have been converted from MudBlazor to custom HTML/CSS (CLAUDE.md §3.1). The **one remaining MudBlazor dependency** is `ISnackbar` / `MudSnackbar`, used for toast-style notifications (success, error, warning) throughout the application. Until a native Momentum toast system exists, `ISnackbar` is the approved temporary mechanism.
+Native `ToastService` + `ToastHost` implemented; MudBlazor removed entirely. All 16 `ISnackbar` call sites across 4 pages replaced.
 
-This issue tracks the full initiative: designing and building the native toast system, migrating all call sites, and removing MudBlazor entirely from the project.
-
-**Why this matters beyond cleanup:**
-- MudSnackbar uses its own visual language (colors, radius, shadows) that does not align with Momentum's design tokens.
-- The MudBlazor NuGet package adds ~300 kB to the WASM payload; removal meaningfully improves cold-start time.
-- A native `ToastService` can be better typed, easier to test, and can be extended (e.g., persistent toasts, action buttons) without MudBlazor constraints.
-
-### Current State
-
-`ISnackbar` is injected in the following contexts (not exhaustive — all pages with form submission or destructive actions):
-- `LogActivity.razor` — success on log submission
-- `ActivityDetail.razor` — success on edit / delete log entry
-- `Activities.razor` — success/error/conflict on activity CRUD
-- `Settings.razor` — success/error on profile save
-
-`AddMudServices()` is registered in `Program.cs`. `MudSnackbarProvider` is rendered in `MainLayout.razor`.
-
-### Architectural Design (target state)
-
-#### `ToastService` (singleton)
-```csharp
-// Momentum.Client/Services/ToastService.cs
-public class ToastService
-{
-    public event Action<ToastMessage>? OnShow;
-    public void Show(string message, ToastType type = ToastType.Success, int durationMs = 4000)
-        => OnShow?.Invoke(new ToastMessage(message, type, durationMs));
-}
-
-public record ToastMessage(string Message, ToastType Type, int DurationMs);
-public enum ToastType { Success, Error, Warning, Info }
-```
-
-#### `ToastHost` component
-- Registered in `MainLayout.razor` (outside the main content area, inside the auth shell).
-- Subscribes to `ToastService.OnShow` via `StateHasChanged`.
-- Renders a fixed-position overlay (`bottom-right`, `z-index` above sidebar).
-- Manages a queue of active toasts; each auto-dismisses after `DurationMs`.
-- Supports swipe-to-dismiss on mobile (touch events).
-- Stacks gracefully: newest toast appears at bottom, pushes older ones up.
-
-#### Visual design
-- Uses `var(--surface-2)` card background + `1px solid var(--border)` border.
-- Left accent border (4px) matches toast type:
-  - `Success` → `var(--primary)` (green)
-  - `Error` → `var(--negative)` (red)
-  - `Warning` → `var(--cat-social)` (amber)
-  - `Info` → `var(--cat-mental)` (sky blue)
-- Entry animation: slide in from right (`translateX`) with `opacity` fade — 200ms ease-out.
-- Exit animation: fade out with slight upward translate — 180ms ease-in.
-- Mobile: toasts appear at top-center (full-width minus 24px margin) instead of bottom-right.
-
-### Migration Steps
-
-1. Implement `ToastService` in `Momentum.Client/Services/` and register as `Singleton` in `Program.cs`.
-2. Build `ToastHost.razor` + `ToastHost.razor.css` in `Momentum.Client/Components/`.
-3. Add `<ToastHost />` to `MainLayout.razor`; remove `<MudSnackbarProvider />`.
-4. Replace all `ISnackbar.Add(...)` call sites with `ToastService.Show(...)`.
-5. Remove `[Inject] ISnackbar Snackbar` from all pages.
-6. Remove `builder.Services.AddMudServices()` from `Program.cs`.
-7. Remove `<PackageReference Include="MudBlazor" .../>` from `Momentum.Client.csproj`.
-8. Update `CLAUDE.md §3.1` and `§3.2` to remove the `ISnackbar` exception note.
-9. Update this issue to RESOLVED; update KI-010 if ApexCharts removal is also complete.
+| File | Change |
+|---|---|
+| `Momentum.Client/Services/ToastService.cs` | New Singleton — `Show(message, ToastType)` fires `Action<ToastMessage>`; 3 s default (4.5 s for Error/Warning) |
+| `Momentum.Client/Components/ToastHost.razor` + `.css` | New component — fixed overlay, bottom-right desktop, bottom full-width mobile (≤540px); per-type left accent border; `System.Threading.Timer` auto-dismiss; manual dismiss button; slide-in animation |
+| `Momentum.Client/Layout/MainLayout.razor` | `<ToastHost />` added inside `<Authorized>` |
+| `Momentum.Client/App.razor` | `MudThemeProvider`, `MudPopoverProvider`, `MudDialogProvider`, `MudSnackbarProvider` all removed |
+| `Momentum.Client/_Imports.razor` | `@using MudBlazor` removed |
+| `Momentum.Client/wwwroot/index.html` | `MudBlazor.min.css` link and `MudBlazor.min.js` script removed |
+| `Momentum.Client/Momentum.Client.csproj` | `MudBlazor` NuGet package reference removed |
+| `Momentum.Client/Program.cs` | `using MudBlazor.Services` + `AddMudServices()` removed; `AddSingleton<ToastService>()` added |
+| `ActivityDetail.razor` | 2 call sites replaced |
+| `LogActivity.razor` | 8 call sites replaced |
+| `ManageActivities.razor` | 4 call sites replaced |
+| `Settings.razor` | 2 call sites replaced |
 
 ---
 
@@ -623,4 +574,4 @@ Option 1 is the most pragmatic starting point. DST transitions would cause up to
 ---
 
 *Momentum — Known Issues Log*  
-*Last updated: 2026-06-04 (KI-010 resolved — Blazor-ApexCharts package, service registration, namespace import, and script tag removed)*
+*Last updated: 2026-06-04 (KI-009 resolved — native ToastService + ToastHost; MudBlazor fully removed)*

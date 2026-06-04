@@ -1,0 +1,87 @@
+/* ── Toast host — fixed overlay container ─────────────────── */
+.toast-host {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 10px;
+    pointer-events: none; /* host itself is not interactive */
+}
+
+/* ── Individual toast card ────────────────────────────────── */
+.toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 260px;
+    max-width: 380px;
+    padding: 13px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--border); /* overridden per type below */
+    border-radius: var(--radius-sm);
+    pointer-events: all;
+    animation: toast-in 0.2s ease-out;
+}
+
+/* ── Type accent borders ──────────────────────────────────── */
+.toast-success { border-left-color: var(--primary); }
+.toast-error   { border-left-color: var(--negative); }
+.toast-warning { border-left-color: var(--cat-social); }
+.toast-info    { border-left-color: var(--accent); }
+
+/* ── Message text ─────────────────────────────────────────── */
+.toast-msg {
+    flex: 1;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.4;
+    padding-top: 1px;
+}
+
+/* ── Dismiss button ───────────────────────────────────────── */
+.toast-close {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.toast-close:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* ── Entry animation ──────────────────────────────────────── */
+@keyframes toast-in {
+    from { opacity: 0; transform: translateX(16px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Mobile: bottom full-width stack ─────────────────────── */
+@media (max-width: 540px) {
+    .toast-host {
+        left: 12px;
+        right: 12px;
+        bottom: 16px;
+    }
+
+    .toast {
+        min-width: unset;
+        width: 100%;
+        max-width: unset;
+    }
+}
