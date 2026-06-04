@@ -2,7 +2,7 @@
 @attribute [Authorize]
 @inject ActivityService ActivityService
 @inject CategoryService CategoryService
-@inject ToastService Toast
+@inject ISnackbar Snackbar
 @inject IJSRuntime JS
 
 <PageTitle>Manage Activities</PageTitle>
@@ -483,7 +483,7 @@
 
         _saving = false;
         CloseForm();
-        Toast.Show("Activity saved.", ToastType.Success);
+        Snackbar.Add("Activity saved.", Severity.Success);
         await ReloadActivities();
     }
 
@@ -494,7 +494,7 @@
 
         if (success)
         {
-            Toast.Show($"\"{activity.Name}\" deleted.", ToastType.Success);
+            Snackbar.Add($"\"{activity.Name}\" deleted.", Severity.Success);
             await ReloadActivities();
             return;
         }
@@ -525,15 +525,15 @@
         var (success, _) = await ActivityService.DeleteAsync(activity.Id, action);
         if (success)
         {
-            Toast.Show(action == "archive"
+            Snackbar.Add(action == "archive"
                 ? $"\"{activity.Name}\" archived."
                 : $"\"{activity.Name}\" and all history deleted.",
-                ToastType.Success);
+                Severity.Success);
             await ReloadActivities();
         }
         else
         {
-            Toast.Show("Operation failed. Please try again.", ToastType.Error);
+            Snackbar.Add("Operation failed. Please try again.", Severity.Error);
         }
     }
 

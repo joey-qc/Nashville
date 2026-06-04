@@ -5,7 +5,7 @@
 @inject ActivityLogService LogService
 @inject ScoreService ScoreService
 @inject NavigationManager Navigation
-@inject ToastService Toast
+@inject ISnackbar Snackbar
 @inject IJSRuntime JS
 
 <PageTitle>@(EditId.HasValue ? "Edit Log Entry" : "Add Entry")</PageTitle>
@@ -388,7 +388,7 @@
         var log = await LogService.GetByIdAsync(logId);
         if (log is null)
         {
-            Toast.Show("Log entry not found.", ToastType.Error);
+            Snackbar.Add("Log entry not found.", Severity.Error);
             Navigation.NavigateTo("/log/detail");
             return;
         }
@@ -494,7 +494,7 @@
     {
         if (_selectedActivity is null)
         {
-            Toast.Show("Please select an activity.", ToastType.Warning);
+            Snackbar.Add("Please select an activity.", Severity.Warning);
             return;
         }
 
@@ -521,11 +521,11 @@
 
             if (result is null)
             {
-                Toast.Show("Failed to update log entry. Please try again.", ToastType.Error);
+                Snackbar.Add("Failed to update log entry. Please try again.", Severity.Error);
                 return;
             }
 
-            Toast.Show("Log entry updated.", ToastType.Success);
+            Snackbar.Add("Log entry updated.", Severity.Success);
             Navigation.NavigateTo("/log/detail");
         }
         else
@@ -542,11 +542,11 @@
 
             if (result is null)
             {
-                Toast.Show("Failed to log activity. Please try again.", ToastType.Error);
+                Snackbar.Add("Failed to log activity. Please try again.", Severity.Error);
                 return;
             }
 
-            Toast.Show($"{_selectedActivity.Name} logged!", ToastType.Success);
+            Snackbar.Add($"{_selectedActivity.Name} logged!", Severity.Success);
 
             // Refresh today's summary so subtitle and after-pill update
             _todaySummary = await ScoreService.GetSummaryAsync();
@@ -572,12 +572,12 @@
         _busy = false;
         if (success)
         {
-            Toast.Show("Log entry deleted.", ToastType.Success);
+            Snackbar.Add("Log entry deleted.", Severity.Success);
             Navigation.NavigateTo("/log/detail");
         }
         else
         {
-            Toast.Show("Failed to delete log entry.", ToastType.Error);
+            Snackbar.Add("Failed to delete log entry.", Severity.Error);
             _deleteArmed = false;
         }
     }

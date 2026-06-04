@@ -6,7 +6,7 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** KI-009 complete — MudBlazor fully removed; native ToastService + ToastHost implemented  
+**Phase:** AUTH-001 Session Persistence complete — JWT lifetime extended to 7 days, stale-token cleanup, inert checkbox removed  
 **Build Status:** ✅ All projects build clean (0 warnings, 0 errors); 33/33 tests pass  
 **Last Updated:** 2026-06-04
 
@@ -66,23 +66,6 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 ---
 
 ## Completed Work
-
-### KI-009 Native Toast System — COMPLETE (2026-06-04)
-
-- **Status:** ✅ Complete — MudBlazor fully removed; native toast system live.
-- **Build/tests:** ✅ Clean build (0 warnings, 0 errors); 33/33 tests pass.
-- **Known issue:** `KI-009` — see `Docs/momentum-known-issues.md`
-- **What shipped:**
-  - `Momentum.Client/Services/ToastService.cs` — new Singleton service; `Show(message, ToastType)` fires an `Action<ToastMessage>` event. Duration defaults: 3 s (Success/Info), 4.5 s (Error/Warning).
-  - `Momentum.Client/Components/ToastHost.razor` + `ToastHost.razor.css` — fixed-position overlay; bottom-right desktop, bottom full-width on mobile (≤540px); per-type left accent border (green/red/amber/sky); entry slide animation; manual dismiss button.
-  - `Momentum.Client/Layout/MainLayout.razor` — `<ToastHost />` added inside `<Authorized>`.
-  - `Momentum.Client/App.razor` — `MudThemeProvider`, `MudPopoverProvider`, `MudDialogProvider`, `MudSnackbarProvider` all removed.
-  - `Momentum.Client/_Imports.razor` — `@using MudBlazor` removed.
-  - `Momentum.Client/wwwroot/index.html` — `MudBlazor.min.css` link and `MudBlazor.min.js` script removed.
-  - `Momentum.Client/Momentum.Client.csproj` — `MudBlazor` NuGet package reference removed.
-  - `Momentum.Client/Program.cs` — `using MudBlazor.Services` and `AddMudServices()` removed; `AddSingleton<ToastService>()` added.
-  - `ActivityDetail.razor`, `LogActivity.razor`, `ManageActivities.razor`, `Settings.razor` — all 16 `ISnackbar` injections and `Snackbar.Add(...)` calls replaced with `ToastService` / `Toast.Show(...)`.
-- **Zero MudBlazor references remain** in any `.cs`, `.razor`, `.csproj`, or `.html` source file.
 
 ### AUTH-001 Session Persistence — COMPLETE (2026-06-04)
 
@@ -319,7 +302,7 @@ All pages converted from MudBlazor to custom HTML/CSS using design tokens from `
 
 | ID | Issue | Status |
 |---|---|---|
-| KI-009 | Replace MudBlazor Snackbar with native Momentum Toast system (`ToastHost` + `ToastService`) | **RESOLVED 2026-06-04** |
+| KI-009 | Replace MudBlazor Snackbar with native Momentum Toast system (`ToastHost` + `ToastService`) | Deferred |
 | KI-010 | `Blazor-ApexCharts` NuGet leftover in `.csproj` | **RESOLVED 2026-06-04** · commit `6b4c29f` |
 | KI-013 | Daily log uses wrong local day due to UTC/local timezone mismatch | **RESOLVED 2026-05-31** |
 
@@ -349,10 +332,11 @@ KI-013 is an **active data accuracy bug** confirmed in production. It is indepen
 | **Check-In feature implementation** | Medium | Design documented (`Docs/check-in-feature-design-spec.md`); not started. Needs `CheckIn` entity + migration, `CheckInDto`/request DTOs, repository/service (scoped by `UserId`), API controller, Check-In form, persistent "Check In" button, Check-Ins history screen, View Log "Notes"→"Details" toggle rename, Edit Log Entry associated-check-in list |
 | Check-In reminders (PWA / push) | Low | Deferred long-term. Azure Function timer job sends push directly without waking the API (see design spec §16) |
 | Body/Energy/Mood reporting & correlation | Low | Future — depends on Check-In data; activity-input → check-in-outcome analytics (see design spec §17) |
+| Custom toast component | Medium | Prerequisite for removing MudBlazor NuGet |
 | Password change in Settings | Low | Planned but not implemented |
 | Screen-reader chart descriptions | Low | SVG charts have `role="img"` + `aria-label` but no `<title>` child |
 | Social login (Google/Apple) | Deferred | UI stubs exist on Login page; backend not implemented |
 
 ---
 
-*Momentum Handoff — Updated 2026-06-04 (KI-009 complete — native ToastService + ToastHost; MudBlazor fully removed)*
+*Momentum Handoff — Updated 2026-06-04 (KI-010 resolved — Blazor-ApexCharts package fully removed; deployed to production commit `6b4c29f`)*

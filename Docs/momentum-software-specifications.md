@@ -22,10 +22,10 @@ The application is structured as a **Visual Studio Solution** containing multipl
 | Custom HTML/CSS | All UI markup — plain HTML elements styled with scoped CSS classes and shared design tokens |
 | `momentum-theme.css` | Global design token file — CSS custom properties for all colors, radii, and spacing |
 | Custom inline SVG | All charts (bar, line, donut, sparkline) and all icons rendered as inline SVG in Razor components |
-| `ToastService` + `ToastHost` | Native toast notifications — `Momentum.Client/Services/ToastService.cs` (Singleton); `Momentum.Client/Components/ToastHost.razor`. MudBlazor has been fully removed (KI-009, 2026-06-04). |
+| MudBlazor (`ISnackbar` only) | Toast notifications only — retained until a custom `ToastHost` component is implemented; no other MudBlazor components are used |
 | C# | Primary programming language |
 
-> **Important:** All pages use custom HTML/CSS — MudBlazor has been fully removed (KI-009, 2026-06-04). Bootstrap must NOT be included. All data visualizations use custom SVG — do not introduce ApexCharts.Blazor or any other charting library. Both `MudBlazor` and `Blazor-ApexCharts` NuGet packages have been removed.
+> **Important:** All pages use custom HTML/CSS — MudBlazor page components have been fully removed. Bootstrap must NOT be included. All data visualizations use custom SVG — do not introduce ApexCharts.Blazor or any other charting library. The `Blazor-ApexCharts` NuGet package has been fully removed (KI-010, commit `6b4c29f`).
 
 ### 3.2 Backend
 
@@ -289,7 +289,7 @@ Both pages render charts as **custom inline SVG** — no charting library is imp
 ### 10.2 Client-Side Error Handling
 - API errors are caught in client service classes and surfaced to the UI as friendly error messages.
 - No technical stack traces or exception details are shown to the user.
-- `ToastService.Show(message, ToastType)` is used to display error, success, and warning toast notifications. The `ToastHost` component renders them as a fixed-position overlay (bottom-right desktop; bottom full-width mobile). MudBlazor `ISnackbar` has been fully removed (KI-009, 2026-06-04).
+- `ISnackbar` (MudBlazor, retained temporarily) is used to display error and success toast notifications. This will be replaced by a custom `ToastHost` component once implemented (see KI-009).
 
 ### 10.3 Global Exception Handler
 - A global exception handling middleware is registered in the ASP.NET Core pipeline.
@@ -334,4 +334,4 @@ The following are noted for future development and should be kept in mind when m
 ---
 
 *Momentum — Software Specifications Document*
-*Version 1.7 — §3.1 + §10.2: MudBlazor fully removed (KI-009); ToastService + ToastHost replace ISnackbar; both MudBlazor and Blazor-ApexCharts NuGet packages removed*
+*Version 1.6 — §4.4: updated token management to reflect AUTH-001 — 7-day JWT lifetime, localStorage storage confirmed, stale-token proactive cleanup, refresh tokens documented as not-yet-implemented*

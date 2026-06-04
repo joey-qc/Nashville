@@ -1067,48 +1067,14 @@ Auth pages (Login, Register) share styles from `wwwroot/css/auth-pages.css` — 
 
 ## 17. Toast Notifications
 
-Toast notifications use the native **`ToastService`** (KI-009 resolved 2026-06-04 — MudBlazor fully removed).
-
-### Usage
-
-Inject `ToastService` and call `Show`:
+Toast notifications use `ISnackbar` / `MudSnackbar` from MudBlazor — the **only** permitted MudBlazor dependency. This is a known temporary dependency pending the native Momentum toast system (see Known Issues KI-009). Usage:
 
 ```csharp
-@inject ToastService Toast
-
-Toast.Show("Settings saved.", ToastType.Success);
-Toast.Show("Failed to save settings.", ToastType.Error);
-Toast.Show("Please select an activity.", ToastType.Warning);
+Snackbar.Add("Settings saved.", Severity.Success);
+Snackbar.Add("Failed to save settings.", Severity.Error);
 ```
 
-`ToastType` values: `Success`, `Error`, `Warning`, `Info`.
-
-Duration defaults: 3 s for Success/Info; 4.5 s for Error/Warning. Set in `ToastService.Show()` — no per-call-site override needed.
-
-### Visual Design
-
-`ToastHost.razor` renders a fixed-position overlay:
-
-- **Desktop:** bottom-right (`bottom: 24px; right: 24px`), toasts stack upward, max-width 380px.
-- **Mobile (≤540px):** bottom full-width (`left: 12px; right: 12px; bottom: 16px`).
-- Background: `var(--surface-2)`, border: `1px solid var(--border)`, radius: `var(--radius-sm)`.
-- Left accent border (4px) by type:
-  - `Success` → `var(--primary)` (green)
-  - `Error` → `var(--negative)` (red)
-  - `Warning` → `var(--cat-social)` (amber)
-  - `Info` → `var(--accent)` (sky blue)
-- Entry animation: slide in from right, 200ms ease-out.
-- Manual dismiss: ✕ button, top-right of each toast.
-
-### Files
-
-| File | Purpose |
-|---|---|
-| `Momentum.Client/Services/ToastService.cs` | Singleton service — fires `Action<ToastMessage>` event |
-| `Momentum.Client/Components/ToastHost.razor` | Blazor component — subscribes to event, renders toast stack, manages auto-dismiss timers |
-| `Momentum.Client/Components/ToastHost.razor.css` | Scoped styles — overlay layout, card, accent borders, animation, mobile breakpoint |
-
-`ToastHost` is registered in `MainLayout.razor` inside `<Authorized>`. Do not add it to individual pages.
+Do not use `MudSnackbar` directly in markup. Use the `ISnackbar` service only.
 
 ---
 
@@ -1174,5 +1140,5 @@ The View Log page (`ActivityDetail.razor`) renders saved notes as read-only form
 
 ---
 
-*Momentum Design System — v1.8*
-*KI-009 resolved: §17 Toast Notifications rewritten — MudBlazor ISnackbar replaced with native ToastService + ToastHost; visual spec and usage documented*
+*Momentum Design System — v1.7*
+*Rich Notes v1 Phase 3 refinement: Notes toggle moved to the summary line (.detail-stats-row), right-aligned, compact, relabeled "Notes"*
