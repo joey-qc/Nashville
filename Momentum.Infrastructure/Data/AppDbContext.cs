@@ -13,6 +13,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<ActivityDimension>          ActivityDimensions          => Set<ActivityDimension>();
     public DbSet<ActivityLog>                ActivityLogs                => Set<ActivityLog>();
     public DbSet<ActivityLogEntryDimension>  ActivityLogEntryDimensions  => Set<ActivityLogEntryDimension>();
+    public DbSet<CheckIn>                    CheckIns                    => Set<CheckIn>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -60,6 +61,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             .WithMany(d => d.LogEntryDimensions)
             .HasForeignKey(led => led.DimensionId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // CheckIn → ActivityLog (SetNull on delete: deleting a log entry orphans the check-in
+        // as standalone rather than cascading deletion of user state records)
+        builder.Entity<CheckIn>()
+            .HasOne(c => c.ActivityLog)
+            .WithMany(l => l.CheckIns)
+            .HasForeignKey(c => c.ActivityLogId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Index on UserId for efficient user-scoped queries (all check-in reads filter by user)
+        builder.Entity<CheckIn>()
+            .HasIndex(c => c.UserId);
+
+        // Index on CheckedInAt for time-ordered display and analytics
+        builder.Entity<CheckIn>()
+            .HasIndex(c => c.CheckedInAt);
 
         // Seed data — IDs are stable; names align with user-facing display names
         builder.Entity<Dimension>().HasData(

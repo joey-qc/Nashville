@@ -29,10 +29,13 @@
   - **Home** (Score Summary / Landing Page)
   - **Add Entry** (also accessible via the persistent plus button)
   - **View Log** (Activity Detail View — browsable history by period)
+  - **Check In** (standalone Check-In form — see §11)
   - **Reports** (Reporting & Analytics — contains Trends and Balance sub-pages)
   - **Manage Activities** (Data Management)
   - **Settings**
 - A **persistent "+" (Add Entry) button** is visible on every authenticated screen, allowing the user to quickly navigate to the Add Entry screen at any time.
+
+> **Note (CHK-002 Phase 3):** The **Check In** nav entry is a temporary way to reach the standalone Check-In form. A persistent "Check In" action button (analogous to the Add Entry button) will replace it in a later phase per the Check-In design spec.
 
 ---
 
@@ -286,19 +289,41 @@ When a new user registers, the following starter activities are automatically ad
 
 ---
 
-## 11. Settings Screen
+## 11. Check-In Screen
 
-### 11.1 Profile
+The Check-In screen (`/check-in`) captures the user's **current state** (how they feel), as distinct from Activity Logs which capture behaviors. Check-Ins are intentionally lightweight.
+
+### 11.1 Standalone Check-In Form (CHK-002 Phase 3 — implemented)
+- Reachable from the **Check In** navigation item (temporary; a persistent action button comes in a later phase).
+- Records three metrics — **Body**, **Energy**, **Mood** — each on a **−5 to +5** scale where **0 = baseline / normal**.
+- A **date and time** field captures when the check-in applies; defaults to now and is user-editable (with **Today** / **Now** shortcuts).
+- **Smart defaults:** when the form opens, the three scores preload from the user's most recent Check-In; if the user has no prior Check-In, all three default to 0.
+- Scores are adjusted with bounded +/− steppers and cannot exceed the −5…+5 range.
+- **No notes field** in this version — capture stays minimal.
+- On save, a success toast confirms the check-in. The entered scores are retained (the natural starting point for the next check-in) and the timestamp resets to now; the user remains on the page.
+- Saved Check-Ins from this screen are **standalone** (not linked to any activity log).
+
+### 11.2 Not yet implemented
+- Post-activity Check-In flow (auto-open after logging an activity).
+- Check-Ins history screen.
+- View Log "Details" integration showing linked check-ins.
+- Body/Energy/Mood reporting and correlation.
+
+---
+
+## 12. Settings Screen
+
+### 12.1 Profile
 - **Display Name** — editable text field; used for the personalized welcome greeting throughout the app
 - **Email Address** — read-only; displayed for reference but cannot be changed after registration
 - **Password** — *(planned for future release)* change password with current password confirmation
 
-### 11.2 Appearance
+### 12.2 Appearance
 - The application uses **permanent dark mode**. There is no theme toggle — light mode is not available.
 
 ---
 
-## 12. General UX Requirements
+## 13. General UX Requirements
 
 - The application is **responsive** and usable on desktop and tablet browsers.
 - **Color coding** for dimensions is consistent across all screens — charts, activity lists, dimension chips, and form elements all use the same color per dimension.

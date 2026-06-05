@@ -41,5 +41,6 @@ builder.Services.AddScoped<ActivityLogService>();
 builder.Services.AddScoped<ScoreService>();
 builder.Services.AddScoped<ReportsService>();
 builder.Services.AddScoped<UserSettingsService>();
+builder.Services.AddScoped<CheckInService>();
 
 await builder.Build().RunAsync();

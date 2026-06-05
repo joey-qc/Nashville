@@ -1,0 +1,171 @@
+@page "/check-in"
+@attribute [Authorize]
+@inject CheckInService CheckInService
+@inject ToastService Toast
+
+<PageTitle>Check In</PageTitle>
+
+<div class="checkin-page">
+
+    <!-- ══ Page header ══ -->
+    <header class="checkin-header">
+        <span class="kicker">CHECK-IN</span>
+        <h1 class="checkin-title">How are you right now?</h1>
+        <p class="checkin-subtitle">
+            A quick snapshot of your current state. Scores run −5 to +5 — <strong>0 is your baseline</strong>.
+        </p>
+    </header>
+
+    <!-- ══ Form card ══ -->
+    <div class="card">
+        <form @onsubmit="HandleSubmit" @onsubmit:preventDefault>
+
+            <!-- ── Date + Time ── -->
+            <div class="field-row">
+                <div class="field-group">
+                    <label class="field-label" for="checkin-date">DATE</label>
+                    <input id="checkin-date" type="date" class="field-input"
+                           value="@DateValue" @onchange="OnDateChange" />
+                    <div class="shortcut-chips">
+                        <button type="button" class="chip @(IsToday ? "active" : "")"
+                                @onclick="SetToday">Today</button>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label class="field-label" for="checkin-time">TIME</label>
+                    <input id="checkin-time" type="time" class="field-input"
+                           value="@TimeValue" @onchange="OnTimeChange" />
+                    <div class="shortcut-chips">
+                        <button type="button" class="chip" @onclick="SetNow">Now</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Score steppers ── -->
+            @foreach (var s in Scores)
+            {
+                var val = s.Get();
+                <div class="field-group">
+                    <label class="field-label">@s.Label.ToUpperInvariant()</label>
+                    <div class="score-stepper">
+                        <button type="button" class="score-btn" aria-label="Decrease @s.Label"
+                                @onclick="@(() => Adjust(s.Set, s.Get(), -1))"
+                                disabled="@(val <= -5)">−</button>
+                        <span class="score-value @(val > 0 ? "pos" : val < 0 ? "neg" : "")">
+                            @(val > 0 ? "+" : "")@val
+                        </span>
+                        <button type="button" class="score-btn" aria-label="Increase @s.Label"
+                                @onclick="@(() => Adjust(s.Set, s.Get(), 1))"
+                                disabled="@(val >= 5)">+</button>
+                    </div>
+                </div>
+            }
+
+            <!-- ── Action row ── -->
+            <div class="action-row">
+                <button type="submit" class="btn-submit" disabled="@_busy">
+                    @(_busy ? "Saving…" : "Save Check-In")
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+
+@code {
+    private readonly CheckInForm _form = new()
+    {
+        Date = DateTime.Today,
+        Time = DateTime.Now.TimeOfDay
+    };
+
+    private bool _busy;
+
+    // (Label, getter, setter) descriptors keep the three identical steppers DRY.
+    private IEnumerable<(string Label, Func<int> Get, Action<int> Set)> Scores =>
+    [
+        ("Body",   () => _form.Body,   v => _form.Body   = v),
+        ("Energy", () => _form.Energy, v => _form.Energy = v),
+        ("Mood",   () => _form.Mood,   v => _form.Mood   = v)
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Preload Body/Energy/Mood from the most recent Check-In so the user adjusts
+        // relative to their last recorded state. Defaults stay 0/0/0 if none exists.
+        var recent = await CheckInService.GetMostRecentAsync();
+        if (recent is not null)
+        {
+            _form.Body   = recent.BodyScore;
+            _form.Energy = recent.EnergyScore;
+            _form.Mood   = recent.MoodScore;
+        }
+        // CheckedInAt always defaults to now regardless of history.
+    }
+
+    private string DateValue => _form.Date.ToString("yyyy-MM-dd");
+    private string TimeValue => $"{(int)_form.Time.TotalHours:D2}:{_form.Time.Minutes:D2}";
+    private bool   IsToday   => _form.Date.Date == DateTime.Today;
+
+    private void SetToday() => _form.Date = DateTime.Today;
+    private void SetNow()   => _form.Time = DateTime.Now.TimeOfDay;
+
+    private void OnDateChange(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var d))
+            _form.Date = d;
+    }
+
+    private void OnTimeChange(ChangeEventArgs e)
+    {
+        if (TimeSpan.TryParse(e.Value?.ToString(), out var t))
+            _form.Time = t;
+    }
+
+    private void Adjust(Action<int> set, int current, int delta)
+        => set(Math.Clamp(current + delta, -5, 5));
+
+    private async Task HandleSubmit()
+    {
+        _busy = true;
+
+        // Combine the local date + time, then convert to UTC for storage (same
+        // pattern as Add Entry). Scores are already clamped to [-5, 5] by the stepper.
+        var checkedInAt = DateTime.SpecifyKind(
+            _form.Date.Add(_form.Time), DateTimeKind.Local).ToUniversalTime();
+
+        var result = await CheckInService.CreateAsync(new CreateCheckInRequestDto
+        {
+            CheckedInAt   = checkedInAt,
+            BodyScore     = _form.Body,
+            EnergyScore   = _form.Energy,
+            MoodScore     = _form.Mood,
+            ActivityLogId = null   // standalone check-in
+        });
+
+        _busy = false;
+
+        if (result is null)
+        {
+            Toast.Show("Couldn't save your check-in. Please try again.", ToastType.Error);
+            return;
+        }
+
+        Toast.Show("Check-in saved.", ToastType.Success);
+
+        // Keep the entered scores (the user's current state is the natural starting
+        // point for the next check-in) but reset the timestamp to now.
+        _form.Date = DateTime.Today;
+        _form.Time = DateTime.Now.TimeOfDay;
+    }
+
+    private sealed class CheckInForm
+    {
+        public DateTime Date   { get; set; }
+        public TimeSpan Time   { get; set; }
+        public int      Body   { get; set; }
+        public int      Energy { get; set; }
+        public int      Mood   { get; set; }
+    }
+}

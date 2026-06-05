@@ -71,11 +71,13 @@ try
     // Repositories
     builder.Services.AddScoped<IActivityRepository, ActivityRepository>();
     builder.Services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
+    builder.Services.AddScoped<ICheckInRepository, CheckInRepository>();
 
     // Application services
     builder.Services.AddScoped<IActivityService, ActivityService>();
     builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
     builder.Services.AddScoped<IScoreService, ScoreService>();
+    builder.Services.AddScoped<ICheckInService, CheckInService>();
 
     // Infrastructure services
     builder.Services.AddScoped<IAuthService, AuthService>();

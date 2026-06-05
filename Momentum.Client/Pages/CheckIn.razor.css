@@ -1,0 +1,249 @@
+/* ═══════════════════════════════════════════════════════════
+   Check-In page (standalone)
+═══════════════════════════════════════════════════════════ */
+.checkin-page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 560px;
+}
+
+/* ── Page header ─────────────────────────────────────────── */
+.checkin-header {
+    margin-bottom: 4px;
+}
+
+.kicker {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--primary);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.checkin-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 6px;
+    line-height: 1.2;
+}
+
+.checkin-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin: 0;
+}
+
+.checkin-subtitle strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* ── Card base ───────────────────────────────────────────── */
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    padding: 20px;
+}
+
+/* ── Field groups ────────────────────────────────────────── */
+.field-group {
+    margin-bottom: 20px;
+}
+
+.field-label {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+/* Date + Time side-by-side */
+.field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.field-row .field-group {
+    margin-bottom: 0;
+}
+
+/* ── Shared input style ──────────────────────────────────── */
+.field-input {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color 0.15s ease;
+}
+
+.field-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.field-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.5);
+    cursor: pointer;
+}
+
+/* ── Shortcut chips ──────────────────────────────────────── */
+.shortcut-chips {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.chip {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.chip:hover {
+    background: var(--surface-2);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.chip.active {
+    background: var(--primary-glow);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* ── Score stepper (bounded −5…+5) ───────────────────────── */
+.score-stepper {
+    display: flex;
+    align-items: stretch;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.score-btn {
+    width: 56px;
+    min-height: 56px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.12s ease, color 0.12s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.score-btn:hover:not(:disabled) {
+    background: var(--surface-3);
+    color: var(--text);
+}
+
+.score-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.score-value {
+    flex: 1;
+    text-align: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    line-height: 56px;
+    border-left: 1px solid var(--border-soft);
+    border-right: 1px solid var(--border-soft);
+    transition: color 0.15s ease;
+}
+
+.score-value.pos { color: var(--primary); }
+.score-value.neg { color: var(--negative); }
+
+/* ── Action row ──────────────────────────────────────────── */
+.action-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 6px;
+}
+
+.btn-submit {
+    padding: 11px 26px;
+    background: var(--primary);
+    color: #071a07;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 0 16px rgba(118, 224, 74, 0.18), 0 2px 6px rgba(0, 0, 0, 0.28);
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.btn-submit:hover:not(:disabled) {
+    background: var(--primary-dim);
+    box-shadow: 0 0 22px rgba(118, 224, 74, 0.28), 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* ── Mobile adjustments ──────────────────────────────────── */
+@media (max-width: 540px) {
+    .checkin-page {
+        gap: 16px;
+    }
+
+    .field-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .field-row .field-group {
+        margin-bottom: 20px;
+    }
+
+    .checkin-title {
+        font-size: 1.3rem;
+    }
+}

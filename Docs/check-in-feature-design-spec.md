@@ -1,7 +1,7 @@
 # Check-In Feature — Design Specification
 
-**Status:** 📝 PLANNED — not implemented (design only)
-**Last Updated:** 2026-06-04
+**Status:** 🔨 IN PROGRESS — CHK-002 Phase 3 complete (standalone Check-In form); post-activity flow, history screen, View Log integration, reporting not yet implemented
+**Last Updated:** 2026-06-05
 
 ---
 
@@ -271,9 +271,104 @@ These depend on the input/outcome separation established in §2 (Activity Logs a
 
 ## 18. Implementation Status
 
-This document is **design/planning only.** No application code, schema, migration, DTO, API, or UI for Check-Ins has been implemented. Functional requirements and software specifications will be updated when the feature is implemented, not before.
+### CHK-002 Phase 1 — Entity + Migration (COMPLETE 2026-06-05)
+
+Migration: `20260605193819_CHK001_AddCheckIn`
+
+| File | Change |
+|---|---|
+| `Momentum.Domain/Entities/CheckIn.cs` | New entity — `Id`, `UserId`, `CheckedInAt`, `BodyScore`, `EnergyScore`, `MoodScore`, `ActivityLogId?`, `CreatedAt`, `ActivityLog?` nav |
+| `Momentum.Domain/Entities/ActivityLog.cs` | Added `ICollection<CheckIn> CheckIns` reverse navigation |
+| `Momentum.Infrastructure/Data/AppDbContext.cs` | `DbSet<CheckIn> CheckIns`; FK config (`ActivityLog → SetNull`); indexes on `UserId` and `CheckedInAt` |
+| `Momentum.Infrastructure/Migrations/20260605193819_CHK001_AddCheckIn.cs` | Creates `CheckIns` table with correct columns, FK, and three indexes |
+
+Schema produced:
+- `CheckIns` table: `Id` (PK, identity), `UserId` (nvarchar 450), `CheckedInAt` (datetime2), `BodyScore` (int), `EnergyScore` (int), `MoodScore` (int), `ActivityLogId` (int, nullable FK → `ActivityLogs.Id`, SetNull), `CreatedAt` (datetime2)
+- Indexes: `IX_CheckIns_UserId`, `IX_CheckIns_CheckedInAt`, `IX_CheckIns_ActivityLogId`
+- `Down()` drops the table cleanly
+
+**Not yet implemented (Phase 3):** client service, UI form, Check-Ins history screen, View Log "Details" toggle, persistent "Check In" button, navigation, reporting.
+
+### CHK-002 Phase 2 — API + DTOs + Repository/Service (COMPLETE 2026-06-05)
+
+Build: ✅ 0 errors · Tests: ✅ 50/50 (15 new)
+
+**DTOs added (`Momentum.Shared`):**
+
+| File | Purpose |
+|---|---|
+| `CheckInDto.cs` | Response DTO — all fields including `CreatedAt` (audit only) |
+| `CreateCheckInRequestDto.cs` | Create request — `CheckedInAt?` optional, scores with `[Range(-5,5)]`, `ActivityLogId?` optional |
+| `UpdateCheckInRequestDto.cs` | Update request — `CheckedInAt` required, scores with `[Range(-5,5)]`, `ActivityLogId?` optional |
+
+**Repository (`Momentum.Application/Interfaces` + `Momentum.Infrastructure/Repositories`):**
+
+| File | Purpose |
+|---|---|
+| `ICheckInRepository.cs` | `GetByIdAsync`, `GetByDateRangeAsync`, `AddAsync`, `SaveChangesAsync`, `DeleteAsync` |
+| `CheckInRepository.cs` | EF Core implementation; all queries scoped by `UserId` |
+
+**Service (`Momentum.Application/Interfaces` + `Momentum.Application/Services`):**
+
+| File | Purpose |
+|---|---|
+| `ICheckInService.cs` | CRUD interface; `ArgumentException` documented for invalid scores / bad ActivityLogId |
+| `CheckInService.cs` | Validates scores in `[-5, 5]`; validates ActivityLogId ownership via `IActivityLogRepository.GetByIdAsync(id, userId)`; maps entities ↔ DTOs; `CreatedAt` set server-side on create only |
+
+**API (`Momentum.API`):**
+
+| File | Purpose |
+|---|---|
+| `Controllers/CheckInsController.cs` | `GET /api/checkins`, `GET /api/checkins/{id}`, `POST /api/checkins`, `PUT /api/checkins/{id}`, `DELETE /api/checkins/{id}`; `[Authorize]`; UserId from JWT claims; `ArgumentException` → 400 |
+| `Program.cs` | `ICheckInRepository` + `ICheckInService` registered as Scoped |
+
+**Tests (`Momentum.Tests/CheckInServiceTests.cs`) — 15 tests:**
+- Create with valid scores succeeds
+- Create with valid ActivityLogId links successfully
+- Score out of range (6 parametrized cases) → `ArgumentException`
+- ActivityLogId belonging to another user → `ArgumentException`
+- ActivityLogId not found → `ArgumentException`
+- Date range query calls repo with correct UserId
+- Update belonging to current user succeeds
+- Update belonging to other user returns null (repo returns null; SaveChanges not called)
+- Delete belonging to current user returns true
+- Delete belonging to other user returns false
+
+### CHK-002 Phase 3 — Standalone Check-In Form (COMPLETE 2026-06-05)
+
+Build: ✅ 0 errors · Tests: ✅ 50/50 (unchanged — no new server tests; client UI is manual-QA per project convention)
+
+**Client service (`Momentum.Client/Services`):**
+
+| File | Purpose |
+|---|---|
+| `CheckInService.cs` | `CreateAsync` (POST `/api/checkins`, returns null on failure) and `GetMostRecentAsync` (wide-range GET, takes first by `CheckedInAt` desc). Tags `CheckedInAt`/`CreatedAt` as UTC after deserialization. Registered Scoped in `Program.cs`. |
+
+**Page (`Momentum.Client/Pages`):**
+
+| File | Purpose |
+|---|---|
+| `CheckIn.razor` | Route `/check-in`, `[Authorize]`. Date/Time fields (default now, Today/Now chips). Three bounded −5…+5 steppers (Body/Energy/Mood) sharing one DRY descriptor loop. Preloads scores from most recent check-in on init; 0/0/0 if none. Save posts a standalone check-in (`ActivityLogId = null`), shows `ToastService` success/error. |
+| `CheckIn.razor.css` | Scoped styles using design tokens; new `.score-stepper` bounded-stepper pattern; mobile breakpoint at ≤540px. |
+
+**Navigation (`Momentum.Client/Layout/MainLayout.razor`):**
+- Temporary **Check In** nav item added after View Log (documented as interim; persistent action button per §14 comes later).
+- `PageTitle` switch maps `/check-in` → "Check In".
+
+**Save behavior (decision):** After a successful save the user **stays on the page**, the entered scores are **retained** (the natural starting point for a follow-up check-in), and the **timestamp resets to now**. Chosen as the simplest behavior that also supports rapid repeat check-ins.
+
+**Score range enforcement:** Steppers clamp to `[-5, 5]` client-side and disable at bounds; DTO `[Range(-5,5)]` + server `CheckInService` validation remain the authoritative guards (Phase 2).
+
+**Not yet implemented (later phases):** post-activity flow (§7), Check-Ins history screen (§12), View Log "Details" integration (§10), Edit Log Entry check-in list (§11), persistent "Check In" action button (§14), reporting/correlation (§17).
+
+**Manual QA checklist (to run against the live app):**
+- Open `/check-in`; defaults load from most recent check-in, else 0/0/0.
+- Save a valid check-in → success toast; timestamp resets to now, scores retained.
+- Steppers cannot exceed −5…+5 (buttons disable at bounds).
+- No browser console errors.
+- Mobile layout (≤540px): date/time stack, steppers full-width and usable.
 
 ---
 
 *Check-In Feature Design Specification — created 2026-06-04*
-*Status: 📝 PLANNED — design only, not implemented*
+*Status: 🔨 IN PROGRESS — Phase 3 complete (standalone form); post-activity flow, history, View Log integration, reporting not started*

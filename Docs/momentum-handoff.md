@@ -6,8 +6,8 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** Cleanup cycle complete — KI-009 (native toast/MudBlazor removal), KI-015 (local-day chart fix), KI-016 (production fingerprint bug) all resolved  
-**Build Status:** ✅ All projects build clean (0 warnings, 0 errors); 35/35 tests pass  
+**Phase:** CHK-002 Phase 3 — standalone Check-In form (`/check-in`) complete; post-activity flow, history, View Log integration, reporting not started  
+**Build Status:** ✅ All projects build clean (0 errors); 50/50 tests pass  
 **Last Updated:** 2026-06-05
 
 ### v2 Migration Deployment Summary
@@ -66,6 +66,44 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 ---
 
 ## Completed Work
+
+### CHK-002 Phase 3 — Standalone Check-In Form UI (2026-06-05)
+
+- **Status:** ✅ Phase 3 complete. Standalone Check-In page live at `/check-in`. Post-activity flow, history screen, View Log integration, and reporting deferred to later phases.
+- **Build/tests:** ✅ 0 errors; 50/50 tests pass (no new server tests; client UI is manual-QA per project convention — no client test project exists).
+- **What shipped:**
+  - `Momentum.Client/Services/CheckInService.cs` — `CreateAsync` (POST, friendly null-on-failure) + `GetMostRecentAsync` (preload defaults); UTC tagging; registered Scoped in `Program.cs`.
+  - `Momentum.Client/Pages/CheckIn.razor` + `.css` — `/check-in` page: date/time (default now), three bounded −5…+5 steppers (Body/Energy/Mood), smart preload from most recent check-in (else 0/0/0), `ToastService` feedback, custom HTML/CSS with design tokens, mobile-friendly. No notes field. Saves standalone (`ActivityLogId = null`).
+  - `Momentum.Client/Layout/MainLayout.razor` — temporary "Check In" nav item after View Log; `PageTitle` maps `/check-in` → "Check In".
+- **Save behavior:** stays on page, retains entered scores, resets timestamp to now (documented in design spec §18).
+- **Navigation note:** the nav item is interim; the persistent "Check In" action button (design spec §14) replaces it in a later phase.
+
+### CHK-002 Phase 2 — Check-In API + DTOs + Repository/Service (2026-06-05)
+
+- **Status:** ✅ Phase 2 complete. API endpoints live; client service, UI, and navigation not yet started.
+- **Build/tests:** ✅ 0 errors; 50/50 tests pass (15 new CheckInService tests).
+
+**DTOs (`Momentum.Shared`):** `CheckInDto`, `CreateCheckInRequestDto`, `UpdateCheckInRequestDto` — all with `[Range(-5, 5)]` annotations on score fields.
+
+**Repository:** `ICheckInRepository` + `CheckInRepository` — all queries scoped by `UserId`; `GetByDateRangeAsync`, `GetByIdAsync`, `AddAsync`, `SaveChangesAsync`, `DeleteAsync`.
+
+**Service:** `ICheckInService` + `CheckInService` — score validation (`ArgumentException` for out-of-range); ActivityLogId ownership check (`ArgumentException` if log not found for current user); `CreatedAt` set server-side at create time; maps entities ↔ DTOs.
+
+**Controller:** `CheckInsController` — `GET /api/checkins`, `GET /api/checkins/{id}`, `POST /api/checkins`, `PUT /api/checkins/{id}`, `DELETE /api/checkins/{id}`; `[Authorize]`; UserId from JWT; `ArgumentException` → 400 Bad Request.
+
+**DI:** `ICheckInRepository` + `ICheckInService` registered as Scoped in `Program.cs`.
+
+### CHK-002 Phase 1 — CheckIn Entity + Migration (2026-06-05)
+
+- **Status:** ✅ Phase 1 complete. Migration generated and verified. API, UI, and navigation not yet started.
+- **Build/tests:** ✅ 0 errors; 35/35 tests pass.
+- **Migration:** `20260605193819_CHK001_AddCheckIn`
+- **What shipped:**
+  - `Momentum.Domain/Entities/CheckIn.cs` — new entity with `Id`, `UserId`, `CheckedInAt` (user-editable display timestamp), `BodyScore`/`EnergyScore`/`MoodScore` (int, −5…+5), `ActivityLogId?` (nullable FK), `CreatedAt` (internal audit), and `ActivityLog?` navigation.
+  - `Momentum.Domain/Entities/ActivityLog.cs` — `ICollection<CheckIn> CheckIns` reverse navigation added.
+  - `Momentum.Infrastructure/Data/AppDbContext.cs` — `DbSet<CheckIn>`, FK configured with `SetNull` on ActivityLog delete, indexes on `UserId` and `CheckedInAt`.
+  - `Momentum.Infrastructure/Migrations/20260605193819_CHK001_AddCheckIn.cs` — creates `CheckIns` table; `Down()` drops it cleanly.
+- **Not yet implemented:** DTOs, repository, API endpoints, client service, UI, navigation, reporting.
 
 ### KI-009 + KI-015 + KI-016 Cleanup Cycle — COMPLETE & DEPLOYED (2026-06-05)
 
@@ -356,7 +394,9 @@ Full detail: `Docs/momentum-known-issues.md`
 | Item | Priority | Notes |
 |---|---|---|
 | AUTH-001 refresh tokens (long-term) | Low | Near-term done. Long-term: `RefreshToken` entity/table, `/api/auth/refresh` endpoint, rotation, revocation — implement before PWA/mobile work. See `Docs/session-persistence-design-spec.md` §6. |
-| **Check-In feature implementation** | Medium | Design documented (`Docs/check-in-feature-design-spec.md`); not started. Needs `CheckIn` entity + migration, `CheckInDto`/request DTOs, repository/service (scoped by `UserId`), API controller, Check-In form, persistent "Check In" button, Check-Ins history screen, View Log "Notes"→"Details" toggle rename, Edit Log Entry associated-check-in list |
+| Check-In Phase 2 — API + DTOs | Medium | ✅ Complete (CHK-002 Phase 2, 2026-06-05). DTOs, repository, service, controller all implemented. 15 tests added. |
+| Check-In Phase 3 — standalone form | Medium | ✅ Complete (CHK-002 Phase 3, 2026-06-05). `/check-in` page, client service, temporary nav item. |
+| Check-In Phase 4 — flows + history | Medium | Not started. Post-activity Check-In flow, persistent "Check In" action button (replaces temp nav item), Check-Ins history screen, View Log "Details" toggle (rename from "Notes"), Edit Log Entry associated check-in list |
 | Check-In reminders (PWA / push) | Low | Deferred long-term. Azure Function timer job sends push directly without waking the API (see design spec §16) |
 | Body/Energy/Mood reporting & correlation | Low | Future — depends on Check-In data; activity-input → check-in-outcome analytics (see design spec §17) |
 | Password change in Settings | Low | Planned but not implemented |
@@ -365,4 +405,4 @@ Full detail: `Docs/momentum-known-issues.md`
 
 ---
 
-*Momentum Handoff — Updated 2026-06-05 (KI-009 + KI-015 + KI-016 cleanup cycle deployed to production — commit `ff833da`; production smoke test passed)*
+*Momentum Handoff — Updated 2026-06-05 (CHK-002 Phase 3 — standalone Check-In form at `/check-in`; 50/50 tests)*

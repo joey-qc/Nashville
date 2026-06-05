@@ -433,6 +433,24 @@ min-height: 80px;
 - Zero: `--text-muted`
 - Sub-label "PER ENTRY" is `0.52rem`, `opacity: 0.45`
 
+### Bounded Score Stepper (Check-In)
+
+A constrained variant of the Points Spinner used by the Check-In form for the Body / Energy / Mood metrics. Identical visual language, but the value is **clamped to a fixed range (−5…+5)** and the +/− buttons **disable at the bounds**.
+
+```html
+<div class="score-stepper">
+    <button class="score-btn" disabled>−</button>   <!-- disabled at -5 -->
+    <span class="score-value pos|neg|''">+3</span>
+    <button class="score-btn">+</button>
+</div>
+```
+
+- Layout mirrors `.pts-spinner` (56px buttons, centered value, dividers via `--border-soft`).
+- Value color: `.pos` → `var(--primary)`, `.neg` → `var(--negative)`, zero → `var(--text-muted)`.
+- `.score-btn:disabled` → `opacity: 0.3; cursor: not-allowed` — the only behavioral difference from the unbounded Points Spinner.
+- Clamping is enforced in code (`Math.Clamp(value, -5, 5)`); the disabled state is a visual reinforcement, not the sole guard.
+- Scoped to `CheckIn.razor.css` (not global) — follows the per-page CSS-isolation convention.
+
 ### Custom Checkbox (auth / terms)
 
 Native checkbox is visually hidden (`opacity: 0; width: 1px`). A sibling `.auth-check-box` is styled via the adjacent sibling CSS selector:
@@ -1174,5 +1192,5 @@ The View Log page (`ActivityDetail.razor`) renders saved notes as read-only form
 
 ---
 
-*Momentum Design System — v1.8*
-*KI-009 resolved: §17 Toast Notifications rewritten — MudBlazor ISnackbar replaced with native ToastService + ToastHost; visual spec, usage, and file table documented*
+*Momentum Design System — v1.9*
+*CHK-002 Phase 3: §7 Form Styling — added Bounded Score Stepper pattern (Check-In Body/Energy/Mood, clamped −5…+5)*

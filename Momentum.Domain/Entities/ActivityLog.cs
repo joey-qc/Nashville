@@ -12,4 +12,5 @@ public class ActivityLog
 
     public Activity Activity { get; set; } = null!;
     public ICollection<ActivityLogEntryDimension> LogEntryDimensions { get; set; } = [];
+    public ICollection<CheckIn> CheckIns { get; set; } = [];
 }

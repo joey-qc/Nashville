@@ -125,7 +125,23 @@ Represents a single logged occurrence of an activity.
 - PointsRecorded  : int (actual points at time of logging, may differ from default)
 - Notes           : string? (optional) — stored as sanitized HTML; blank/whitespace-only is normalized to NULL by ActivityLogService
 - CreatedAt       : DateTime
+- CheckIns        : ICollection<CheckIn> (navigation — zero or many check-ins linked to this log entry)
 ```
+
+#### CheckIn
+Represents a point-in-time state snapshot (outcomes/how the user feels). Separate from ActivityLog which captures behaviors/inputs. Added by migration `CHK001_AddCheckIn`.
+```
+- Id            : int (PK)
+- UserId        : string (FK to ApplicationUser)
+- CheckedInAt   : DateTime — user-editable effective timestamp; used for analytics, display, and sorting
+- BodyScore     : int (-5…+5, 0 = baseline)
+- EnergyScore   : int (-5…+5, 0 = baseline)
+- MoodScore     : int (-5…+5, 0 = baseline)
+- ActivityLogId : int? (nullable FK to ActivityLog — SetNull on delete; null = standalone check-in)
+- CreatedAt     : DateTime — internal audit timestamp; never used for analytics or display
+- ActivityLog   : ActivityLog? (optional navigation)
+```
+Indexes: `IX_CheckIns_UserId` (all queries scoped by user), `IX_CheckIns_CheckedInAt` (time-ordered display), `IX_CheckIns_ActivityLogId` (FK lookup).
 
 ### 5.3 DTOs (Momentum.Shared)
 All data transferred between client and server uses DTOs (Data Transfer Objects), not entity models directly. DTOs are defined in the Momentum.Shared project and referenced by both Client and Server projects.
@@ -144,6 +160,9 @@ Key DTOs include:
 - `UpdateActivityLogDto` — includes optional `List<int>? DimensionIds`; when provided the entry's snapshot is fully replaced; when null and the activity changed, snapshot is re-derived from the new activity; when null and activity unchanged, existing snapshot is preserved; `Notes` has `[MaxLength(10000)]`
 - `ActivityLogService.SanitizeNotes()` — `public static` helper; applied to Notes on every create and update; strips disallowed HTML tags/attributes via `HtmlSanitizer` (allowlist: p, br, strong, em, b, i, u, ul, ol, li — includes `b`/`i` because browser `execCommand` outputs these); uses `KeepChildNodes = true` so structural wrappers (e.g. the `<div>` `execCommand` puts around a list when text precedes it) are unwrapped while allowed children survive; script/style tags are still removed; normalizes blank content to null
 - `RichNotesEditor` — Blazor component (`Momentum.Client/Components/`) replacing the plain textarea on Add/Edit Log Entry; `contenteditable` + custom toolbar; JS interop via `wwwroot/js/richNotesEditor.js`; parent reads content via `GetContentAsync()` at submit time; `ShouldRender()` returns false after first render to prevent Blazor from overwriting user edits
+- `CheckInDto` — response DTO for a check-in record; includes all fields except internal fields are present but CreatedAt is audit-only
+- `CreateCheckInRequestDto` — `CheckedInAt?` (optional, defaults to server UTC now), `BodyScore`/`EnergyScore`/`MoodScore` (int, `[Range(-5, 5)]`), `ActivityLogId?` (optional)
+- `UpdateCheckInRequestDto` — `CheckedInAt` (required), scores with `[Range(-5, 5)]`, `ActivityLogId?`; pass null ActivityLogId to detach from a log entry
 
 ---
 
@@ -163,6 +182,7 @@ Key DTOs include:
 Key repositories:
 - `IActivityRepository` / `ActivityRepository`
 - `IActivityLogRepository` / `ActivityLogRepository`
+- `ICheckInRepository` / `CheckInRepository` (CHK-002 Phase 2)
 
 ### 6.3 Migrations
 - EF Core migrations are used to manage database schema changes.
@@ -222,6 +242,17 @@ Key repositories:
 | GET | /api/reports/weekly?weeks=52&categoryId= | Weekly totals for the past N weeks, optionally filtered by category ID |
 | GET | /api/reports/monthly?months=12&categoryId= | Monthly totals for the past N months, optionally filtered by category ID |
 | GET | /api/reports/balance?period=week\|month\|year | Category point totals for the Balance pie chart |
+
+#### Check-Ins (CHK-002 Phase 2)
+| Method | Route | Description |
+|---|---|---|
+| GET | /api/checkins | Get check-ins for the current user (supports `from`/`to` date range query params) |
+| GET | /api/checkins/{id} | Get a single check-in by ID |
+| POST | /api/checkins | Create a new check-in |
+| PUT | /api/checkins/{id} | Update an existing check-in |
+| DELETE | /api/checkins/{id} | Delete a check-in |
+
+Score fields (`BodyScore`, `EnergyScore`, `MoodScore`) must each be in `[-5, 5]`; the API returns `400` if out of range. If `ActivityLogId` is provided, the referenced log must belong to the current user; the API returns `400` otherwise. `UserId` is always derived from JWT claims — never trusted from the request body. `CreatedAt` is set server-side at creation and never exposed as editable.
 
 #### User Settings
 | Method | Route | Description |
@@ -334,4 +365,4 @@ The following are noted for future development and should be kept in mind when m
 ---
 
 *Momentum — Software Specifications Document*
-*Version 1.6 — §4.4: updated token management to reflect AUTH-001 — 7-day JWT lifetime, localStorage storage confirmed, stale-token proactive cleanup, refresh tokens documented as not-yet-implemented*
+*Version 1.8 — §5.3, §6.2, §7.2: CheckIn DTOs, repository, and API endpoints added (CHK-002 Phase 2)*
