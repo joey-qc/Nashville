@@ -7,7 +7,8 @@ public class ReportsService(HttpClient http)
 {
     public async Task<List<DailyScoreDto>> GetDailyAsync(int days = 30, int? categoryId = null)
     {
-        var url = $"api/reports/daily?days={days}";
+        var offset = (int)TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).TotalMinutes;
+        var url = $"api/reports/daily?days={days}&localOffsetMinutes={offset}";
         if (categoryId.HasValue) url += $"&categoryId={categoryId.Value}";
         var response = await http.GetAsync(url);
         if (!response.IsSuccessStatusCode) return [];

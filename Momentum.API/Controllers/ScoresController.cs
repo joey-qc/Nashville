@@ -31,11 +31,11 @@ public class ScoresController(IScoreService scoreService, ILogger<ScoresControll
     }
 
     [HttpGet("weekly-comparison")]
-    public async Task<IActionResult> GetWeeklyComparison()
+    public async Task<IActionResult> GetWeeklyComparison([FromQuery] int? localOffsetMinutes = null)
     {
         try
         {
-            var comparison = await scoreService.GetWeeklyComparisonAsync(UserId);
+            var comparison = await scoreService.GetWeeklyComparisonAsync(UserId, localOffsetMinutes);
             return Ok(comparison);
         }
         catch (Exception ex)

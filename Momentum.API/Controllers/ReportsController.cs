@@ -13,11 +13,14 @@ public class ReportsController(IScoreService scoreService, ILogger<ReportsContro
     private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
     [HttpGet("daily")]
-    public async Task<IActionResult> GetDaily([FromQuery] int days = 30, [FromQuery] int? categoryId = null)
+    public async Task<IActionResult> GetDaily(
+        [FromQuery] int days = 30,
+        [FromQuery] int? categoryId = null,
+        [FromQuery] int? localOffsetMinutes = null)
     {
         try
         {
-            var data = await scoreService.GetDailyTotalsAsync(UserId, days, categoryId);
+            var data = await scoreService.GetDailyTotalsAsync(UserId, days, categoryId, localOffsetMinutes);
             return Ok(data);
         }
         catch (Exception ex)

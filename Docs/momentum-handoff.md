@@ -6,9 +6,9 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** AUTH-001 Session Persistence complete — JWT lifetime extended to 7 days, stale-token cleanup, inert checkbox removed  
-**Build Status:** ✅ All projects build clean (0 warnings, 0 errors); 33/33 tests pass  
-**Last Updated:** 2026-06-04
+**Phase:** Cleanup cycle complete — KI-009 (native toast/MudBlazor removal), KI-015 (local-day chart fix), KI-016 (production fingerprint bug) all resolved  
+**Build Status:** ✅ All projects build clean (0 warnings, 0 errors); 35/35 tests pass  
+**Last Updated:** 2026-06-05
 
 ### v2 Migration Deployment Summary
 
@@ -66,6 +66,32 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 ---
 
 ## Completed Work
+
+### KI-009 + KI-015 + KI-016 Cleanup Cycle — COMPLETE (2026-06-05)
+
+- **Status:** ✅ Complete — all three issues resolved in a single cycle.
+- **Build/tests:** ✅ Clean build (0 warnings, 0 errors); 35/35 tests pass (2 new KI-015 regression tests added).
+- **Published index.html verified:** fingerprinted Blazor script (`blazor.webassembly.{hash}.js`), no `_content/MudBlazor/` output.
+
+**KI-009 — Native Toast System + MudBlazor Removal:**
+- `Momentum.Client/Services/ToastService.cs` — new Singleton; `Show(message, ToastType)` fires `Action<ToastMessage>`; 3 s (Success/Info) / 4.5 s (Error/Warning).
+- `Momentum.Client/Components/ToastHost.razor` + `.css` — `Task.Delay` auto-dismiss, per-type left accent border (green/red/amber/sky), slide-in animation, bottom-right desktop / bottom full-width mobile (≤540px).
+- `MainLayout.razor` — `<ToastHost />` inside `<Authorized>`.
+- `Program.cs` — `AddMudServices()` removed; `AddSingleton<ToastService>()` added.
+- `App.razor` — all four MudBlazor providers removed.
+- `_Imports.razor` — `@using MudBlazor` removed.
+- `index.html` — MudBlazor CSS/JS removed; `#[.{fingerprint}]` script placeholder preserved.
+- `Momentum.Client.csproj` — MudBlazor NuGet removed.
+- 4 pages (16 call sites) — `ISnackbar` / `Snackbar.Add(...)` replaced with `Toast` / `Toast.Show(...)`.
+
+**KI-015 — Local-Day Daily Chart Fix:**
+- `IScoreService` + `ScoreService` — `GetWeeklyComparisonAsync` and `GetDailyTotalsAsync` accept `int? localOffsetMinutes`; daily grouping uses `l.LoggedAt.AddMinutes(offset).Date`; UTC range query includes 1-day buffer.
+- `ScoresController` + `ReportsController` — `localOffsetMinutes` forwarded from `[FromQuery]`.
+- Client `ScoreService` + `ReportsService` — compute `TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).TotalMinutes` and pass to API.
+- `ScoreServiceTests` — 2 new regression tests for late-evening local-day bucketing.
+
+**KI-016 — Blazor Fingerprint Script (Production 404):**
+- Root cause identified: prior commit accidentally replaced `blazor.webassembly#[.{fingerprint}].js` with bare `blazor.webassembly.js`. Current implementation preserves the correct fingerprint placeholder. No code change needed — it was already correct in this cycle.
 
 ### AUTH-001 Session Persistence — COMPLETE (2026-06-04)
 
@@ -302,15 +328,13 @@ All pages converted from MudBlazor to custom HTML/CSS using design tokens from `
 
 | ID | Issue | Status |
 |---|---|---|
-| KI-009 | Replace MudBlazor Snackbar with native Momentum Toast system (`ToastHost` + `ToastService`) | Deferred |
+| KI-009 | Replace MudBlazor Snackbar with native Momentum Toast system | **RESOLVED 2026-06-05** |
 | KI-010 | `Blazor-ApexCharts` NuGet leftover in `.csproj` | **RESOLVED 2026-06-04** · commit `6b4c29f` |
 | KI-013 | Daily log uses wrong local day due to UTC/local timezone mismatch | **RESOLVED 2026-05-31** |
+| KI-015 | Trends daily chart buckets use UTC date instead of local date | **RESOLVED 2026-06-05** |
+| KI-016 | Production Blazor bootstrap 404 after MudBlazor removal attempt | **RESOLVED 2026-06-05** |
 
 Full detail: `Docs/momentum-known-issues.md`
-
-### Note on KI-013
-
-KI-013 is an **active data accuracy bug** confirmed in production. It is independent of the v2 Dimension Model migration (which is now complete). The v2 migration did not introduce or worsen this bug.
 
 ---
 
@@ -332,11 +356,10 @@ KI-013 is an **active data accuracy bug** confirmed in production. It is indepen
 | **Check-In feature implementation** | Medium | Design documented (`Docs/check-in-feature-design-spec.md`); not started. Needs `CheckIn` entity + migration, `CheckInDto`/request DTOs, repository/service (scoped by `UserId`), API controller, Check-In form, persistent "Check In" button, Check-Ins history screen, View Log "Notes"→"Details" toggle rename, Edit Log Entry associated-check-in list |
 | Check-In reminders (PWA / push) | Low | Deferred long-term. Azure Function timer job sends push directly without waking the API (see design spec §16) |
 | Body/Energy/Mood reporting & correlation | Low | Future — depends on Check-In data; activity-input → check-in-outcome analytics (see design spec §17) |
-| Custom toast component | Medium | Prerequisite for removing MudBlazor NuGet |
 | Password change in Settings | Low | Planned but not implemented |
 | Screen-reader chart descriptions | Low | SVG charts have `role="img"` + `aria-label` but no `<title>` child |
 | Social login (Google/Apple) | Deferred | UI stubs exist on Login page; backend not implemented |
 
 ---
 
-*Momentum Handoff — Updated 2026-06-04 (KI-010 resolved — Blazor-ApexCharts package fully removed; deployed to production commit `6b4c29f`)*
+*Momentum Handoff — Updated 2026-06-05 (KI-009 native toast + MudBlazor removal; KI-015 local-day chart fix; KI-016 fingerprint bug resolved)*

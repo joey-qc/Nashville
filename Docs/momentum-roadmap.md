@@ -55,7 +55,7 @@ Momentum is moving away from MudBlazor toward:
 - inline SVG graphics/charts
 - responsive mobile-first layouts
 
-All pages have been converted to custom HTML/CSS. The only remaining MudBlazor dependency is `ISnackbar` / `MudSnackbar` for toast notifications, retained intentionally until a native Momentum toast system is implemented (see KI-009).
+All pages have been converted to custom HTML/CSS. MudBlazor has been fully removed (KI-009, 2026-06-05) — `ToastService` + `ToastHost` are the native toast system. No MudBlazor references remain in the codebase.
 
 ---
 
@@ -472,41 +472,14 @@ Momentum currently uses the default Blazor favicon and no application logo. The 
 
 ---
 
-## Remaining MudBlazor / Legacy UI Work
+## MudBlazor / Legacy UI Work — COMPLETE ✅
 
-All pages are now fully converted to custom HTML/CSS (Home, Add Entry, View Log, Trends, Balance, Manage Activities, Settings, Login, Register). No MudBlazor page components remain.
+All pages are fully converted to custom HTML/CSS. MudBlazor has been fully removed (KI-009, 2026-06-05).
 
-Remaining MudBlazor cleanup items:
-
-### Shorten Toast Notification Duration
-
-**Status:** Planned · **Priority:** Low
-
-Current toast notifications stay visible slightly too long, making the UI feel less responsive and more visually cluttered than it should.
-
-**Goal:** Reduce the default popup duration so toasts feel lighter and less intrusive, while remaining long enough to be readable on both mobile and desktop.
-
-**Suggested defaults:**
-- Success / info: ~2 seconds
-- Warning / error: ~3–4 seconds
-
-**Scope:**
-- Locate the current `ISnackbar` / `MudSnackbar` configuration (likely in `Program.cs` via `AddMudServices()` options or at each `Snackbar.Add(...)` call site)
-- Apply shorter durations centrally where possible rather than at each call site
-- Verify the chosen durations on mobile (smaller read window, users glance at toasts)
-- If the native `ToastService` (KI-009) is implemented first, bake these durations into its defaults instead
-
-**Acceptance criteria:**
-- Toasts dismiss faster than they do today
-- Success toasts dismiss faster than error/warning toasts
-- Duration is set in one place, not per call site
-- No other UI changes are introduced
-
----
-
-- **Native Momentum toast system** — implement `ToastHost` + `ToastService` to replace `ISnackbar`; enables full MudBlazor removal (see KI-009)
-- **Remove `ISnackbar` calls** — replace all `ISnackbar.Add(...)` usages once custom toast is live
-- **Remove MudBlazor NuGet package** — after all `ISnackbar` references are eliminated
+- ✅ All pages converted to custom HTML/CSS
+- ✅ Native `ToastService` + `ToastHost` replaces `ISnackbar` / `MudSnackbar` — 3 s Success/Info, 4.5 s Error/Warning, set in one place
+- ✅ MudBlazor NuGet removed
+- ✅ Blazor-ApexCharts NuGet removed (KI-010, 2026-06-04)
 ## Planned View Log Enhancements
 
 Status: Planned

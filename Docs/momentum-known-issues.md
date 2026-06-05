@@ -227,10 +227,10 @@ Removed the `var cats = await CategoryService.GetAllAsync();` line. No functiona
 | Field | Value |
 |---|---|
 | **ID** | KI-009 |
-| **Status** | DEFERRED |
+| **Status** | RESOLVED |
 | **Area** | UI Infrastructure — `Momentum.Client/Components/`, `MainLayout.razor`, `Program.cs`, MudBlazor NuGet |
 | **Severity** | Low — fully functional today; MudBlazor snackbar works correctly; this is a clean-up and design-consistency initiative |
-| **Target** | Prioritize when MudBlazor NuGet is being removed (see KI-010) |
+| **Resolved** | 2026-06-05 |
 
 ### Description
 
@@ -288,17 +288,21 @@ public enum ToastType { Success, Error, Warning, Info }
 - Exit animation: fade out with slight upward translate — 180ms ease-in.
 - Mobile: toasts appear at top-center (full-width minus 24px margin) instead of bottom-right.
 
-### Migration Steps
+### Resolution (2026-06-05)
 
-1. Implement `ToastService` in `Momentum.Client/Services/` and register as `Singleton` in `Program.cs`.
-2. Build `ToastHost.razor` + `ToastHost.razor.css` in `Momentum.Client/Components/`.
-3. Add `<ToastHost />` to `MainLayout.razor`; remove `<MudSnackbarProvider />`.
-4. Replace all `ISnackbar.Add(...)` call sites with `ToastService.Show(...)`.
-5. Remove `[Inject] ISnackbar Snackbar` from all pages.
-6. Remove `builder.Services.AddMudServices()` from `Program.cs`.
-7. Remove `<PackageReference Include="MudBlazor" .../>` from `Momentum.Client.csproj`.
-8. Update `CLAUDE.md §3.1` and `§3.2` to remove the `ISnackbar` exception note.
-9. Update this issue to RESOLVED; update KI-010 if ApexCharts removal is also complete.
+| File | Change |
+|---|---|
+| `Momentum.Client/Services/ToastService.cs` | New singleton — `Show(message, ToastType)` fires `Action<ToastMessage>`; 3 s (Success/Info) / 4.5 s (Error/Warning) |
+| `Momentum.Client/Components/ToastHost.razor` + `.css` | New component — `Task.Delay` auto-dismiss, per-type left accent border, slide-in animation, bottom-right desktop / bottom full-width mobile (≤540px) |
+| `Momentum.Client/Layout/MainLayout.razor` | `<ToastHost />` added inside `<Authorized>` |
+| `Momentum.Client/Program.cs` | `AddMudServices()` removed; `AddSingleton<ToastService>()` added |
+| `Momentum.Client/App.razor` | All four MudBlazor providers removed |
+| `Momentum.Client/_Imports.razor` | `@using MudBlazor` removed |
+| `Momentum.Client/wwwroot/index.html` | MudBlazor CSS link and JS script removed; fingerprint script preserved |
+| `Momentum.Client/Momentum.Client.csproj` | MudBlazor NuGet package removed |
+| `ActivityDetail.razor`, `LogActivity.razor`, `ManageActivities.razor`, `Settings.razor` | All 16 `ISnackbar` injections and `Snackbar.Add(...)` calls replaced with `Toast.Show(...)` |
+
+Published `index.html` verified: fingerprinted script (`blazor.webassembly.{hash}.js`), no `_content/MudBlazor/` in output.
 
 ---
 
@@ -558,7 +562,8 @@ Same diff-based pattern applied to the activity-change fallback path.
 | Field | Value |
 |---|---|
 | **ID** | KI-015 |
-| **Status** | OPEN · DEFERRED |
+| **Status** | RESOLVED |
+| **Resolved** | 2026-06-05 |
 | **Area** | `Momentum.Application/Services/ScoreService.cs` — `GetWeeklyComparisonAsync`, `GetTotalsAsync` |
 | **Severity** | Low–Medium — daily chart bucket labeling/grouping can be off by one day for entries logged near local midnight; primary View Log and Score Summary symptoms from KI-013 are not affected |
 | **Discovered** | During KI-013 resolution (2026-05-31) |
@@ -620,7 +625,70 @@ Option 1 is the most pragmatic starting point. DST transitions would cause up to
 - Existing KI-013 fixes (View Log, Score Summary, Balance) remain intact.
 - Regression test: entry at 23:00 local time is grouped into the correct local day bucket, not the following UTC day bucket.
 
+### Resolution (2026-06-05)
+
+**Approach used:** Option 1 (client supplies `localOffsetMinutes`). DST transitions may still cause up to one hour of misalignment on two dates per year; acceptable at this scale.
+
+| File | Change |
+|---|---|
+| `Momentum.Application/Interfaces/IScoreService.cs` | `GetWeeklyComparisonAsync` and `GetDailyTotalsAsync` accept `int? localOffsetMinutes = null` |
+| `Momentum.Application/Services/ScoreService.cs` | `GetWeeklyComparisonAsync`: derives local week boundaries from offset; groups by `l.LoggedAt.AddMinutes(offset).Date`; fetches UTC range with 1-day buffer. `GetDailyTotalsAsync`: derives UTC `to`/`from` from local today via offset. `GetTotalsAsync` daily branch: groups by `l.LoggedAt.AddMinutes(offset).Date` |
+| `Momentum.API/Controllers/ScoresController.cs` | `GetWeeklyComparison` accepts `[FromQuery] int? localOffsetMinutes` |
+| `Momentum.API/Controllers/ReportsController.cs` | `GetDaily` accepts `[FromQuery] int? localOffsetMinutes` |
+| `Momentum.Client/Services/ScoreService.cs` | `GetWeeklyComparisonAsync` computes `TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).TotalMinutes` and passes as query param |
+| `Momentum.Client/Services/ReportsService.cs` | `GetDailyAsync` computes offset and passes as query param |
+| `Momentum.Tests/ScoreServiceTests.cs` | 2 new regression tests: `GetWeeklyComparisonAsync_WithOffset_BucketsLateEveningEntryUnderLocalSunday` and `GetDailyTotalsAsync_WithOffset_BucketsLateEveningEntryUnderLocalDay` |
+
+KI-013 fixes (View Log, Score Summary, Balance) remain intact and unaffected.
+
+---
+
+## KI-016 — Production Blazor bootstrap 404 after MudBlazor removal attempt
+
+| Field | Value |
+|---|---|
+| **ID** | KI-016 |
+| **Status** | RESOLVED |
+| **Area** | `Momentum.Client/wwwroot/index.html` |
+| **Severity** | Critical — production app fails to load entirely |
+| **Discovered** | 2026-06-04 after deploying commit `fa4a505` |
+| **Resolved** | 2026-06-05 |
+
+### Symptom
+
+After the KI-009 MudBlazor removal commit (`fa4a505`), production returned a 404 for `/_framework/blazor.webassembly.js` and the app failed to load. The error was immediate and reproducible on every reload. Revert commit `5dfb7ba` restored production.
+
+### Root Cause
+
+`index.html` in commit `fa4a505` accidentally replaced the Blazor fingerprint placeholder script tag:
+
+```html
+<!-- correct — publish pipeline replaces #[.{fingerprint}] with the hash -->
+<script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+```
+
+with two incorrect non-fingerprinted tags:
+
+```html
+<script src="_framework/blazor.webassembly.js" autostart="false"></script>
+<script src="_framework/blazor.webassembly.js"></script>
+```
+
+In production, Blazor publish outputs `blazor.webassembly.{hash}.js` (not the bare filename). The `#[.{fingerprint}]` placeholder is what instructs the publish pipeline to substitute the real fingerprinted name. Without it, the browser requests `blazor.webassembly.js` which does not exist in the publish output, causing the 404. The duplicate tag was also wrong independently.
+
+This change was unrelated to MudBlazor removal. The rest of KI-009 (ToastService, ToastHost, call-site replacements, package removal) was correct. Only `index.html` was broken.
+
+### Resolution
+
+The fingerprint placeholder is intact in the current implementation. The `index.html` Blazor script tag reads:
+
+```html
+<script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+```
+
+Verified by `dotnet publish` output: published `index.html` contains `blazor.webassembly.{hash}.js` with no MudBlazor references and no `_content/MudBlazor/` directory.
+
 ---
 
 *Momentum — Known Issues Log*  
-*Last updated: 2026-06-04 (KI-010 resolved — Blazor-ApexCharts package, service registration, namespace import, and script tag removed)*
+*Last updated: 2026-06-05 (KI-009 resolved — native ToastService + ToastHost, MudBlazor removed; KI-015 resolved — local-day chart bucketing; KI-016 resolved — Blazor fingerprint script preserved)*

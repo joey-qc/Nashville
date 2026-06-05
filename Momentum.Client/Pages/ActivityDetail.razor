@@ -3,7 +3,7 @@
 @inject ActivityLogService LogService
 @inject CategoryService CategoryService
 @inject NavigationManager Navigation
-@inject ISnackbar Snackbar
+@inject ToastService Toast
 
 <PageTitle>View Log</PageTitle>
 
@@ -266,12 +266,12 @@
         var success = await LogService.DeleteAsync(id);
         if (success)
         {
-            Snackbar.Add("Log entry deleted.", Severity.Success);
+            Toast.Show("Log entry deleted.", ToastType.Success);
             await LoadLogs();
         }
         else
         {
-            Snackbar.Add("Failed to delete entry.", Severity.Error);
+            Toast.Show("Failed to delete entry.", ToastType.Error);
         }
     }
 

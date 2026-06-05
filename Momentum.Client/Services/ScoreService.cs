@@ -26,7 +26,8 @@ public class ScoreService(HttpClient http)
 
     public async Task<WeeklyComparisonDto?> GetWeeklyComparisonAsync()
     {
-        var response = await http.GetAsync("api/scores/weekly-comparison");
+        var offset = (int)TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).TotalMinutes;
+        var response = await http.GetAsync($"api/scores/weekly-comparison?localOffsetMinutes={offset}");
         if (!response.IsSuccessStatusCode) return null;
         return await response.Content.ReadFromJsonAsync<WeeklyComparisonDto>();
     }

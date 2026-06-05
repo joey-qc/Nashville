@@ -27,13 +27,21 @@ public class ScoreService(IActivityLogRepository logRepo) : IScoreService
         };
     }
 
-    public async Task<WeeklyComparisonDto> GetWeeklyComparisonAsync(string userId)
+    public async Task<WeeklyComparisonDto> GetWeeklyComparisonAsync(string userId, int? localOffsetMinutes = null)
     {
-        var today = DateTime.UtcNow.Date;
+        var offset = localOffsetMinutes ?? 0;
+        // Derive local-day boundaries using the client's UTC offset so the day buckets
+        // align with the user's calendar day rather than UTC midnight.
+        var localNow      = DateTime.UtcNow.AddMinutes(offset);
+        var today         = localNow.Date;
         var thisWeekStart = today.AddDays(-(int)today.DayOfWeek);
         var lastWeekStart = thisWeekStart.AddDays(-7);
 
-        var twoWeeksLogs = await logRepo.GetByDateRangeAsync(userId, lastWeekStart, thisWeekStart.AddDays(7));
+        // Convert local week boundaries back to UTC for the repository range query.
+        // A 1-day buffer on each side ensures no local day is clipped at the boundary.
+        var utcFrom = lastWeekStart.AddMinutes(-offset).AddDays(-1);
+        var utcTo   = thisWeekStart.AddDays(7).AddMinutes(-offset).AddDays(1);
+        var twoWeeksLogs = await logRepo.GetByDateRangeAsync(userId, utcFrom, utcTo);
         var list = twoWeeksLogs.ToList();
 
         var days = new[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
@@ -44,20 +52,23 @@ public class ScoreService(IActivityLogRepository logRepo) : IScoreService
             {
                 DayLabel    = label,
                 CurrentWeek = list
-                    .Where(l => l.LoggedAt.Date == thisWeekStart.AddDays(i))
+                    .Where(l => l.LoggedAt.AddMinutes(offset).Date == thisWeekStart.AddDays(i))
                     .Sum(l => l.PointsRecorded),
                 LastWeek    = list
-                    .Where(l => l.LoggedAt.Date == lastWeekStart.AddDays(i))
+                    .Where(l => l.LoggedAt.AddMinutes(offset).Date == lastWeekStart.AddDays(i))
                     .Sum(l => l.PointsRecorded)
             }).ToList()
         };
     }
 
-    public async Task<IEnumerable<DailyScoreDto>> GetDailyTotalsAsync(string userId, int days, int? categoryId)
+    public async Task<IEnumerable<DailyScoreDto>> GetDailyTotalsAsync(string userId, int days, int? categoryId, int? localOffsetMinutes = null)
     {
-        var to   = DateTime.UtcNow.Date.AddDays(1);
+        var offset = localOffsetMinutes ?? 0;
+        // Convert the local end-of-today to UTC so the range captures the user's current day.
+        var localToday = DateTime.UtcNow.AddMinutes(offset).Date;
+        var to   = localToday.AddDays(1).AddMinutes(-offset);
         var from = to.AddDays(-days);
-        return await GetTotalsAsync(userId, from, to, "day", categoryId);
+        return await GetTotalsAsync(userId, from, to, "day", categoryId, localOffsetMinutes);
     }
 
     public async Task<IEnumerable<DailyScoreDto>> GetWeeklyTotalsAsync(string userId, int weeks, int? categoryId)
@@ -75,8 +86,9 @@ public class ScoreService(IActivityLogRepository logRepo) : IScoreService
     }
 
     private async Task<IEnumerable<DailyScoreDto>> GetTotalsAsync(
-        string userId, DateTime from, DateTime to, string groupBy, int? categoryId)
+        string userId, DateTime from, DateTime to, string groupBy, int? categoryId, int? localOffsetMinutes = null)
     {
+        var offset = localOffsetMinutes ?? 0;
         var logs = await logRepo.GetByDateRangeAsync(userId, from, to);
 
         var filtered = categoryId.HasValue
@@ -103,8 +115,10 @@ public class ScoreService(IActivityLogRepository logRepo) : IScoreService
                     Total      = g.Sum(l => l.PointsRecorded),
                     ByCategory = BuildByCategory(g, categoryId)
                 }),
+            // Daily grouping: use client's local day rather than UTC date so entries
+            // logged in the late evening appear under the correct local calendar day.
             _ => filtered
-                .GroupBy(l => l.LoggedAt.Date)
+                .GroupBy(l => l.LoggedAt.AddMinutes(offset).Date)
                 .OrderBy(g => g.Key)
                 .Select(g => new DailyScoreDto
                 {

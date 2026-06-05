@@ -97,4 +97,71 @@ public class ScoreServiceTests
         // Both entries are within May — MonthTotal = 15
         Assert.Equal(15, result.MonthTotal);
     }
+
+    // KI-015 regression: weekly comparison chart should group by local day, not UTC day.
+    [Fact]
+    public async Task GetWeeklyComparisonAsync_WithOffset_BucketsLateEveningEntryUnderLocalSunday()
+    {
+        // Entry at Sunday 23:00 EDT (UTC-4) = Monday 03:00 UTC.
+        // UTC grouping would place it in Monday; local grouping must place it in Sunday.
+        const int offset = -240; // EDT (UTC-4)
+        var localNow        = DateTime.UtcNow.AddMinutes(offset);
+        var localSunday     = localNow.Date.AddDays(-(int)localNow.DayOfWeek);
+        // Convert Sunday 23:00 local to UTC: local + abs(offset) minutes
+        var sunday23hUtc    = localSunday.AddHours(23).AddMinutes(-offset);
+
+        _logRepo.GetByDateRangeAsync(UserId, Arg.Any<DateTime>(), Arg.Any<DateTime>())
+            .Returns([
+                new ActivityLog
+                {
+                    UserId         = UserId,
+                    LoggedAt       = sunday23hUtc, // Monday 03:00 UTC, Sunday 23:00 local
+                    PointsRecorded = 10,
+                    Activity       = new Activity()
+                }
+            ]);
+
+        var result = await _sut.GetWeeklyComparisonAsync(UserId, localOffsetMinutes: offset);
+
+        // Should appear in Sunday's bucket (local day), not Monday's (UTC day)
+        Assert.Equal(10, result.Days.First(d => d.DayLabel == "Sun").CurrentWeek);
+        Assert.Equal(0,  result.Days.First(d => d.DayLabel == "Mon").CurrentWeek);
+    }
+
+    // KI-015 regression: daily Trends chart should group by local day, not UTC day.
+    [Fact]
+    public async Task GetDailyTotalsAsync_WithOffset_BucketsLateEveningEntryUnderLocalDay()
+    {
+        // Entry at yesterday 23:00 local EDT = today 03:00 UTC.
+        // UTC grouping would place it in today; local grouping must place it under yesterday.
+        const int offset   = -240; // EDT (UTC-4)
+        var localNow       = DateTime.UtcNow.AddMinutes(offset);
+        var localYesterday = localNow.Date.AddDays(-1);
+        // Convert yesterday 23:00 local to UTC
+        var yesterday23hUtc = localYesterday.AddHours(23).AddMinutes(-offset);
+
+        _logRepo.GetByDateRangeAsync(UserId, Arg.Any<DateTime>(), Arg.Any<DateTime>())
+            .Returns([
+                new ActivityLog
+                {
+                    UserId         = UserId,
+                    LoggedAt       = yesterday23hUtc, // today 03:00 UTC, yesterday 23:00 local
+                    PointsRecorded = 10,
+                    Activity       = new Activity()
+                }
+            ]);
+
+        var result = (await _sut.GetDailyTotalsAsync(UserId, 7, null, localOffsetMinutes: offset)).ToList();
+
+        var expectedDate = DateOnly.FromDateTime(localYesterday);
+        var yesterdayBucket = result.FirstOrDefault(r => r.Date == expectedDate);
+        Assert.NotNull(yesterdayBucket);
+        Assert.Equal(10, yesterdayBucket.Total);
+
+        // Must NOT appear in today's bucket
+        var todayDate   = DateOnly.FromDateTime(localNow.Date);
+        var todayBucket = result.FirstOrDefault(r => r.Date == todayDate);
+        Assert.True(todayBucket is null || todayBucket.Total == 0,
+            "Entry logged at 23:00 local should not appear in today's bucket.");
+    }
 }
