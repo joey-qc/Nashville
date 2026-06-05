@@ -243,52 +243,9 @@ This issue tracks the full initiative: designing and building the native toast s
 - The MudBlazor NuGet package adds ~300 kB to the WASM payload; removal meaningfully improves cold-start time.
 - A native `ToastService` can be better typed, easier to test, and can be extended (e.g., persistent toasts, action buttons) without MudBlazor constraints.
 
-### Current State
+### Resolution (2026-06-05) — commit `ff833da`
 
-`ISnackbar` is injected in the following contexts (not exhaustive — all pages with form submission or destructive actions):
-- `LogActivity.razor` — success on log submission
-- `ActivityDetail.razor` — success on edit / delete log entry
-- `Activities.razor` — success/error/conflict on activity CRUD
-- `Settings.razor` — success/error on profile save
-
-`AddMudServices()` is registered in `Program.cs`. `MudSnackbarProvider` is rendered in `MainLayout.razor`.
-
-### Architectural Design (target state)
-
-#### `ToastService` (singleton)
-```csharp
-// Momentum.Client/Services/ToastService.cs
-public class ToastService
-{
-    public event Action<ToastMessage>? OnShow;
-    public void Show(string message, ToastType type = ToastType.Success, int durationMs = 4000)
-        => OnShow?.Invoke(new ToastMessage(message, type, durationMs));
-}
-
-public record ToastMessage(string Message, ToastType Type, int DurationMs);
-public enum ToastType { Success, Error, Warning, Info }
-```
-
-#### `ToastHost` component
-- Registered in `MainLayout.razor` (outside the main content area, inside the auth shell).
-- Subscribes to `ToastService.OnShow` via `StateHasChanged`.
-- Renders a fixed-position overlay (`bottom-right`, `z-index` above sidebar).
-- Manages a queue of active toasts; each auto-dismisses after `DurationMs`.
-- Supports swipe-to-dismiss on mobile (touch events).
-- Stacks gracefully: newest toast appears at bottom, pushes older ones up.
-
-#### Visual design
-- Uses `var(--surface-2)` card background + `1px solid var(--border)` border.
-- Left accent border (4px) matches toast type:
-  - `Success` → `var(--primary)` (green)
-  - `Error` → `var(--negative)` (red)
-  - `Warning` → `var(--cat-social)` (amber)
-  - `Info` → `var(--cat-mental)` (sky blue)
-- Entry animation: slide in from right (`translateX`) with `opacity` fade — 200ms ease-out.
-- Exit animation: fade out with slight upward translate — 180ms ease-in.
-- Mobile: toasts appear at top-center (full-width minus 24px margin) instead of bottom-right.
-
-### Resolution (2026-06-05)
+**Production smoke test passed:** Login, Log Activity (native toast visible), Trends, View Log — all working. No Blazor error banner. No startup 404.
 
 | File | Change |
 |---|---|
@@ -298,7 +255,7 @@ public enum ToastType { Success, Error, Warning, Info }
 | `Momentum.Client/Program.cs` | `AddMudServices()` removed; `AddSingleton<ToastService>()` added |
 | `Momentum.Client/App.razor` | All four MudBlazor providers removed |
 | `Momentum.Client/_Imports.razor` | `@using MudBlazor` removed |
-| `Momentum.Client/wwwroot/index.html` | MudBlazor CSS link and JS script removed; fingerprint script preserved |
+| `Momentum.Client/wwwroot/index.html` | MudBlazor CSS link and JS script removed; fingerprint script preserved; `css/app.css` link added |
 | `Momentum.Client/Momentum.Client.csproj` | MudBlazor NuGet package removed |
 | `ActivityDetail.razor`, `LogActivity.razor`, `ManageActivities.razor`, `Settings.razor` | All 16 `ISnackbar` injections and `Snackbar.Add(...)` calls replaced with `Toast.Show(...)` |
 
@@ -625,7 +582,9 @@ Option 1 is the most pragmatic starting point. DST transitions would cause up to
 - Existing KI-013 fixes (View Log, Score Summary, Balance) remain intact.
 - Regression test: entry at 23:00 local time is grouped into the correct local day bucket, not the following UTC day bucket.
 
-### Resolution (2026-06-05)
+### Resolution (2026-06-05) — commit `ff833da`
+
+**Production smoke test passed:** Trends daily chart and Home weekly comparison chart verified bucketing entries under correct local calendar day.
 
 **Approach used:** Option 1 (client supplies `localOffsetMinutes`). DST transitions may still cause up to one hour of misalignment on two dates per year; acceptable at this scale.
 
@@ -678,17 +637,21 @@ In production, Blazor publish outputs `blazor.webassembly.{hash}.js` (not the ba
 
 This change was unrelated to MudBlazor removal. The rest of KI-009 (ToastService, ToastHost, call-site replacements, package removal) was correct. Only `index.html` was broken.
 
-### Resolution
+### Resolution (2026-06-05) — commit `ff833da`
 
-The fingerprint placeholder is intact in the current implementation. The `index.html` Blazor script tag reads:
+Two fixes applied:
 
-```html
-<script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
-```
+1. **Fingerprint placeholder preserved.** The `index.html` Blazor script tag is:
+   ```html
+   <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+   ```
+   Verified by `dotnet publish`: published `index.html` contains `blazor.webassembly.{hash}.js`, no `_content/MudBlazor/` directory.
 
-Verified by `dotnet publish` output: published `index.html` contains `blazor.webassembly.{hash}.js` with no MudBlazor references and no `_content/MudBlazor/` directory.
+2. **`css/app.css` restored.** The `app.css` link was missing in the previous broken commit, which caused the `#blazor-error-ui` element to be visible as a persistent bottom strip even when no error had occurred. `app.css` includes the rule that hides this element by default. Restored in `index.html`.
+
+**Production smoke test passed:** App loads cleanly. No startup 404. No persistent bottom error banner. Login, Log Activity, Trends, and View Log all confirmed working.
 
 ---
 
 *Momentum — Known Issues Log*  
-*Last updated: 2026-06-05 (KI-009 resolved — native ToastService + ToastHost, MudBlazor removed; KI-015 resolved — local-day chart bucketing; KI-016 resolved — Blazor fingerprint script preserved)*
+*Last updated: 2026-06-05 (KI-009, KI-015, KI-016 resolved — commit `ff833da`, deployed to production, smoke test passed)*

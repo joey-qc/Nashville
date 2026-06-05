@@ -67,11 +67,13 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 
 ## Completed Work
 
-### KI-009 + KI-015 + KI-016 Cleanup Cycle — COMPLETE (2026-06-05)
+### KI-009 + KI-015 + KI-016 Cleanup Cycle — COMPLETE & DEPLOYED (2026-06-05)
 
-- **Status:** ✅ Complete — all three issues resolved in a single cycle.
+- **Status:** ✅ Complete — all three issues resolved, merged to `main`, deployed to production.
+- **Commit:** `ff833da` ("Implement native toasts and remove MudBlazor")
 - **Build/tests:** ✅ Clean build (0 warnings, 0 errors); 35/35 tests pass (2 new KI-015 regression tests added).
 - **Published index.html verified:** fingerprinted Blazor script (`blazor.webassembly.{hash}.js`), no `_content/MudBlazor/` output.
+- **Production smoke test:** ✅ Login, Log Activity (native toast appears), Trends, View Log — all pass. No Blazor error banner. No startup 404.
 
 **KI-009 — Native Toast System + MudBlazor Removal:**
 - `Momentum.Client/Services/ToastService.cs` — new Singleton; `Show(message, ToastType)` fires `Action<ToastMessage>`; 3 s (Success/Info) / 4.5 s (Error/Warning).
@@ -80,7 +82,7 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 - `Program.cs` — `AddMudServices()` removed; `AddSingleton<ToastService>()` added.
 - `App.razor` — all four MudBlazor providers removed.
 - `_Imports.razor` — `@using MudBlazor` removed.
-- `index.html` — MudBlazor CSS/JS removed; `#[.{fingerprint}]` script placeholder preserved.
+- `index.html` — MudBlazor CSS/JS removed; `#[.{fingerprint}]` script placeholder preserved; `css/app.css` link added (suppresses Blazor default error banner in non-error conditions).
 - `Momentum.Client.csproj` — MudBlazor NuGet removed.
 - 4 pages (16 call sites) — `ISnackbar` / `Snackbar.Add(...)` replaced with `Toast` / `Toast.Show(...)`.
 
@@ -91,7 +93,8 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 - `ScoreServiceTests` — 2 new regression tests for late-evening local-day bucketing.
 
 **KI-016 — Blazor Fingerprint Script (Production 404):**
-- Root cause identified: prior commit accidentally replaced `blazor.webassembly#[.{fingerprint}].js` with bare `blazor.webassembly.js`. Current implementation preserves the correct fingerprint placeholder. No code change needed — it was already correct in this cycle.
+- Root cause identified: prior commit accidentally replaced `blazor.webassembly#[.{fingerprint}].js` with bare `blazor.webassembly.js`. Current implementation preserves the correct fingerprint placeholder.
+- `css/app.css` restored so the `#blazor-error-ui` element is hidden by default (the Blazor error banner was visible as a persistent bottom strip in production).
 
 ### AUTH-001 Session Persistence — COMPLETE (2026-06-04)
 
@@ -328,11 +331,11 @@ All pages converted from MudBlazor to custom HTML/CSS using design tokens from `
 
 | ID | Issue | Status |
 |---|---|---|
-| KI-009 | Replace MudBlazor Snackbar with native Momentum Toast system | **RESOLVED 2026-06-05** |
+| KI-009 | Replace MudBlazor Snackbar with native Momentum Toast system | **RESOLVED 2026-06-05** · commit `ff833da` |
 | KI-010 | `Blazor-ApexCharts` NuGet leftover in `.csproj` | **RESOLVED 2026-06-04** · commit `6b4c29f` |
 | KI-013 | Daily log uses wrong local day due to UTC/local timezone mismatch | **RESOLVED 2026-05-31** |
-| KI-015 | Trends daily chart buckets use UTC date instead of local date | **RESOLVED 2026-06-05** |
-| KI-016 | Production Blazor bootstrap 404 after MudBlazor removal attempt | **RESOLVED 2026-06-05** |
+| KI-015 | Trends daily chart buckets use UTC date instead of local date | **RESOLVED 2026-06-05** · commit `ff833da` |
+| KI-016 | Production Blazor bootstrap 404 after MudBlazor removal attempt | **RESOLVED 2026-06-05** · commit `ff833da` |
 
 Full detail: `Docs/momentum-known-issues.md`
 
@@ -362,4 +365,4 @@ Full detail: `Docs/momentum-known-issues.md`
 
 ---
 
-*Momentum Handoff — Updated 2026-06-05 (KI-009 native toast + MudBlazor removal; KI-015 local-day chart fix; KI-016 fingerprint bug resolved)*
+*Momentum Handoff — Updated 2026-06-05 (KI-009 + KI-015 + KI-016 cleanup cycle deployed to production — commit `ff833da`; production smoke test passed)*
