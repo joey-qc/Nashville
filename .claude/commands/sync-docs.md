@@ -5,7 +5,7 @@ After completing any set of code changes, review and update the three Momentum d
 ## Files to Review and Update
 
 1. **`CLAUDE.md`** (project root) — Architecture decisions, technology rules, naming conventions, business rules, seed data. Update when:
-   - A technology version changes (e.g., .NET, MudBlazor, ApexCharts)
+   - A technology version changes (e.g., .NET, EF Core, Serilog)
    - A new architectural pattern or rule is established
    - A business rule changes (deletion logic, seeding logic, auth behavior)
    - A new service, layer, or caching pattern is introduced

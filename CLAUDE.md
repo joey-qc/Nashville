@@ -22,23 +22,19 @@ Before performing any implementation task:
 
 ## 3. Technology Rules
 
-### 3.1 UI Components — Custom HTML/CSS (MudBlazor being phased out)
-Momentum is moving away from MudBlazor toward fully custom Razor markup, plain HTML/CSS, shared design tokens (`momentum-theme.css`), and inline SVG.
+### 3.1 UI Components — Custom HTML/CSS
+Momentum uses fully custom Razor markup, plain HTML/CSS, shared design tokens (`momentum-theme.css`), and inline SVG. **There is no UI component library** — MudBlazor has been removed entirely (no NuGet package, no code, no DI registration, no runtime assets).
 
-**For all new code and any page being modified or converted:**
+**For all new code and any page being modified:**
 - Use plain HTML elements (`<button>`, `<input>`, `<textarea>`, `<select>`, etc.) styled with scoped CSS classes.
 - Use CSS variables from `Momentum.Client/wwwroot/css/momentum-theme.css` — never hardcode colors, radii, or spacing.
 - Use inline SVG for all icons and charts — no icon font or third-party icon library.
-- **Do NOT introduce any new MudBlazor components.** All pages are now fully converted.
-- The one permitted MudBlazor exception is `ISnackbar` / `MudSnackbar` for toast notifications — until a custom global toast is implemented, after which the MudBlazor NuGet package should be removed entirely.
-- **Bootstrap must NEVER be used or referenced** anywhere in the project — not in markup, not in CSS, not in NuGet packages.
-
-**Converted pages (custom HTML/CSS only):** Home, Add Entry (`/log`), View Log (`/log/detail`), Trends (`/reports`), Balance (`/reports/balance`), Manage Activities (`/activities`), Settings (`/settings`), Login (`/login`), Register (`/register`).
-**Legacy pages (MudBlazor still present):** None — all pages converted. `ISnackbar`/`MudSnackbar` remains only for toast notifications.
+- **Do NOT add MudBlazor, Bootstrap, or any other UI component / CSS framework** — not in markup, not in CSS, not in NuGet packages.
+- Toast notifications use the native `ToastService` + `ToastHost` (`Momentum.Client/Services/ToastService.cs`, `Momentum.Client/Components/ToastHost.razor`). Call `ToastService.Show(message, ToastType.Success | Error | Warning | Info)`.
 
 ### 3.2 Charting — Custom SVG
 - All charts (bar, line, donut, sparkline) are implemented as **custom inline SVG** rendered directly in Razor components.
-- ApexCharts.Blazor, Chart.js, Plotly, and all third-party charting libraries must NOT be used — the `Blazor-ApexCharts` NuGet package is a leftover reference that should be removed.
+- ApexCharts.Blazor, Chart.js, Plotly, and all third-party charting libraries must NOT be used. No charting package is referenced — ApexCharts has been removed entirely.
 - Chart data is fetched via `ReportsService` and `ScoreService`; rendering is done with SVG markup and C# computed layout values.
 
 ### 3.3 Backend Framework
@@ -149,10 +145,6 @@ These colors are the single source of truth for category representation througho
 - All API calls from the client go through service classes in `Momentum.Client/Services/` — never call `HttpClient` directly from a page or component.
 - Protected routes use `[Authorize]` attribute or `<AuthorizeView>` component — never implement manual auth checks in page code.
 
-### 7.1 MudBlazor Type Aliases
-- All pages use unqualified `Color`, `Size`, and `Align` which resolve to MudBlazor by default via `_Imports.razor`.
-- ApexCharts is no longer used; there is no namespace conflict to resolve.
-
 ---
 
 ## 8. Error Handling Rules
@@ -162,7 +154,7 @@ These colors are the single source of truth for category representation througho
 - Return `404 Not Found` when a resource doesn't exist.
 - Return `409 Conflict` for the activity deletion scenario where logs exist.
 - Return `500 Internal Server Error` only for unexpected exceptions — log the full exception with Serilog before returning.
-- Client-side: display user-friendly error messages using MudBlazor `MudSnackbar` — never show raw exception messages to the user.
+- Client-side: display user-friendly error messages using `ToastService.Show(message, ToastType.Error)` — never show raw exception messages to the user.
 
 ---
 
@@ -217,7 +209,7 @@ Note: negative default points are intentional — they track detrimental habits.
 ---
 
 *Momentum — CLAUDE.md Skills File*
-*Version 1.4 — Updated category colors to new palette; replaced ApexCharts with custom SVG charting; removed ApexCharts namespace conflict rules; replaced MudBlazor-only rule with phased-migration directive*
+*Version 1.5 — Removed all MudBlazor and ApexCharts references now that both are fully removed from the app; §3.1 rewritten for custom HTML/CSS + native ToastService; §3.2 charting note updated; obsolete §7.1 MudBlazor type-aliases section deleted; §8 error-handling toast reference updated*
 
 
 ## Documentation Maintenance Rule
