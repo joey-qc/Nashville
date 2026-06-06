@@ -135,10 +135,17 @@ Accessible by clicking on a score total (Today, This Week, This Month) from the 
   - Points earned (the adjusted value at time of logging, not the default)
   - Date and time logged
 
-#### Show Notes toggle
-- A **Show Notes** toggle appears in the filter bar **only when at least one currently displayed entry has notes**. If the displayed set has no notes (including after filtering by period or dimension), the toggle is hidden.
-- The toggle defaults **OFF**. When OFF, entries appear exactly as they do without notes — no icon, badge, or extra row.
-- When **ON**, each entry that has notes shows its full formatted note (bold, italic, underline, paragraphs, bullet lists) rendered directly beneath the entry as inline secondary detail — no truncation, no "show more," no separate panel. Entries without notes are unchanged.
+#### Details toggle
+- A **Details** toggle appears on the summary line whenever there is at least one displayed entry. (Renamed from "Notes" in CHK-002 Phase 6A; it now reveals notes **and** linked check-ins.)
+- The toggle defaults **OFF**. When OFF, entries appear compact — no notes, check-ins, or extra rows.
+- When **ON**, each entry shows a details section containing:
+  - its full formatted note (bold, italic, underline, paragraphs, bullet lists), if present;
+  - its **linked check-ins**, if any — each showing the check-in's local date/time and Body / Energy / Mood scores;
+  - a **"+ Add Check-In"** action that starts a check-in linked to that log entry.
+- **Editing a linked check-in:** clicking a check-in row opens it for editing on the Check-Ins screen.
+- **Deleting a linked check-in:** a trash → confirm/cancel control deletes only that check-in; the log entry itself is unaffected.
+- **Returning to context:** adding or editing a check-in from View Log returns the user to the **same View Log view** (same period, Details still expanded) after Save, Skip, or Cancel.
+- Entries with no note and no check-ins still show the "+ Add Check-In" action when Details is ON, and are otherwise unchanged.
 
 ### 7.2 Editing a Log Entry
 - Each activity entry is **clickable/editable**.
@@ -317,8 +324,12 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
 - **Delete:** the user can delete any of their check-ins via a trash → confirm/cancel control. Deleting a check-in does **not** delete the associated activity log.
 - An empty state is shown when the user has no check-ins.
 
-### 11.4 Not yet implemented
-- View Log "Details" integration showing linked check-ins.
+### 11.4 View Log Details Integration (CHK-002 Phase 6A — implemented)
+- The View Log **Details** toggle (§7.1) surfaces each entry's linked check-ins and a "+ Add Check-In" action, in addition to notes.
+- Adding a check-in from a log entry links it to that entry; editing/deleting is available inline. See §7.1 for behavior.
+
+### 11.5 Not yet implemented
+- Edit Log Entry screen: associated check-in list with "add follow-up".
 - Body/Energy/Mood reporting and correlation.
 
 ---
@@ -350,3 +361,5 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
 *Version 1.12 — CHK-002 Phase 5A: §3 nav restructured (persistent top "Check In" button + "Check Ins" history nav, mobile "Manage" title); §11.1 entry point updated; §11.3 Check-Ins history placeholder added*
 *Version 1.13 — CHK-002 Phase 5B: §11.3 Check-Ins history screen implemented (newest-first list, "After: {activity}" for linked, inline edit, trash→confirm delete)*
 *Version 1.14 — CHK-002 Phase 5B fix: §11.3 clarifies check-in times display in the user's local browser time, ordered by the true check-in instant*
+*Version 1.15 — CHK-002 Phase 6A: §7.1 "Show Notes" toggle renamed to "Details" (now reveals notes + linked check-ins + "+ Add Check-In", with inline edit/delete); §11.4 View Log integration marked implemented*
+*Version 1.16 — CHK-002 Phase 6A polish: §7.1 add/edit check-in from View Log returns to the same View Log context (period + Details expanded) after save/skip/cancel*

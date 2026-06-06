@@ -94,6 +94,10 @@
     // Optional display-only context (the activity name) passed by the Add Entry flow.
     [SupplyParameterFromQuery(Name = "from")] public string? FromActivity { get; set; }
 
+    // Optional: where to return after save/skip (generic returnUrl pattern). When absent,
+    // the default flow applies (linked → Home; standalone → stay on page).
+    [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }
+
     private bool IsLinked => ActivityLogId.HasValue;
 
     private readonly CheckInForm _form = new()
@@ -177,6 +181,13 @@
 
         Toast.Show("Check-in saved.", ToastType.Success);
 
+        if (!string.IsNullOrEmpty(ReturnUrl))
+        {
+            // Caller supplied a return context (e.g. View Log) — go back to it.
+            Navigation.NavigateTo(ReturnUrl);
+            return;
+        }
+
         if (IsLinked)
         {
             // Post-activity flow: the check-in is the final step — return to Home.
@@ -190,8 +201,10 @@
         _form.Time = DateTime.Now.TimeOfDay;
     }
 
-    // Post-activity flow only: dismiss without creating a Check-In.
-    private void Skip() => Navigation.NavigateTo("/");
+    // Linked-flow dismiss without creating a Check-In: return to the caller's context
+    // when provided, otherwise Home.
+    private void Skip() => Navigation.NavigateTo(
+        !string.IsNullOrEmpty(ReturnUrl) ? ReturnUrl : "/");
 
     private sealed class CheckInForm
     {

@@ -1201,23 +1201,24 @@ The `<p>`, `<ul>`, `<li>` elements inside the editor are inserted by the browser
 
 This is the same CSS-isolation gotcha documented for `MarkupString` SVG in §12 / KI-005 — any DOM not rendered by the Blazor renderer must be styled via `::deep` or a global stylesheet.
 
-### View Log note display (read-only)
+### View Log details display (read-only notes + linked check-ins)
 
-The View Log page (`ActivityDetail.razor`) renders saved notes as read-only formatted HTML when the **Show Notes** toggle is ON.
+The View Log page (`ActivityDetail.razor`) shows an expandable **details** section per entry when the **Details** toggle is ON. The section holds: the formatted note (if present), the entry's linked check-ins (if any), and a "+ Add Check-In" action.
 
-- **Toggle** (`.notes-toggle`) is a compact chip labeled **Notes** with a notebook icon, placed on the entry-count / score-summary line (`.detail-stats-row`) and **right-aligned** via `margin-left: auto` (stays right-aligned even when it wraps to its own line on very narrow screens). It uses the same chip language as the dimension filter chips (`--border`, `--text-dim`; active = `--primary-glow` bg + `--primary` border/text), slightly smaller (`0.72rem`, `4px 10px`). Rendered only when at least one displayed entry has notes; defaults OFF. Accessibility: dynamic `aria-label`/`title` ("Show notes" / "Hide notes") and `aria-pressed`.
-- **Card structure:** `.log-card` is a flex **column**. The clickable row (`.log-card-row`, holding badge · info · time/points · delete, with the edit `@onclick` and `cursor:pointer`) is the first child; the note (`.log-note-body`) is an optional second child. When the toggle is OFF the note element is not rendered, so the card is visually identical to a no-notes entry.
-- **Note body** (`.log-note-body`) is inline secondary detail — muted (`--text-dim`), smaller font, indented under the text column, **no border/background/panel**. Rendered via `@((MarkupString)log.Notes)`.
-- **`::deep` is required** for the note's child elements (`p`, `ul`, `ol`, `li`, `strong`, `b`, `em`, `i`, `u`) for the same isolation reason — `MarkupString` content has no scope attribute.
+- **Toggle** (`.details-toggle`) is a compact chip labeled **Details** with a notebook icon, placed on the entry-count / score-summary line (`.detail-stats-row`) and **right-aligned** via `margin-left: auto`. Same chip language as the dimension filter chips (`--border`, `--text-dim`; active = `--primary-glow` bg + `--primary` border/text), `0.72rem`, `4px 10px`. Rendered whenever there is at least one displayed entry; defaults OFF. Accessibility: dynamic `aria-label`/`title` ("Show details" / "Hide details") and `aria-pressed`. *(Renamed from the former "Notes" toggle in CHK-002 Phase 6A; the concept now covers notes + check-ins.)*
+- **Card structure:** `.log-card` is a flex **column**. The clickable row (`.log-card-row`, holding badge · info · time/points · delete, with the edit `@onclick` and `cursor:pointer`) is the first child; the details block is an optional second child (sibling of the row, so its clicks do not trigger the row's edit handler). When the toggle is OFF nothing extra renders, so the card is visually identical to before.
+- **Note body** (`.log-note-body`) is inline secondary detail — muted (`--text-dim`), smaller font, indented under the text column, **no border/background/panel**. Rendered via `@((MarkupString)log.Notes)`. `::deep` is required for its child elements (`p`, `ul`, `ol`, `li`, `strong`, `b`, `em`, `i`, `u`) since `MarkupString` content has no scope attribute.
+- **Linked check-ins** (`.log-checkins`) are indented to match the note body. Each `.ci-row` has a clickable `.ci-main` and a `.ci-del` trash → confirm/cancel control reusing the shared `.act-btn` destructive pattern (§9). Inside `.ci-main`, the **timestamp (`.ci-time`) is normal-weight / secondary** (`--text-dim`) and the Body/Energy/Mood values are the primary information; score values use `.ci-val.pos`/`.neg` for green/red. The row navigates to `/check-ins?editId={id}` to edit; a dashed `.ci-add` button navigates to `/check-in?activityLogId={logId}&from={name}`. Both launches also carry a `returnUrl` so the flow returns to the View Log context (see software spec §8.2b).
 
 ```css
 .log-card        { display: flex; flex-direction: column; }
 .log-card-row    { display: flex; align-items: center; gap: 12px; cursor: pointer; }
 .log-note-body   { margin-top: 10px; padding-left: 50px; color: var(--text-dim); font-size: 0.82rem; }
-.log-note-body ::deep ul { padding-left: 22px; list-style-position: outside; }
+.log-checkins    { margin-top: 10px; padding-left: 50px; display: flex; flex-direction: column; gap: 6px; }
 ```
 
 ---
 
-*Momentum Design System — v1.10*
-*CHK-002 Phase 5A: §13 — added Top Bar section (persistent `.topbar-cta` action buttons, `.topbar-actions` container, responsive `.title-full`/`.title-short` page title)*
+*Momentum Design System — v1.11*
+*CHK-002 Phase 6A: §18 — View Log "Notes" toggle renamed to "Details" (`.details-toggle`); details section now shows notes + linked check-in rows (`.log-checkins`, `.ci-row`, `.ci-add`) + Add Check-In action*
+*CHK-002 Phase 6A polish: §18 — linked check-in timestamp (`.ci-time`) is normal-weight/secondary so scores read as primary*

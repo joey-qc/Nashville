@@ -467,7 +467,41 @@ Fix (UTC stored throughout; no schema change):
 - Client display (`ToLocalTime()`) and edit-field round-trip (`SpecifyKind(Local).ToUniversalTime()`) were already correct and are unchanged.
 - 3 server tests added: UTC-kind mapping without clock shift, `ActivityName` projection (linked / standalone), and pass-through ordering.
 
+### CHK-002 Phase 6A — View Log Details Integration (COMPLETE 2026-06-06)
+
+Build: ✅ 0 errors · Tests: ✅ 54/54 (no server change → no new server tests; client UI is manual-QA per project convention)
+
+Surfaces linked check-ins inside View Log's expandable details and lets the user add/edit/delete them in context. Implements §10 (View Log integration).
+
+**No server/DTO/API change** — reuses the existing user-scoped `GET /api/checkins` (date-range), `DELETE`, and `CheckInDto.ActivityLogId`. View Log groups check-ins by `ActivityLogId` on the client.
+
+**View Log (`Momentum.Client/Pages/ActivityDetail.razor` + `.css`):**
+- Toggle renamed **"Notes" → "Details"** (`.details-toggle`); now shown whenever there is ≥1 displayed entry (previously only when notes existed); default OFF.
+- On load, injects `CheckInService` and builds `_checkInsByLog` = `GetAllAsync()` grouped by `ActivityLogId` (standalone check-ins excluded).
+- When **Details ON**, each entry's section shows: the note (if present), then each linked check-in as a row (local time + Body/Energy/Mood values), then a dashed **"+ Add Check-In"** button.
+- **Edit:** clicking a check-in row navigates to `/check-ins?editId={id}` (the history page opens that row's inline editor).
+- **Delete:** per-row trash → confirm/cancel (shared `.act-btn` pattern), calls `CheckInService.DeleteAsync`, reloads. Deletes only the check-in — never the ActivityLog.
+- **Add:** "+ Add Check-In" navigates to `/check-in?activityLogId={logId}&from={activityName}` (same target as the post-activity flow, so the saved check-in links correctly).
+
+**History page (`CheckIns.razor`):** added `?editId={id}` — after load, auto-opens that check-in's inline editor (reuses existing `StartEdit`).
+
+**Unchanged:** post-activity flow; Edit Log Entry save flow does **not** trigger check-in creation; standalone `/check-in`; create/edit time handling.
+
+**Out of scope (not added):** reporting, charts, analytics, filtering, search.
+
+**Polish (pre-commit, 2026-06-06):**
+- Linked check-in **timestamps are normal-weight / secondary** (`--text-dim`) so the Body/Energy/Mood scores read as primary.
+- **Return-context (generic `returnUrl` pattern):** when add/edit is launched from View Log, the launcher passes `returnUrl` (an encoded URL that also carries `period` and `details=true`). `CheckIn.razor` (save/skip) and `CheckIns.razor` (edit save/cancel) navigate to `returnUrl` when present, so the user returns to the **same View Log context with Details still expanded**. When `returnUrl` is absent, existing behavior is unchanged (standalone `/check-in` stays on page; post-activity → Home; history-page edit stays on the list). View Log reads `details=true` to restore the expanded state.
+
+**Manual QA checklist (Phase 6A):**
+- View Log shows a **Details** toggle (not "Notes").
+- Details ON shows notes (when present), linked check-ins under the entry, and "+ Add Check-In".
+- Linked check-in time shows in local time; clicking it opens edit; editing persists.
+- Delete requires confirmation and removes only the check-in (ActivityLog remains).
+- "+ Add Check-In" opens `/check-in` with `activityLogId` populated; saving links it.
+- Post-activity flow still works; entries without notes/check-ins behave cleanly; no console errors; mobile usable.
+
 ---
 
 *Check-In Feature Design Specification — created 2026-06-04*
-*Status: 🔨 IN PROGRESS — Phase 5B complete (history screen with edit/delete; time-display fix); View Log "Details" integration, reporting not started*
+*Status: 🔨 IN PROGRESS — Phase 6A complete (View Log Details integration); Edit Log Entry check-in list, reporting not started*

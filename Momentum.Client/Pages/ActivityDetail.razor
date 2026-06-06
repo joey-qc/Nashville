@@ -2,6 +2,7 @@
 @attribute [Authorize]
 @inject ActivityLogService LogService
 @inject CategoryService CategoryService
+@inject CheckInService CheckInService
 @inject NavigationManager Navigation
 @inject ToastService Toast
 
@@ -30,15 +31,15 @@
                     · <span class="@(NetTotal >= 0 ? "stat-pos" : "stat-neg")">@(NetTotal > 0 ? "+" : "")@NetTotal pts</span>
                 </p>
 
-                <!-- Notes toggle — only shown when a displayed entry has notes -->
-                @if (HasDisplayedNotes)
+                <!-- Details toggle — reveals notes, linked check-ins, and "+ Add Check-In" -->
+                @if (FilteredLogs.Any())
                 {
                     <button type="button"
-                            class="notes-toggle @(_showNotes ? "active" : "")"
-                            aria-pressed="@(_showNotes ? "true" : "false")"
-                            aria-label="@(_showNotes ? "Hide notes" : "Show notes")"
-                            title="@(_showNotes ? "Hide notes" : "Show notes")"
-                            @onclick="@(() => _showNotes = !_showNotes)">
+                            class="details-toggle @(_showDetails ? "active" : "")"
+                            aria-pressed="@(_showDetails ? "true" : "false")"
+                            aria-label="@(_showDetails ? "Hide details" : "Show details")"
+                            title="@(_showDetails ? "Hide details" : "Show details")"
+                            @onclick="@(() => _showDetails = !_showDetails)">
                         <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"
                              fill="none" stroke="currentColor" stroke-width="2"
                              stroke-linecap="round" stroke-linejoin="round">
@@ -46,7 +47,7 @@
                             <line x1="8" y1="8" x2="14" y2="8"/>
                             <line x1="8" y1="12" x2="14" y2="12"/>
                         </svg>
-                        Notes
+                        Details
                     </button>
                 }
             </div>
@@ -181,10 +182,67 @@
 
                     </div>
 
-                    <!-- Formatted note (only when toggle ON and entry has notes) -->
-                    @if (_showNotes && !string.IsNullOrWhiteSpace(log.Notes))
+                    <!-- Details (notes + linked check-ins + add action) when toggle ON -->
+                    @if (_showDetails)
                     {
-                        <div class="log-note-body">@((MarkupString)log.Notes!)</div>
+                        @if (!string.IsNullOrWhiteSpace(log.Notes))
+                        {
+                            <div class="log-note-body">@((MarkupString)log.Notes!)</div>
+                        }
+
+                        <div class="log-checkins">
+                            @foreach (var ci in CheckInsFor(log.Id))
+                            {
+                                <div class="ci-row">
+                                    <button type="button" class="ci-main"
+                                            title="Edit check-in"
+                                            @onclick="@(() => Navigation.NavigateTo($"/check-ins?editId={ci.Id}&returnUrl={ReturnUrl}"))">
+                                        <span class="ci-time">@CheckInTime(ci)</span>
+                                        <span class="ci-scores">
+                                            <span class="ci-metric">B
+                                                <span class="ci-val @ScoreClass(ci.BodyScore)">@Signed(ci.BodyScore)</span>
+                                            </span>
+                                            <span class="ci-metric">E
+                                                <span class="ci-val @ScoreClass(ci.EnergyScore)">@Signed(ci.EnergyScore)</span>
+                                            </span>
+                                            <span class="ci-metric">M
+                                                <span class="ci-val @ScoreClass(ci.MoodScore)">@Signed(ci.MoodScore)</span>
+                                            </span>
+                                        </span>
+                                    </button>
+                                    <div class="ci-del">
+                                        @if (_pendingCheckInDeleteId == ci.Id)
+                                        {
+                                            <button type="button" class="act-btn confirm" title="Confirm delete"
+                                                    @onclick="@(() => ConfirmDeleteCheckIn(ci.Id))">
+                                                <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
+                                                </svg>
+                                            </button>
+                                            <button type="button" class="act-btn cancel-del" title="Cancel"
+                                                    @onclick="@(() => _pendingCheckInDeleteId = null)">
+                                                <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                                                </svg>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="act-btn delete" title="Delete check-in"
+                                                    @onclick="@(() => _pendingCheckInDeleteId = ci.Id)">
+                                                <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                                                </svg>
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            <button type="button" class="ci-add" @onclick="@(() => AddCheckIn(log))">
+                                + Add Check-In
+                            </button>
+                        </div>
                     }
 
                 </div>
@@ -196,6 +254,8 @@
 
 @code {
     [SupplyParameterFromQuery] private string? Period { get; set; }
+    // When returning from an add/edit check-in flow, this restores the expanded Details state.
+    [SupplyParameterFromQuery(Name = "details")] private string? DetailsParam { get; set; }
 
     private string _period = "today";
     private List<ActivityLogDto> _logs = [];
@@ -203,7 +263,11 @@
     private int? _categoryFilter;
     private bool _loading;
     private int? _pendingDeleteId;
-    private bool _showNotes;
+    private bool _showDetails;
+
+    // Linked check-ins keyed by ActivityLogId (user-scoped; loaded with the logs).
+    private Dictionary<int, List<CheckInDto>> _checkInsByLog = [];
+    private int? _pendingCheckInDeleteId;
 
     private string DateDisplay => DateTime.Now.ToString("d MMM ddd");
 
@@ -211,9 +275,6 @@
         _categoryFilter.HasValue
             ? _logs.Where(l => l.Categories.Any(c => c.Id == _categoryFilter))
             : _logs;
-
-    // Toggle is shown only when at least one currently displayed entry has notes.
-    private bool HasDisplayedNotes => FilteredLogs.Any(l => !string.IsNullOrWhiteSpace(l.Notes));
 
     private int Earned   => FilteredLogs.Where(l => l.PointsRecorded > 0).Sum(l => l.PointsRecorded);
     private int Setbacks => Math.Abs(FilteredLogs.Where(l => l.PointsRecorded < 0).Sum(l => l.PointsRecorded));
@@ -223,9 +284,16 @@
     {
         if (!string.IsNullOrEmpty(Period))
             _period = Period;
+        // Restore expanded Details when returning from an add/edit check-in flow.
+        _showDetails = DetailsParam == "true";
         _categories = (await CategoryService.GetAllAsync()).ToList();
         await LoadLogs();
     }
+
+    // Encoded return target so add/edit check-in flows can come back to this exact
+    // View Log context (same period, Details expanded). Generic returnUrl pattern.
+    private string ReturnUrl =>
+        Uri.EscapeDataString($"/log/detail?period={_period}&details=true");
 
     private async Task OnPeriodChanged(ChangeEventArgs e)
     {
@@ -239,10 +307,24 @@
     {
         _loading = true;
         _pendingDeleteId = null;
+        _pendingCheckInDeleteId = null;
         var (from, to) = GetDateRange();
         _logs = await LogService.GetByDateRangeAsync(from, to);
+
+        // Load the user's check-ins and group the linked ones by ActivityLogId so each
+        // log entry's details section can show its check-ins. GetAllAsync is user-scoped
+        // and UTC-tagged; standalone check-ins (no ActivityLogId) are ignored here.
+        var checkIns = await CheckInService.GetAllAsync();
+        _checkInsByLog = checkIns
+            .Where(c => c.ActivityLogId.HasValue)
+            .GroupBy(c => c.ActivityLogId!.Value)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(c => c.CheckedInAt).ToList());
+
         _loading = false;
     }
+
+    private List<CheckInDto> CheckInsFor(int logId) =>
+        _checkInsByLog.TryGetValue(logId, out var list) ? list : [];
 
     private (DateTime from, DateTime to) GetDateRange()
     {
@@ -281,6 +363,37 @@
         return _period == "today"
             ? local.ToString("h:mm tt")
             : local.ToString("MMM d") + " · " + local.ToString("h:mm tt");
+    }
+
+    // ── Linked check-ins ──────────────────────────────────────────────────────
+
+    private static string CheckInTime(CheckInDto ci)
+    {
+        var local = ci.CheckedInAt.ToLocalTime();
+        return local.ToString("MMM d") + " · " + local.ToString("h:mm tt");
+    }
+
+    private static string Signed(int v) => v > 0 ? $"+{v}" : v.ToString();
+
+    private static string ScoreClass(int v) => v > 0 ? "pos" : v < 0 ? "neg" : "";
+
+    private void AddCheckIn(ActivityLogDto log) =>
+        Navigation.NavigateTo(
+            $"/check-in?activityLogId={log.Id}&from={Uri.EscapeDataString(log.ActivityName)}&returnUrl={ReturnUrl}");
+
+    private async Task ConfirmDeleteCheckIn(int id)
+    {
+        _pendingCheckInDeleteId = null;
+        var success = await CheckInService.DeleteAsync(id);
+        if (success)
+        {
+            Toast.Show("Check-in deleted.", ToastType.Success);
+            await LoadLogs();
+        }
+        else
+        {
+            Toast.Show("Failed to delete check-in.", ToastType.Error);
+        }
     }
 
     private static string BadgeBg(ActivityLogDto log) =>

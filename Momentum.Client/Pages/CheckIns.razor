@@ -2,6 +2,7 @@
 @attribute [Authorize]
 @inject CheckInService CheckInService
 @inject ToastService Toast
+@inject NavigationManager Navigation
 
 <PageTitle>Check Ins</PageTitle>
 
@@ -172,7 +173,23 @@
         ("Mood",   () => _editMood,   v => _editMood   = v)
     ];
 
-    protected override async Task OnInitializedAsync() => await Load();
+    // When set (e.g. from View Log "edit check-in"), the matching row opens in edit mode.
+    [SupplyParameterFromQuery] public int? EditId { get; set; }
+
+    // Optional: where to return after the edit is saved/cancelled (generic returnUrl
+    // pattern). When absent, the user stays on the history page (default behavior).
+    [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+
+        if (EditId is not null)
+        {
+            var target = _checkIns.FirstOrDefault(c => c.Id == EditId.Value);
+            if (target is not null) StartEdit(target);
+        }
+    }
 
     private async Task Load()
     {
@@ -209,7 +226,15 @@
         _editMood          = c.MoodScore;
     }
 
-    private void CancelEdit() => _editingId = null;
+    private void CancelEdit()
+    {
+        if (!string.IsNullOrEmpty(ReturnUrl))
+        {
+            Navigation.NavigateTo(ReturnUrl);
+            return;
+        }
+        _editingId = null;
+    }
 
     private void OnEditDateChange(ChangeEventArgs e)
     {
@@ -250,6 +275,14 @@
         }
 
         Toast.Show("Check-in updated.", ToastType.Success);
+
+        if (!string.IsNullOrEmpty(ReturnUrl))
+        {
+            // Came from another context (e.g. View Log) — return there.
+            Navigation.NavigateTo(ReturnUrl);
+            return;
+        }
+
         _editingId = null;
         await Load();
     }

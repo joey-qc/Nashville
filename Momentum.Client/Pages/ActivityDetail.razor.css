@@ -54,7 +54,7 @@
 }
 
 /* Push the toggle to the right; stays right-aligned even when it wraps to its own line */
-.detail-stats-row .notes-toggle {
+.detail-stats-row .details-toggle {
     margin-left: auto;
 }
 
@@ -170,8 +170,8 @@
     display: inline-block;
 }
 
-/* Notes toggle — compact chip on the summary line; same chip language as dimension filters */
-.notes-toggle {
+/* Details toggle — compact chip on the summary line; same chip language as dimension filters */
+.details-toggle {
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -191,12 +191,12 @@
     flex-shrink: 0;
 }
 
-.notes-toggle:hover {
+.details-toggle:hover {
     background: var(--surface-2);
     color: var(--text);
 }
 
-.notes-toggle.active {
+.details-toggle.active {
     background: var(--primary-glow);
     border-color: var(--primary);
     color: var(--primary);
@@ -278,6 +278,106 @@
 .log-note-body ::deep i { font-style: italic; }
 
 .log-note-body ::deep u { text-decoration: underline; }
+
+/* ── Linked check-ins (details section) ──────────────────── */
+.log-checkins {
+    margin-top: 10px;
+    padding-left: 50px;        /* aligns under the activity name, like .log-note-body */
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ci-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ci-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 6px 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    color: var(--text-dim);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s ease, border-color 0.12s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.ci-main:hover {
+    background: var(--surface-3);
+    border-color: var(--primary);
+}
+
+.ci-time {
+    font-size: 0.78rem;
+    font-weight: 400;          /* secondary to the scores — normal weight */
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+.ci-scores {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.ci-metric {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.ci-val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-left: 2px;
+}
+
+.ci-val.pos { color: var(--primary); }
+.ci-val.neg { color: var(--negative); }
+
+.ci-del {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.ci-add {
+    align-self: flex-start;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-dim);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.ci-add:hover {
+    background: var(--surface-2);
+    border-color: var(--primary);
+    color: var(--primary);
+}
 
 /* Badge */
 .log-badge {
@@ -507,7 +607,8 @@
     }
 
     /* Tighter note indent on narrow screens (badge 34px + gap 10px = 44px) */
-    .log-note-body {
+    .log-note-body,
+    .log-checkins {
         padding-left: 44px;
     }
 }

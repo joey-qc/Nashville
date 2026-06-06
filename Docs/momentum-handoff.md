@@ -6,7 +6,7 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** CHK-002 Phase 5B — Check-Ins history screen (list + edit + delete) complete, incl. time-display fix; View Log "Details" integration, reporting not started  
+**Phase:** CHK-002 Phase 6A — View Log Details integration (linked check-ins shown/added/edited/deleted in View Log); Edit Log Entry check-in list, reporting not started  
 **Build Status:** ✅ All projects build clean (0 errors); 54/54 tests pass  
 **Last Updated:** 2026-06-06
 
@@ -66,6 +66,17 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 ---
 
 ## Completed Work
+
+### CHK-002 Phase 6A — View Log Details Integration (2026-06-06)
+
+- **Status:** ✅ Phase 6A complete. View Log's expandable details now surface linked check-ins with add/edit/delete in context.
+- **Build/tests:** ✅ 0 errors; 54/54 tests pass. **No server/DTO/API/service change** (reuses `GetAllAsync`, `DeleteAsync`, `CheckInDto.ActivityLogId`), so no new server tests.
+- **What shipped:**
+  - `Momentum.Client/Pages/ActivityDetail.razor` + `.css` — "Notes" toggle renamed **Details** (`.details-toggle`), shown whenever entries exist; loads `_checkInsByLog` (client-side group of `GetAllAsync` by `ActivityLogId`); per-entry details section renders note + linked check-in rows (local time + B/E/M) + "+ Add Check-In". Row click → `/check-ins?editId={id}`; per-row trash→confirm delete via `CheckInService.DeleteAsync`; add → `/check-in?activityLogId={logId}&from={name}`.
+  - `Momentum.Client/Pages/CheckIns.razor` — added `?editId={id}` query param that auto-opens that row's inline editor after load.
+- **Isolation/time:** `GetAllAsync` is user-scoped and UTC-tagged; display uses `ToLocalTime()`. Deleting a check-in never affects the ActivityLog.
+- **Unchanged:** post-activity flow; Edit Log Entry save does not create check-ins; standalone `/check-in`.
+- **Polish (pre-commit):** linked check-in timestamps are now normal-weight/secondary (scores are primary); a generic `returnUrl` query pattern was added so add/edit launched from View Log returns to the same View Log context (period + Details expanded) after save/skip/cancel. `returnUrl` is honored by `CheckIn.razor` and `CheckIns.razor`; absent → existing behavior (standalone stays, post-activity → Home, history edit stays).
 
 ### CHK-002 Phase 5B — Check-Ins History Screen (2026-06-06)
 
@@ -433,7 +444,8 @@ Full detail: `Docs/momentum-known-issues.md`
 | Check-In Phase 4 — post-activity flow | Medium | ✅ Complete (CHK-002 Phase 4, 2026-06-06). Add Entry routes to Check-In with linked `ActivityLogId`; save or skip. |
 | Check-In Phase 5A — nav structure | Medium | ✅ Complete (CHK-002 Phase 5A, 2026-06-06). Persistent top "Check In" button, "Check Ins" history nav, `/check-ins` placeholder, mobile "Manage" title. |
 | Check-In Phase 5B — history screen | Medium | ✅ Complete (CHK-002 Phase 5B, 2026-06-06). `/check-ins` list with inline edit + delete; `ActivityName` on DTO. |
-| Check-In Phase 5C — View Log integration | Medium | Not started. View Log "Details" toggle (rename from "Notes") showing linked check-ins; Edit Log Entry associated check-in list |
+| Check-In Phase 6A — View Log integration | Medium | ✅ Complete (CHK-002 Phase 6A, 2026-06-06). "Details" toggle shows/adds/edits/deletes linked check-ins in View Log. |
+| Check-In Phase 6B — Edit Log Entry check-in list | Low | Not started. Show associated check-ins (+ add follow-up) on the Edit Log Entry screen (design spec §11) |
 | Check-In reminders (PWA / push) | Low | Deferred long-term. Azure Function timer job sends push directly without waking the API (see design spec §16) |
 | Body/Energy/Mood reporting & correlation | Low | Future — depends on Check-In data; activity-input → check-in-outcome analytics (see design spec §17) |
 | Password change in Settings | Low | Planned but not implemented |
@@ -442,4 +454,4 @@ Full detail: `Docs/momentum-known-issues.md`
 
 ---
 
-*Momentum Handoff — Updated 2026-06-06 (CHK-002 Phase 5B — Check-Ins history screen with edit/delete + time-display fix KI-017; 54/54 tests)*
+*Momentum Handoff — Updated 2026-06-06 (CHK-002 Phase 6A — View Log Details integration: linked check-ins shown/added/edited/deleted; 54/54 tests)*
