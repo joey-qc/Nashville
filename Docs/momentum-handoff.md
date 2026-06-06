@@ -6,7 +6,7 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** CHK-002 Phase 4 — post-activity Check-In flow complete; history, View Log integration, persistent action button, reporting not started  
+**Phase:** CHK-002 Phase 5A — Check-In nav structure complete (top "Check In" button + "Check Ins" history nav + placeholder); history list, View Log integration, reporting not started  
 **Build Status:** ✅ All projects build clean (0 errors); 50/50 tests pass  
 **Last Updated:** 2026-06-06
 
@@ -66,6 +66,15 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 ---
 
 ## Completed Work
+
+### CHK-002 Phase 5A — Check-In Navigation Structure (2026-06-06)
+
+- **Status:** ✅ Phase 5A complete. Creation and history are now separate entry points.
+- **Build/tests:** ✅ 0 errors; 50/50 tests pass (layout/routing only — no schema/API/service change; manual QA per project convention).
+- **What shipped:**
+  - `Momentum.Client/Layout/MainLayout.razor` + `.css` — removed the temporary left-nav "Check In" → `/check-in` link; added left-nav "Check Ins" → `/check-ins`; added a persistent top action button "Check In" → `/check-in` beside "+ Add Entry" (new `.topbar-actions` container, same `.topbar-cta` style). `PageTitle` adds the `/check-ins` case before `/check-in`; `PageTitleShort` returns "Manage" for `/activities`, rendered via `.title-full`/`.title-short` spans toggled at the 767px breakpoint. Mobile topbar tightened so two buttons never wrap.
+  - `Momentum.Client/Pages/CheckIns.razor` + `.css` — new placeholder history page at `/check-ins` (`[Authorize]`); full list deferred.
+- **Unchanged:** `/check-in` form (Phase 3) and post-activity flow (Phase 4) — only entry points moved.
 
 ### CHK-002 Phase 4 — Post-Activity Check-In Flow (2026-06-06)
 
@@ -407,7 +416,8 @@ Full detail: `Docs/momentum-known-issues.md`
 | Check-In Phase 2 — API + DTOs | Medium | ✅ Complete (CHK-002 Phase 2, 2026-06-05). DTOs, repository, service, controller all implemented. 15 tests added. |
 | Check-In Phase 3 — standalone form | Medium | ✅ Complete (CHK-002 Phase 3, 2026-06-05). `/check-in` page, client service, temporary nav item. |
 | Check-In Phase 4 — post-activity flow | Medium | ✅ Complete (CHK-002 Phase 4, 2026-06-06). Add Entry routes to Check-In with linked `ActivityLogId`; save or skip. |
-| Check-In Phase 5 — history + integration | Medium | Not started. Persistent "Check In" action button (replaces temp nav item), Check-Ins history screen, View Log "Details" toggle (rename from "Notes"), Edit Log Entry associated check-in list |
+| Check-In Phase 5A — nav structure | Medium | ✅ Complete (CHK-002 Phase 5A, 2026-06-06). Persistent top "Check In" button, "Check Ins" history nav, `/check-ins` placeholder, mobile "Manage" title. |
+| Check-In Phase 5B — history + integration | Medium | Not started. Build out the `/check-ins` history list (currently a placeholder), View Log "Details" toggle (rename from "Notes"), Edit Log Entry associated check-in list |
 | Check-In reminders (PWA / push) | Low | Deferred long-term. Azure Function timer job sends push directly without waking the API (see design spec §16) |
 | Body/Energy/Mood reporting & correlation | Low | Future — depends on Check-In data; activity-input → check-in-outcome analytics (see design spec §17) |
 | Password change in Settings | Low | Planned but not implemented |
@@ -416,4 +426,4 @@ Full detail: `Docs/momentum-known-issues.md`
 
 ---
 
-*Momentum Handoff — Updated 2026-06-06 (CHK-002 Phase 4 — post-activity Check-In flow; 50/50 tests)*
+*Momentum Handoff — Updated 2026-06-06 (CHK-002 Phase 5A — Check-In nav structure: top button + history nav + placeholder; 50/50 tests)*

@@ -399,7 +399,32 @@ Implements the §7 flow: `Save Activity Log → Check-In form opens → user sav
 - Open `/check-in` directly → standalone flow unchanged (no skip button, stays on page after save).
 - No browser console errors.
 
+### CHK-002 Phase 5A — Check-In Navigation Structure (COMPLETE 2026-06-06)
+
+Build: ✅ 0 errors · Tests: ✅ 50/50 (unchanged — layout/routing only; manual-QA per project convention)
+
+Separates Check-In **creation** (top action button) from Check-In **history** (left-nav). Implements §13 (Navigation), §14 (Persistent Check In button), and §15 (Mobile masthead concern).
+
+**Navigation (`Momentum.Client/Layout/MainLayout.razor` + `.css`):**
+- **Removed** the temporary left-nav "Check In" link that pointed to `/check-in` (added in Phase 3).
+- **Added** a left-nav "Check Ins" link → `/check-ins` (history; active when path starts with `/check-ins`).
+- **Added** a persistent top action button "Check In" → `/check-in`, beside "+ Add Entry", inside a new `.topbar-actions` flex container. Both use the same `.topbar-cta` style. Visible on all authenticated pages (persists like Add Entry).
+- `PageTitle` switch: `/check-ins` case added **before** `/check-in` (since `/check-ins` also starts with `/check-in`).
+- **Mobile masthead (§15):** `PageTitleShort` returns "Manage" for `/activities`; the topbar renders `.title-full` (desktop) + `.title-short` (mobile ≤767px) spans toggled by CSS. Top bar tightened on mobile (smaller gap + button padding; title truncates via `min-width:0`/ellipsis) so "+ Add Entry" and "Check In" never wrap.
+
+**Placeholder page (`Momentum.Client/Pages/CheckIns.razor` + `.css`):**
+- `/check-ins`, `[Authorize]`. Simple "history coming soon" placeholder — the full history list is deferred to a later phase.
+
+**Unchanged:** the `/check-in` form behavior (Phase 3) and the post-activity flow (`/check-in?activityLogId=…`, Phase 4) are untouched — only the entry points moved.
+
+**Manual QA checklist (Phase 5A):**
+- Left-nav no longer has "Check In" → `/check-in`; it has "Check Ins" → `/check-ins`.
+- Top bar shows "+ Add Entry" and "Check In" on authenticated pages; Check In opens `/check-in`, Add Entry opens `/log`.
+- Post-activity flow still opens `/check-in?activityLogId=…`.
+- Manage Activities title shows "Manage" on mobile; top row does not wrap.
+- No browser console errors.
+
 ---
 
 *Check-In Feature Design Specification — created 2026-06-04*
-*Status: 🔨 IN PROGRESS — Phase 4 complete (post-activity flow); history, View Log integration, persistent action button, reporting not started*
+*Status: 🔨 IN PROGRESS — Phase 5A complete (nav structure: top Check In button + Check Ins history nav + placeholder); history list, View Log integration, reporting not started*

@@ -25,17 +25,18 @@
 ## 3. Global Navigation
 
 - A persistent navigation menu (sidebar or top bar) is accessible from all authenticated screens.
-- Navigation items:
+- Navigation items (left nav):
   - **Home** (Score Summary / Landing Page)
-  - **Add Entry** (also accessible via the persistent plus button)
+  - **Add Entry** (also accessible via the persistent "+ Add Entry" button)
   - **View Log** (Activity Detail View — browsable history by period)
-  - **Check In** (standalone Check-In form — see §11)
+  - **Check Ins** (Check-In history — see §11; route `/check-ins`)
   - **Reports** (Reporting & Analytics — contains Trends and Balance sub-pages)
   - **Manage Activities** (Data Management)
   - **Settings**
-- A **persistent "+" (Add Entry) button** is visible on every authenticated screen, allowing the user to quickly navigate to the Add Entry screen at any time.
-
-> **Note (CHK-002 Phase 3):** The **Check In** nav entry is a temporary way to reach the standalone Check-In form. A persistent "Check In" action button (analogous to the Add Entry button) will replace it in a later phase per the Check-In design spec.
+- **Persistent top action buttons** are visible on every authenticated screen in the top bar, side by side:
+  - **+ Add Entry** — navigates to the Add Entry screen (`/log`).
+  - **Check In** — navigates to the standalone Check-In form (`/check-in`).
+- On mobile, the page title **"Manage Activities" shortens to "Manage"** so the two top action buttons fit on one row without wrapping.
 
 ---
 
@@ -291,7 +292,7 @@ When a new user registers, the following starter activities are automatically ad
 The Check-In screen (`/check-in`) captures the user's **current state** (how they feel), as distinct from Activity Logs which capture behaviors. Check-Ins are intentionally lightweight.
 
 ### 11.1 Standalone Check-In Form (CHK-002 Phase 3 — implemented)
-- Reachable from the **Check In** navigation item (temporary; a persistent action button comes in a later phase).
+- Reachable from the persistent **Check In** top action button (`/check-in`).
 - Records three metrics — **Body**, **Energy**, **Mood** — each on a **−5 to +5** scale where **0 = baseline / normal**.
 - A **date and time** field captures when the check-in applies; defaults to now and is user-editable (with **Today** / **Now** shortcuts).
 - **Smart defaults:** when the form opens, the three scores preload from the user's most recent Check-In; if the user has no prior Check-In, all three default to 0.
@@ -308,10 +309,13 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
   - After **Save** or **Skip**, the user is taken to the **Home / Score Summary** screen.
 - A saved check-in from this flow is **linked** to the activity log entry; a skipped one creates nothing.
 
-### 11.3 Not yet implemented
-- Check-Ins history screen.
+### 11.3 Check-Ins History (CHK-002 Phase 5A — placeholder)
+- A **Check Ins** left-nav item routes to the Check-In history screen (`/check-ins`).
+- Currently a **placeholder** — the full period-based history list is deferred to a later phase.
+
+### 11.4 Not yet implemented
+- Full Check-Ins history list (the `/check-ins` route is a placeholder).
 - View Log "Details" integration showing linked check-ins.
-- Persistent "Check In" action button (the temporary nav item is the current entry point).
 - Body/Energy/Mood reporting and correlation.
 
 ---
@@ -340,3 +344,4 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
 
 *Momentum — Functional Requirements Document*
 *Version 1.11 — CHK-002 Phase 4: §6.4/§6.5 updated for the post-activity Check-In flow (new logs route to the Check-In form, then Home); §11.2 adds the post-activity flow with Save/Skip*
+*Version 1.12 — CHK-002 Phase 5A: §3 nav restructured (persistent top "Check In" button + "Check Ins" history nav, mobile "Manage" title); §11.1 entry point updated; §11.3 Check-Ins history placeholder added*

@@ -883,6 +883,33 @@ Auth pages render inside `.auth-shell` (full-height flex column, centered), whic
 
 Modals are in-page overlays with `max-width: 580px`. On mobile (≤660px), the modal footer stacks vertically (`flex-direction: column; align-items: stretch`).
 
+### Top Bar (`.topbar`)
+
+The authenticated top bar is a sticky flex row: `[hamburger] [title] [actions]`.
+
+**Persistent action buttons.** Top-level creation flows live as persistent buttons in the top bar (right-aligned), **not** as left-nav items. They sit side by side inside a `.topbar-actions` flex container (`gap: 8px; flex-shrink: 0`) and share one style class, `.topbar-cta` (green `--primary` fill, `#071a07` text, `--radius-sm`, `white-space: nowrap`):
+
+```html
+<div class="topbar-actions">
+    <a href="/log" class="topbar-cta">+ Add Entry</a>
+    <a href="/check-in" class="topbar-cta">Check In</a>
+</div>
+```
+
+- Both buttons appear on every authenticated page (they persist across navigation).
+- Add new persistent creation actions here rather than in the left nav. The left nav is for **destinations** (Home, View Log, Check Ins, Reports, Manage, Settings), not creation.
+
+**Responsive page title.** The title renders two spans — `.title-full` (default) and `.title-short` (hidden by default) — toggled at the **≤767px** breakpoint, mirroring the dimension-label pattern (§11). This lets a long title shorten on mobile (e.g. "Manage Activities" → "Manage") so the action buttons never wrap. The title also carries `min-width: 0` + `overflow: hidden; text-overflow: ellipsis` so it truncates rather than pushing the buttons off-row. On mobile the top bar tightens (`gap`, `.topbar-cta` padding/font) to fit both buttons.
+
+```razor
+<span class="topbar-title">
+    <span class="title-full">@PageTitle</span>
+    <span class="title-short">@PageTitleShort</span>
+</span>
+```
+
+`PageTitleShort` equals `PageTitle` except where a shorter mobile form is needed (currently only `/activities` → "Manage").
+
 ### Sidebar
 
 - Desktop: Fixed 280px sidebar; collapses to 64px icon-only mode via the `collapsed` CSS class
@@ -1192,5 +1219,5 @@ The View Log page (`ActivityDetail.razor`) renders saved notes as read-only form
 
 ---
 
-*Momentum Design System — v1.9*
-*CHK-002 Phase 3: §7 Form Styling — added Bounded Score Stepper pattern (Check-In Body/Energy/Mood, clamped −5…+5)*
+*Momentum Design System — v1.10*
+*CHK-002 Phase 5A: §13 — added Top Bar section (persistent `.topbar-cta` action buttons, `.topbar-actions` container, responsive `.title-full`/`.title-short` page title)*

@@ -324,10 +324,27 @@
 
 .topbar-title {
     flex: 1;
+    min-width: 0; /* allow truncation instead of forcing the action buttons to wrap */
     font-family: 'Space Grotesk', sans-serif;
     font-size: 1rem;
     font-weight: 600;
     color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Responsive title: full on desktop, short on mobile (see 767px breakpoint) */
+.title-short {
+    display: none;
+}
+
+/* Persistent top action buttons (Add Entry + Check In) sit side by side */
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .topbar-cta {
@@ -441,7 +458,27 @@
 
     /* Tighter padding on small screens */
     .topbar {
-        padding: 0 16px;
+        padding: 0 12px;
+        gap: 10px;
+    }
+
+    /* Swap to the shortened page title ("Manage Activities" → "Manage") */
+    .title-full {
+        display: none;
+    }
+
+    .title-short {
+        display: inline;
+    }
+
+    /* Compact the two action buttons so Add Entry + Check In fit one row */
+    .topbar-actions {
+        gap: 6px;
+    }
+
+    .topbar-cta {
+        padding: 7px 12px;
+        font-size: 0.8rem;
     }
 
     .page-content {

@@ -1,0 +1,86 @@
+/* ═══════════════════════════════════════════════════════════
+   Check-Ins history page (placeholder — CHK-002 Phase 5A)
+═══════════════════════════════════════════════════════════ */
+.checkins-page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 680px;
+}
+
+.checkins-header {
+    margin-bottom: 4px;
+}
+
+.kicker {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--primary);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.checkins-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 6px;
+    line-height: 1.2;
+}
+
+.checkins-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin: 0;
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    padding: 20px;
+}
+
+/* ── Placeholder card ────────────────────────────────────── */
+.checkins-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    padding: 48px 24px;
+    color: var(--text-muted);
+}
+
+.placeholder-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 8px 0 0;
+}
+
+.placeholder-text {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin: 0;
+    max-width: 380px;
+}
+
+.placeholder-text strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+@media (max-width: 540px) {
+    .checkins-title {
+        font-size: 1.3rem;
+    }
+
+    .checkins-placeholder {
+        padding: 36px 16px;
+    }
+}

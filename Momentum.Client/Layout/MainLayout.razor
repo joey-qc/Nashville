@@ -45,13 +45,13 @@
                         <span class="nav-label">View Log</span>
                     </a>
 
-                    @* CHK-002 Phase 3: temporary nav entry to reach the standalone Check-In form.
-                       A persistent "Check In" action button (per design spec §14) replaces this later. *@
-                    <a href="/check-in" class="nav-item @(GetPath().StartsWith("/check-in") ? "active" : "")">
+                    @* CHK-002 Phase 5A: Check-Ins history nav entry. Creation lives on the
+                       persistent "Check In" top action button, not in the left nav. *@
+                    <a href="/check-ins" class="nav-item @(GetPath().StartsWith("/check-ins") ? "active" : "")">
                         <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7z" fill="currentColor"/>
+                            <path d="M13 3a9 9 0 0 0-9 9H1l3.9 3.9.1.1L9 12H6a7 7 0 1 1 7 7c-1.9 0-3.6-.8-4.8-2l-1.4 1.4A8.9 8.9 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.3 2.5.7-1.2-3.5-2.1V8H12z" fill="currentColor"/>
                         </svg>
-                        <span class="nav-label">Check In</span>
+                        <span class="nav-label">Check Ins</span>
                     </a>
 
                     <!-- Reports — desktop icon-rail shows a direct link; expanded nav (or mobile open drawer) shows collapsible group -->
@@ -149,8 +149,14 @@
                             <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/>
                         </svg>
                     </button>
-                    <span class="topbar-title">@PageTitle</span>
-                    <a href="/log" class="topbar-cta">+ Add Entry</a>
+                    <span class="topbar-title">
+                        <span class="title-full">@PageTitle</span>
+                        <span class="title-short">@PageTitleShort</span>
+                    </span>
+                    <div class="topbar-actions">
+                        <a href="/log" class="topbar-cta">+ Add Entry</a>
+                        <a href="/check-in" class="topbar-cta">Check In</a>
+                    </div>
                 </header>
 
                 <main class="page-content">
@@ -227,6 +233,7 @@
         "/" => "Home",
         var p when p.StartsWith("/log/detail") => "View Log",
         var p when p.StartsWith("/log") => "Add Entry",
+        var p when p.StartsWith("/check-ins") => "Check Ins",
         var p when p.StartsWith("/check-in") => "Check In",
         var p when p.StartsWith("/reports/balance") => "Balance",
         var p when p.StartsWith("/reports") => "Trends",
@@ -234,6 +241,11 @@
         var p when p.StartsWith("/settings") => "Settings",
         _ => "Momentum"
     };
+
+    // Mobile-shortened title: "Manage Activities" → "Manage" so the top row fits the
+    // Add Entry + Check In action buttons without wrapping. Other titles are unchanged.
+    private string PageTitleShort =>
+        GetPath().StartsWith("/activities") ? "Manage" : PageTitle;
 
     private async Task Logout()
     {
