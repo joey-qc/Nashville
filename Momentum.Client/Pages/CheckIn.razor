@@ -2,6 +2,7 @@
 @attribute [Authorize]
 @inject CheckInService CheckInService
 @inject ToastService Toast
+@inject NavigationManager Navigation
 
 <PageTitle>Check In</PageTitle>
 
@@ -14,6 +15,14 @@
         <p class="checkin-subtitle">
             A quick snapshot of your current state. Scores run −5 to +5 — <strong>0 is your baseline</strong>.
         </p>
+        @if (IsLinked)
+        {
+            <p class="checkin-context">
+                @(string.IsNullOrWhiteSpace(FromActivity)
+                    ? "Linked to the activity you just logged."
+                    : $"After: {FromActivity}")
+            </p>
+        }
     </header>
 
     <!-- ══ Form card ══ -->
@@ -66,6 +75,10 @@
                 <button type="submit" class="btn-submit" disabled="@_busy">
                     @(_busy ? "Saving…" : "Save Check-In")
                 </button>
+                @if (IsLinked)
+                {
+                    <button type="button" class="btn-text-cancel" @onclick="Skip" disabled="@_busy">SKIP</button>
+                }
             </div>
 
         </form>
@@ -74,6 +87,15 @@
 </div>
 
 @code {
+    // Optional: when present, this Check-In links to the just-logged activity (post-activity flow).
+    // Absent on the standalone /check-in route.
+    [SupplyParameterFromQuery] public int? ActivityLogId { get; set; }
+
+    // Optional display-only context (the activity name) passed by the Add Entry flow.
+    [SupplyParameterFromQuery(Name = "from")] public string? FromActivity { get; set; }
+
+    private bool IsLinked => ActivityLogId.HasValue;
+
     private readonly CheckInForm _form = new()
     {
         Date = DateTime.Today,
@@ -94,6 +116,7 @@
     {
         // Preload Body/Energy/Mood from the most recent Check-In so the user adjusts
         // relative to their last recorded state. Defaults stay 0/0/0 if none exists.
+        // Applies in both standalone and post-activity (linked) modes.
         var recent = await CheckInService.GetMostRecentAsync();
         if (recent is not null)
         {
@@ -141,7 +164,7 @@
             BodyScore     = _form.Body,
             EnergyScore   = _form.Energy,
             MoodScore     = _form.Mood,
-            ActivityLogId = null   // standalone check-in
+            ActivityLogId = ActivityLogId   // null = standalone; set = linked to the logged activity
         });
 
         _busy = false;
@@ -154,11 +177,21 @@
 
         Toast.Show("Check-in saved.", ToastType.Success);
 
-        // Keep the entered scores (the user's current state is the natural starting
-        // point for the next check-in) but reset the timestamp to now.
+        if (IsLinked)
+        {
+            // Post-activity flow: the check-in is the final step — return to Home.
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        // Standalone flow: keep the entered scores (the natural starting point for the
+        // next check-in) but reset the timestamp to now. User stays on the page.
         _form.Date = DateTime.Today;
         _form.Time = DateTime.Now.TimeOfDay;
     }
+
+    // Post-activity flow only: dismiss without creating a Check-In.
+    private void Skip() => Navigation.NavigateTo("/");
 
     private sealed class CheckInForm
     {

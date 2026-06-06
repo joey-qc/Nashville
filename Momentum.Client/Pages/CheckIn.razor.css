@@ -43,6 +43,19 @@
     font-weight: 600;
 }
 
+/* Post-activity context line (linked Check-In) */
+.checkin-context {
+    display: inline-block;
+    margin: 10px 0 0;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--primary);
+    background: var(--primary-glow);
+    color: var(--primary);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
 /* ── Card base ───────────────────────────────────────────── */
 .card {
     background: var(--surface);
@@ -226,6 +239,32 @@
     opacity: 0.6;
     cursor: not-allowed;
     box-shadow: none;
+}
+
+/* Skip (post-activity flow only) — bare text action */
+.btn-text-cancel {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    padding: 4px 0;
+    white-space: nowrap;
+    transition: color 0.12s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.btn-text-cancel:hover:not(:disabled) {
+    color: var(--text-dim);
+}
+
+.btn-text-cancel:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* ── Mobile adjustments ──────────────────────────────────── */

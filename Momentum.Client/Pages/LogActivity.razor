@@ -546,20 +546,14 @@
                 return;
             }
 
-            Toast.Show($"{_selectedActivity.Name} logged!", ToastType.Success);
+            var activityName = _selectedActivity.Name;
+            Toast.Show($"{activityName} logged!", ToastType.Success);
 
-            // Refresh today's summary so subtitle and after-pill update
-            _todaySummary = await ScoreService.GetSummaryAsync();
-            _todayEntryCount++;
-
-            // Reset form for next entry
-            _selectedActivity     = null;
-            _model.Notes          = null;
-            _model.Points         = 0;
-            _model.Date           = DateTime.Today;
-            _model.Time           = DateTime.Now.TimeOfDay;
-            _selectedDimensionIds = [];
-            if (_notesEditor is not null) await _notesEditor.ClearAsync();
+            // Post-activity Check-In flow (CHK-002 Phase 4): route to the Check-In form
+            // with the new ActivityLogId pre-populated so a follow-up check-in links to it.
+            // The user may save or skip; skipping creates no Check-In.
+            Navigation.NavigateTo(
+                $"/check-in?activityLogId={result.Id}&from={Uri.EscapeDataString(activityName)}");
         }
     }
 

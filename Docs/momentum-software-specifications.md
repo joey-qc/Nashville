@@ -285,6 +285,14 @@ The Reports section of the client contains two distinct pages:
 
 Both pages render charts as **custom inline SVG** — no charting library is imported.
 
+### 8.2b Check-In Pages & Flow
+- `CheckInService` (`Momentum.Client/Services/`) wraps `/api/checkins`: `CreateAsync` (POST) and `GetMostRecentAsync` (wide-range GET, first by `CheckedInAt` desc) for form preload.
+- `/check-in` (`CheckIn.razor`) is the Check-In form. It accepts two optional query parameters:
+  - `activityLogId` (int) — when present, the saved check-in is linked to that activity log (post-activity flow); when absent, the check-in is standalone.
+  - `from` (string) — display-only activity name for the "After: {activity}" context label.
+- **Post-activity flow (CHK-002 Phase 4):** on a successful **new** log creation, `LogActivity.razor` navigates to `/check-in?activityLogId={newId}&from={name}`. In linked mode the form offers Save or **Skip**; both then navigate to Home (`/`). Skipping creates no check-in. The **edit** log path does not enter this flow (returns to View Log). Standalone `/check-in` behavior is unchanged (stays on page after save).
+- No new API surface — ownership of `activityLogId` is enforced by the existing `CheckInService` server validation (400 if the log is not the user's).
+
 ### 8.3 Routing & Authentication
 - Blazor routing is used for client-side navigation.
 - All routes except `/login` and `/register` are protected with an `[Authorize]` attribute.
@@ -366,3 +374,4 @@ The following are noted for future development and should be kept in mind when m
 
 *Momentum — Software Specifications Document*
 *Version 1.8 — §5.3, §6.2, §7.2: CheckIn DTOs, repository, and API endpoints added (CHK-002 Phase 2)*
+*Version 1.9 — §8.2b: Check-In client service, page query params, and post-activity flow documented (CHK-002 Phase 4); no API/schema change*

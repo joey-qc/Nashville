@@ -1,7 +1,7 @@
 # Check-In Feature — Design Specification
 
-**Status:** 🔨 IN PROGRESS — CHK-002 Phase 3 complete (standalone Check-In form); post-activity flow, history screen, View Log integration, reporting not yet implemented
-**Last Updated:** 2026-06-05
+**Status:** 🔨 IN PROGRESS — CHK-002 Phase 4 complete (post-activity flow); history screen, View Log integration, persistent action button, reporting not yet implemented
+**Last Updated:** 2026-06-06
 
 ---
 
@@ -359,7 +359,7 @@ Build: ✅ 0 errors · Tests: ✅ 50/50 (unchanged — no new server tests; clie
 
 **Score range enforcement:** Steppers clamp to `[-5, 5]` client-side and disable at bounds; DTO `[Range(-5,5)]` + server `CheckInService` validation remain the authoritative guards (Phase 2).
 
-**Not yet implemented (later phases):** post-activity flow (§7), Check-Ins history screen (§12), View Log "Details" integration (§10), Edit Log Entry check-in list (§11), persistent "Check In" action button (§14), reporting/correlation (§17).
+**Not yet implemented (after Phase 3):** post-activity flow (§7 — delivered in Phase 4 below), Check-Ins history screen (§12), View Log "Details" integration (§10), Edit Log Entry check-in list (§11), persistent "Check In" action button (§14), reporting/correlation (§17).
 
 **Manual QA checklist (to run against the live app):**
 - Open `/check-in`; defaults load from most recent check-in, else 0/0/0.
@@ -368,7 +368,38 @@ Build: ✅ 0 errors · Tests: ✅ 50/50 (unchanged — no new server tests; clie
 - No browser console errors.
 - Mobile layout (≤540px): date/time stack, steppers full-width and usable.
 
+### CHK-002 Phase 4 — Post-Activity Check-In Flow (COMPLETE 2026-06-06)
+
+Build: ✅ 0 errors · Tests: ✅ 50/50 (unchanged — no schema/API change; client flow is manual-QA per project convention)
+
+Implements the §7 flow: `Save Activity Log → Check-In form opens → user saves or cancels`.
+
+**Add Entry → Check-In hand-off (`Momentum.Client/Pages/LogActivity.razor`):**
+- On successful **new** log creation, navigates to `/check-in?activityLogId={newId}&from={activityName}` (the `from` value is display-only context). The previous behavior (reset form, stay on Add Entry) is replaced for the create path. **Edit path is unchanged** — it still returns to View Log.
+
+**Check-In page changes (`Momentum.Client/Pages/CheckIn.razor` + `.css`):**
+- New query params: `[SupplyParameterFromQuery] int? ActivityLogId` and `[SupplyParameterFromQuery(Name="from")] string? FromActivity` (display only).
+- `IsLinked => ActivityLogId.HasValue`.
+- When linked, a context chip shows `After: {FromActivity}` (or a generic line if the name is absent).
+- Save passes `ActivityLogId` through to `CreateCheckInRequestDto` — ownership is validated server-side by the existing Phase 2 `CheckInService` (`ArgumentException` → 400 if the log isn't the user's).
+- **Linked mode** adds a **SKIP** text button; both Save and Skip then navigate to Home (`/`).
+- **Standalone mode** (`/check-in` with no query) is **unchanged**: Save keeps the user on the page, retains scores, resets timestamp.
+
+**Save / skip behavior (decision):**
+- Linked Save → creates a check-in with the populated `ActivityLogId`, success toast, navigate to Home.
+- Linked Skip → **no check-in created**, navigate to Home.
+- Standalone Save → unchanged (stay on page).
+
+**No schema, API, repository, or service changes** — Phase 4 is entirely client-side routing + the page's optional-link handling. Linked check-ins are ordinary records; `ActivityLogId` SetNull-on-delete behavior (Phase 1) is untouched.
+
+**Manual QA checklist (Phase 4):**
+- Save a new activity → Check-In form opens automatically with an `After: {activity}` context chip.
+- Save the linked check-in → Dev DB row has `ActivityLogId` populated; lands on Home.
+- Save another activity → **Skip** → no check-in row created; lands on Home.
+- Open `/check-in` directly → standalone flow unchanged (no skip button, stays on page after save).
+- No browser console errors.
+
 ---
 
 *Check-In Feature Design Specification — created 2026-06-04*
-*Status: 🔨 IN PROGRESS — Phase 3 complete (standalone form); post-activity flow, history, View Log integration, reporting not started*
+*Status: 🔨 IN PROGRESS — Phase 4 complete (post-activity flow); history, View Log integration, persistent action button, reporting not started*

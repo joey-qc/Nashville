@@ -6,9 +6,9 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** CHK-002 Phase 3 — standalone Check-In form (`/check-in`) complete; post-activity flow, history, View Log integration, reporting not started  
+**Phase:** CHK-002 Phase 4 — post-activity Check-In flow complete; history, View Log integration, persistent action button, reporting not started  
 **Build Status:** ✅ All projects build clean (0 errors); 50/50 tests pass  
-**Last Updated:** 2026-06-05
+**Last Updated:** 2026-06-06
 
 ### v2 Migration Deployment Summary
 
@@ -66,6 +66,16 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 ---
 
 ## Completed Work
+
+### CHK-002 Phase 4 — Post-Activity Check-In Flow (2026-06-06)
+
+- **Status:** ✅ Phase 4 complete. After saving a **new** activity log, the app routes to the Check-In form with the new `ActivityLogId` pre-populated; the user saves a linked check-in or skips.
+- **Build/tests:** ✅ 0 errors; 50/50 tests pass (no schema/API/service changes — client-side flow only; manual QA per project convention).
+- **What shipped:**
+  - `Momentum.Client/Pages/LogActivity.razor` — create path now navigates to `/check-in?activityLogId={newId}&from={activityName}` instead of resetting in place. **Edit path unchanged** (still returns to View Log).
+  - `Momentum.Client/Pages/CheckIn.razor` + `.css` — accepts optional `ActivityLogId` and display-only `from` query params; shows an `After: {activity}` context chip when linked; adds a **SKIP** button in linked mode; Save/Skip in linked mode navigate to Home. **Standalone `/check-in` behavior unchanged.**
+- **Ownership:** linked-save reuses the Phase 2 server validation (`CheckInService` rejects an `ActivityLogId` not owned by the user → 400). No new validation code.
+- **No schema / API / repository / service changes.** `ActivityLogId` SetNull-on-delete (Phase 1) untouched; linked check-ins are ordinary records.
 
 ### CHK-002 Phase 3 — Standalone Check-In Form UI (2026-06-05)
 
@@ -396,7 +406,8 @@ Full detail: `Docs/momentum-known-issues.md`
 | AUTH-001 refresh tokens (long-term) | Low | Near-term done. Long-term: `RefreshToken` entity/table, `/api/auth/refresh` endpoint, rotation, revocation — implement before PWA/mobile work. See `Docs/session-persistence-design-spec.md` §6. |
 | Check-In Phase 2 — API + DTOs | Medium | ✅ Complete (CHK-002 Phase 2, 2026-06-05). DTOs, repository, service, controller all implemented. 15 tests added. |
 | Check-In Phase 3 — standalone form | Medium | ✅ Complete (CHK-002 Phase 3, 2026-06-05). `/check-in` page, client service, temporary nav item. |
-| Check-In Phase 4 — flows + history | Medium | Not started. Post-activity Check-In flow, persistent "Check In" action button (replaces temp nav item), Check-Ins history screen, View Log "Details" toggle (rename from "Notes"), Edit Log Entry associated check-in list |
+| Check-In Phase 4 — post-activity flow | Medium | ✅ Complete (CHK-002 Phase 4, 2026-06-06). Add Entry routes to Check-In with linked `ActivityLogId`; save or skip. |
+| Check-In Phase 5 — history + integration | Medium | Not started. Persistent "Check In" action button (replaces temp nav item), Check-Ins history screen, View Log "Details" toggle (rename from "Notes"), Edit Log Entry associated check-in list |
 | Check-In reminders (PWA / push) | Low | Deferred long-term. Azure Function timer job sends push directly without waking the API (see design spec §16) |
 | Body/Energy/Mood reporting & correlation | Low | Future — depends on Check-In data; activity-input → check-in-outcome analytics (see design spec §17) |
 | Password change in Settings | Low | Planned but not implemented |
@@ -405,4 +416,4 @@ Full detail: `Docs/momentum-known-issues.md`
 
 ---
 
-*Momentum Handoff — Updated 2026-06-05 (CHK-002 Phase 3 — standalone Check-In form at `/check-in`; 50/50 tests)*
+*Momentum Handoff — Updated 2026-06-06 (CHK-002 Phase 4 — post-activity Check-In flow; 50/50 tests)*

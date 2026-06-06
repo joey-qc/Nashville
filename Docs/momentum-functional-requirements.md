@@ -111,15 +111,12 @@ Accessible via the persistent "+" button from any screen.
 
 ### 6.4 Submission
 - User submits the form to log the activity.
-- Upon successful submission, the user is directed to the **Post-Log Confirmation Screen** (see Section 6.5).
+- A success confirmation (toast) confirms the activity was logged.
+- **Upon successfully logging a *new* activity, the user is taken to the Check-In form** (post-activity Check-In flow — see Section 11.2) with that activity pre-associated. The user may save a linked check-in or skip; either way they then land on the **Home / Score Summary** screen (see Section 5).
+- **Editing an existing log entry** does not trigger the Check-In flow — the user returns to the View Log screen.
 
-### 6.5 Post-Log Confirmation Screen
-- Confirms the activity was successfully logged.
-- Displays a summary of what has been logged today, including:
-  - List of activities logged so far today
-  - Today's running point total
-  - This week's running point total
-  - This month's running point total
+### 6.5 Score Summary After Logging
+- After completing (or skipping) the post-activity check-in, the user lands on the **Home / Score Summary** screen, which shows today's, this week's, and this month's running point totals and the day's logged activities (see Section 5).
 - The persistent "+" button remains available to log another activity.
 
 ---
@@ -303,10 +300,18 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
 - On save, a success toast confirms the check-in. The entered scores are retained (the natural starting point for the next check-in) and the timestamp resets to now; the user remains on the page.
 - Saved Check-Ins from this screen are **standalone** (not linked to any activity log).
 
-### 11.2 Not yet implemented
-- Post-activity Check-In flow (auto-open after logging an activity).
+### 11.2 Post-Activity Check-In Flow (CHK-002 Phase 4 — implemented)
+- After a user successfully logs a **new** activity, the Check-In form opens automatically with that activity pre-associated.
+- The form shows an **"After: {activity}"** context label so the user knows the check-in will link to what they just logged.
+- The form behaves the same as the standalone form (same metrics, scale, date/time, and smart defaults), with two differences:
+  - A **Skip** option is available. Skipping creates **no** Check-In.
+  - After **Save** or **Skip**, the user is taken to the **Home / Score Summary** screen.
+- A saved check-in from this flow is **linked** to the activity log entry; a skipped one creates nothing.
+
+### 11.3 Not yet implemented
 - Check-Ins history screen.
 - View Log "Details" integration showing linked check-ins.
+- Persistent "Check In" action button (the temporary nav item is the current entry point).
 - Body/Energy/Mood reporting and correlation.
 
 ---
@@ -334,4 +339,4 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
 ---
 
 *Momentum — Functional Requirements Document*
-*Version 1.10 — Rich Notes v1 Phase 3: §7.1 adds the View Log Show Notes toggle (conditional visibility, default OFF, formatted note rendering beneath entries)*
+*Version 1.11 — CHK-002 Phase 4: §6.4/§6.5 updated for the post-activity Check-In flow (new logs route to the Check-In form, then Home); §11.2 adds the post-activity flow with Save/Skip*
