@@ -309,12 +309,15 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
   - After **Save** or **Skip**, the user is taken to the **Home / Score Summary** screen.
 - A saved check-in from this flow is **linked** to the activity log entry; a skipped one creates nothing.
 
-### 11.3 Check-Ins History (CHK-002 Phase 5A — placeholder)
+### 11.3 Check-Ins History (CHK-002 Phase 5B — implemented)
 - A **Check Ins** left-nav item routes to the Check-In history screen (`/check-ins`).
-- Currently a **placeholder** — the full period-based history list is deferred to a later phase.
+- Lists the user's check-ins **newest first** (by the actual check-in instant), each showing the date/time — in the user's **local browser time** — and the **Body**, **Energy**, and **Mood** scores.
+- A check-in linked to an activity shows **"After: {activity name}"**; standalone check-ins show no extra label.
+- **Edit:** the user can edit a check-in's date/time and Body/Energy/Mood scores inline. The activity link cannot be changed from this screen.
+- **Delete:** the user can delete any of their check-ins via a trash → confirm/cancel control. Deleting a check-in does **not** delete the associated activity log.
+- An empty state is shown when the user has no check-ins.
 
 ### 11.4 Not yet implemented
-- Full Check-Ins history list (the `/check-ins` route is a placeholder).
 - View Log "Details" integration showing linked check-ins.
 - Body/Energy/Mood reporting and correlation.
 
@@ -345,3 +348,5 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
 *Momentum — Functional Requirements Document*
 *Version 1.11 — CHK-002 Phase 4: §6.4/§6.5 updated for the post-activity Check-In flow (new logs route to the Check-In form, then Home); §11.2 adds the post-activity flow with Save/Skip*
 *Version 1.12 — CHK-002 Phase 5A: §3 nav restructured (persistent top "Check In" button + "Check Ins" history nav, mobile "Manage" title); §11.1 entry point updated; §11.3 Check-Ins history placeholder added*
+*Version 1.13 — CHK-002 Phase 5B: §11.3 Check-Ins history screen implemented (newest-first list, "After: {activity}" for linked, inline edit, trash→confirm delete)*
+*Version 1.14 — CHK-002 Phase 5B fix: §11.3 clarifies check-in times display in the user's local browser time, ordered by the true check-in instant*

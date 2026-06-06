@@ -424,7 +424,50 @@ Separates Check-In **creation** (top action button) from Check-In **history** (l
 - Manage Activities title shows "Manage" on mobile; top row does not wrap.
 - No browser console errors.
 
+### CHK-002 Phase 5B — Check-Ins History Screen (COMPLETE 2026-06-06)
+
+Build: ✅ 0 errors · Tests: ✅ 52/52 (2 new server tests for `ActivityName` projection)
+
+Replaces the `/check-ins` placeholder with a usable history list supporting inline edit and delete.
+
+**DTO / server (`Momentum.Shared`, `Momentum.Application`, `Momentum.Infrastructure`):**
+- `CheckInDto` gains **`ActivityName`** (string?, display-only) — the linked activity's name, or null for standalone.
+- `CheckInRepository.GetByIdAsync` / `GetByDateRangeAsync` now `.Include(c => c.ActivityLog).ThenInclude(l => l.Activity)` so the name is available.
+- `CheckInService.Map` populates `ActivityName = c.ActivityLog?.Activity?.Name`.
+- No new endpoints — reuses GET (date-range), PUT, DELETE from Phase 2.
+
+**Client service (`Momentum.Client/Services/CheckInService.cs`):**
+- Added `GetAllAsync()` (wide date-range, newest first, empty list on failure), `UpdateAsync(id, dto)`, `DeleteAsync(id)`. `GetMostRecentAsync` now delegates to `GetAllAsync`.
+
+**Page (`Momentum.Client/Pages/CheckIns.razor` + `.css`):**
+- Lists check-ins **newest first** (the repo already orders by `CheckedInAt` desc).
+- Each row shows timestamp, **Body / Energy / Mood** score pills (colored pos/neg/zero), and `After: {ActivityName}` only when linked (no label for standalone).
+- **Inline edit:** an edit (pencil) button swaps the row for a form with date/time + three bounded −5…+5 steppers. Save / Cancel. The existing `ActivityLogId` is preserved and sent back unchanged (link is not editable here); `CreatedAt` is never shown.
+- **Delete:** trash → confirm(✓)/cancel(✕) pattern, identical to View Log / Manage Activities. Deleting a check-in never affects any ActivityLog.
+- Empty state when the user has no check-ins.
+
+**Unchanged:** the `/check-in` form, the post-activity flow, and the persistent top "Check In" button.
+
+**Out of scope (not added):** charts, reporting, search, pagination, filtering, analytics.
+
+**Manual QA checklist (Phase 5B):**
+- Open `/check-ins` → newest-first list.
+- Standalone check-ins show no "After:" label; linked ones show `After: {activity}`.
+- Edit a check-in → values update and persist.
+- Delete a check-in → it disappears; delete requires explicit confirm.
+- "+ Add Entry" / "Check In" top buttons still work; no console errors; mobile layout usable.
+
+#### Phase 5B time-display fix (2026-06-06)
+
+QA found check-in times displayed in UTC (e.g. a 10:52 AM EDT check-in showed as 2:52 PM) and the list appeared mis-ordered. Root cause: EF Core returns `CheckedInAt`/`CreatedAt` as `DateTimeKind.Unspecified`; the API's `UtcDateTimeConverter.Write` then ran `ToUniversalTime()` on them, which on a **non-UTC host (the dev machine)** re-shifted the already-UTC value by the host offset (+4h). Production (UTC host) was unaffected, so it only surfaced in local QA.
+
+Fix (UTC stored throughout; no schema change):
+- `CheckInService.Map` now marks `CheckedInAt` and `CreatedAt` as `DateTimeKind.Utc` (`DateTime.SpecifyKind`) so the serializer emits a correct `Z` without re-converting against the server timezone.
+- Client `CheckInService.GetAllAsync` sorts newest-first by `CheckedInAt` (after UTC-tagging) so display order tracks the true instant regardless of source order.
+- Client display (`ToLocalTime()`) and edit-field round-trip (`SpecifyKind(Local).ToUniversalTime()`) were already correct and are unchanged.
+- 3 server tests added: UTC-kind mapping without clock shift, `ActivityName` projection (linked / standalone), and pass-through ordering.
+
 ---
 
 *Check-In Feature Design Specification — created 2026-06-04*
-*Status: 🔨 IN PROGRESS — Phase 5A complete (nav structure: top Check In button + Check Ins history nav + placeholder); history list, View Log integration, reporting not started*
+*Status: 🔨 IN PROGRESS — Phase 5B complete (history screen with edit/delete; time-display fix); View Log "Details" integration, reporting not started*

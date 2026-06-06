@@ -9,10 +9,12 @@ public class CheckInRepository(AppDbContext context) : ICheckInRepository
 {
     public async Task<CheckIn?> GetByIdAsync(int id, string userId) =>
         await context.CheckIns
+            .Include(c => c.ActivityLog).ThenInclude(l => l!.Activity)
             .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
 
     public async Task<IEnumerable<CheckIn>> GetByDateRangeAsync(string userId, DateTime from, DateTime to) =>
         await context.CheckIns
+            .Include(c => c.ActivityLog).ThenInclude(l => l!.Activity)
             .Where(c => c.UserId == userId && c.CheckedInAt >= from && c.CheckedInAt < to)
             .OrderByDescending(c => c.CheckedInAt)
             .ToListAsync();

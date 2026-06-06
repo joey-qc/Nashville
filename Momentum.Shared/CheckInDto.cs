@@ -9,5 +9,9 @@ public class CheckInDto
     public int      EnergyScore   { get; set; }
     public int      MoodScore     { get; set; }
     public int?     ActivityLogId { get; set; }
+
+    /// <summary>Name of the linked activity (when ActivityLogId is set); null for standalone check-ins. Display-only.</summary>
+    public string?  ActivityName  { get; set; }
+
     public DateTime CreatedAt     { get; set; }
 }

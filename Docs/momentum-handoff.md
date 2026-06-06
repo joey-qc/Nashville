@@ -6,8 +6,8 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** CHK-002 Phase 5A — Check-In nav structure complete (top "Check In" button + "Check Ins" history nav + placeholder); history list, View Log integration, reporting not started  
-**Build Status:** ✅ All projects build clean (0 errors); 50/50 tests pass  
+**Phase:** CHK-002 Phase 5B — Check-Ins history screen (list + edit + delete) complete, incl. time-display fix; View Log "Details" integration, reporting not started  
+**Build Status:** ✅ All projects build clean (0 errors); 54/54 tests pass  
 **Last Updated:** 2026-06-06
 
 ### v2 Migration Deployment Summary
@@ -66,6 +66,21 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 ---
 
 ## Completed Work
+
+### CHK-002 Phase 5B — Check-Ins History Screen (2026-06-06)
+
+- **Status:** ✅ Phase 5B complete. `/check-ins` is now a usable history list with inline edit and delete.
+- **Build/tests:** ✅ 0 errors; 52/52 tests pass (2 new server tests for `ActivityName` projection).
+- **What shipped:**
+  - `Momentum.Shared/CheckInDto.cs` — added display-only `ActivityName`.
+  - `Momentum.Infrastructure/Repositories/CheckInRepository.cs` — `GetByIdAsync`/`GetByDateRangeAsync` now `.Include` the linked `ActivityLog.Activity`.
+  - `Momentum.Application/Services/CheckInService.cs` — `Map` populates `ActivityName` from `ActivityLog?.Activity?.Name`.
+  - `Momentum.Client/Services/CheckInService.cs` — added `GetAllAsync`, `UpdateAsync`, `DeleteAsync`; `GetMostRecentAsync` delegates to `GetAllAsync`.
+  - `Momentum.Client/Pages/CheckIns.razor` + `.css` — newest-first list; Body/Energy/Mood score pills; `After: {activity}` for linked, no label for standalone; inline edit (date/time + bounded steppers, link preserved, `CreatedAt` hidden); delete via trash→confirm/cancel; empty state.
+  - `Momentum.Tests/CheckInServiceTests.cs` — 2 new tests (linked populates `ActivityName`, standalone is null).
+- **No new API endpoints** — reuses GET (date-range), PUT, DELETE from Phase 2. Deleting a check-in never affects any ActivityLog.
+- **Unchanged:** `/check-in` form, post-activity flow, persistent top "Check In" button.
+- **Time-display fix (2026-06-06):** check-in times were showing in UTC on the dev box (e.g. 10:52 AM → 2:52 PM). Cause: `UtcDateTimeConverter.Write` double-shifted EF's `Unspecified` timestamps on a non-UTC host. Fix: `CheckInService.Map` marks `CheckedInAt`/`CreatedAt` as `DateTimeKind.Utc`; client `GetAllAsync` sorts newest-first by the true instant. UTC storage unchanged; production (UTC host) was already correct. See KI-017.
 
 ### CHK-002 Phase 5A — Check-In Navigation Structure (2026-06-06)
 
@@ -417,7 +432,8 @@ Full detail: `Docs/momentum-known-issues.md`
 | Check-In Phase 3 — standalone form | Medium | ✅ Complete (CHK-002 Phase 3, 2026-06-05). `/check-in` page, client service, temporary nav item. |
 | Check-In Phase 4 — post-activity flow | Medium | ✅ Complete (CHK-002 Phase 4, 2026-06-06). Add Entry routes to Check-In with linked `ActivityLogId`; save or skip. |
 | Check-In Phase 5A — nav structure | Medium | ✅ Complete (CHK-002 Phase 5A, 2026-06-06). Persistent top "Check In" button, "Check Ins" history nav, `/check-ins` placeholder, mobile "Manage" title. |
-| Check-In Phase 5B — history + integration | Medium | Not started. Build out the `/check-ins` history list (currently a placeholder), View Log "Details" toggle (rename from "Notes"), Edit Log Entry associated check-in list |
+| Check-In Phase 5B — history screen | Medium | ✅ Complete (CHK-002 Phase 5B, 2026-06-06). `/check-ins` list with inline edit + delete; `ActivityName` on DTO. |
+| Check-In Phase 5C — View Log integration | Medium | Not started. View Log "Details" toggle (rename from "Notes") showing linked check-ins; Edit Log Entry associated check-in list |
 | Check-In reminders (PWA / push) | Low | Deferred long-term. Azure Function timer job sends push directly without waking the API (see design spec §16) |
 | Body/Energy/Mood reporting & correlation | Low | Future — depends on Check-In data; activity-input → check-in-outcome analytics (see design spec §17) |
 | Password change in Settings | Low | Planned but not implemented |
@@ -426,4 +442,4 @@ Full detail: `Docs/momentum-known-issues.md`
 
 ---
 
-*Momentum Handoff — Updated 2026-06-06 (CHK-002 Phase 5A — Check-In nav structure: top button + history nav + placeholder; 50/50 tests)*
+*Momentum Handoff — Updated 2026-06-06 (CHK-002 Phase 5B — Check-Ins history screen with edit/delete + time-display fix KI-017; 54/54 tests)*

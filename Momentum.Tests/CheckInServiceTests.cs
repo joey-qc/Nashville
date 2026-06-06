@@ -205,4 +205,96 @@ public class CheckInServiceTests
 
         Assert.False(result);
     }
+
+    // ── ActivityName projection (CHK-002 Phase 5B) ────────────────────────────
+
+    [Fact]
+    public async Task GetByDateRangeAsync_LinkedCheckIn_PopulatesActivityName()
+    {
+        var from = DateTime.UtcNow.Date;
+        var to   = from.AddDays(1);
+        var linked = new CheckIn
+        {
+            Id = 1, UserId = UserId, CheckedInAt = from.AddHours(9),
+            BodyScore = 1, EnergyScore = 1, MoodScore = 1,
+            ActivityLogId = 42,
+            ActivityLog = new ActivityLog
+            {
+                Id = 42, UserId = UserId,
+                Activity = new Activity { Id = 7, Name = "Exercise / Gym" }
+            },
+            CreatedAt = DateTime.UtcNow
+        };
+        _checkInRepo.GetByDateRangeAsync(UserId, from, to).Returns([linked]);
+
+        var result = (await _sut.GetByDateRangeAsync(UserId, from, to)).Single();
+
+        Assert.Equal(42, result.ActivityLogId);
+        Assert.Equal("Exercise / Gym", result.ActivityName);
+    }
+
+    [Fact]
+    public async Task GetByDateRangeAsync_StandaloneCheckIn_ActivityNameIsNull()
+    {
+        var from = DateTime.UtcNow.Date;
+        var to   = from.AddDays(1);
+        var standalone = new CheckIn
+        {
+            Id = 2, UserId = UserId, CheckedInAt = from.AddHours(7),
+            BodyScore = 0, EnergyScore = 0, MoodScore = 0,
+            ActivityLogId = null,
+            CreatedAt = DateTime.UtcNow
+        };
+        _checkInRepo.GetByDateRangeAsync(UserId, from, to).Returns([standalone]);
+
+        var result = (await _sut.GetByDateRangeAsync(UserId, from, to)).Single();
+
+        Assert.Null(result.ActivityLogId);
+        Assert.Null(result.ActivityName);
+    }
+
+    // ── DateTime kind mapping (CHK-002 Phase 5B time-display fix) ──────────────
+
+    [Fact]
+    public async Task GetByDateRangeAsync_MarksTimestampsAsUtc_WithoutShiftingClockValue()
+    {
+        var from = DateTime.UtcNow.Date;
+        var to   = from.AddDays(1);
+        // EF Core returns SQL Server datetime2 values as Kind=Unspecified.
+        var stored = new DateTime(2026, 6, 6, 14, 52, 0, DateTimeKind.Unspecified);
+        var checkIn = new CheckIn
+        {
+            Id = 1, UserId = UserId,
+            CheckedInAt = stored,
+            BodyScore = 1, EnergyScore = 1, MoodScore = 1,
+            CreatedAt = new DateTime(2026, 6, 6, 14, 52, 0, DateTimeKind.Unspecified)
+        };
+        _checkInRepo.GetByDateRangeAsync(UserId, from, to).Returns([checkIn]);
+
+        var result = (await _sut.GetByDateRangeAsync(UserId, from, to)).Single();
+
+        // Marked UTC so the API serializer emits a 'Z' suffix without re-converting…
+        Assert.Equal(DateTimeKind.Utc, result.CheckedInAt.Kind);
+        Assert.Equal(DateTimeKind.Utc, result.CreatedAt.Kind);
+        // …and the clock value is preserved (no timezone shift applied in the service).
+        Assert.Equal(stored.TimeOfDay, result.CheckedInAt.TimeOfDay);
+        Assert.Equal(new DateTime(2026, 6, 6), result.CheckedInAt.Date);
+    }
+
+    [Fact]
+    public async Task GetByDateRangeAsync_OrdersByCheckInRepository()
+    {
+        // The repository is responsible for newest-first ordering; the service passes
+        // the order through unchanged (the client also sorts defensively for display).
+        var from = DateTime.UtcNow.Date;
+        var to   = from.AddDays(1);
+        var newer = new CheckIn { Id = 2, UserId = UserId, CheckedInAt = from.AddHours(15), CreatedAt = DateTime.UtcNow };
+        var older = new CheckIn { Id = 1, UserId = UserId, CheckedInAt = from.AddHours(9),  CreatedAt = DateTime.UtcNow };
+        _checkInRepo.GetByDateRangeAsync(UserId, from, to).Returns([newer, older]);
+
+        var result = (await _sut.GetByDateRangeAsync(UserId, from, to)).ToList();
+
+        Assert.Equal(2, result[0].Id);
+        Assert.Equal(1, result[1].Id);
+    }
 }

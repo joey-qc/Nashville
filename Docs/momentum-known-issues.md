@@ -653,5 +653,32 @@ Two fixes applied:
 
 ---
 
+## KI-017 — Check-In history times displayed in UTC on non-UTC hosts
+
+| Field | Value |
+|---|---|
+| **ID** | KI-017 |
+| **Status** | RESOLVED |
+| **Area** | `Momentum.Application/Services/CheckInService.cs` (Map); `Momentum.Client/Services/CheckInService.cs`; underlying cause in `Momentum.API/Converters/UtcDateTimeConverter.cs` |
+| **Severity** | Medium — wrong times shown on the Check-Ins history screen during local dev/QA; production (UTC host) unaffected |
+| **Discovered** | 2026-06-06 — CHK-002 Phase 5B manual QA |
+| **Resolved** | 2026-06-06 |
+
+### Symptom
+On the `/check-ins` history screen, a check-in entered at 10:52 AM local (EDT) displayed as 2:52 PM (+4h), and the list appeared mis-ordered.
+
+### Root Cause
+Check-ins are stored in UTC. EF Core returns `CheckedInAt`/`CreatedAt` as `DateTimeKind.Unspecified`. The API's `UtcDateTimeConverter.Write` calls `value.ToUniversalTime()`; for an `Unspecified` value on a **non-UTC host** (the developer machine, EDT), that treats the already-UTC value as server-local and shifts it again by the host offset before writing the `Z` string. The client then subtracts the offset on display, netting the host offset as a net error. A UTC production host applies a zero shift, so the defect only appeared in local QA.
+
+### Resolution
+- `CheckInService.Map` marks `CheckedInAt` and `CreatedAt` as `DateTimeKind.Utc` via `DateTime.SpecifyKind`, so the serializer emits a correct `Z` without re-converting against the server timezone (`ToUniversalTime()` on a `Utc` value is a no-op on any host).
+- Client `CheckInService.GetAllAsync` sorts newest-first by `CheckedInAt` after UTC-tagging, so display order tracks the true instant regardless of source order.
+- No database schema change; UTC storage and the create/edit conversion paths were already correct.
+- 3 server tests added in `CheckInServiceTests` (UTC-kind mapping without clock shift; `ActivityName` projection; pass-through ordering). 54/54 tests pass.
+
+> **Note:** the shared `UtcDateTimeConverter.Write` retains the latent double-shift for any DTO whose timestamps reach it as `Unspecified` on a non-UTC host (e.g. `ActivityLogDto.LoggedAt`). This is pre-existing, masked in production (UTC), and out of scope for CHK-002. Marking timestamps `Utc` in the mapping layer (as done for check-ins) is the project's pattern for avoiding it.
+
+---
+
 *Momentum — Known Issues Log*  
-*Last updated: 2026-06-05 (KI-009, KI-015, KI-016 resolved — commit `ff833da`, deployed to production, smoke test passed)*
+*Last updated: 2026-06-06 (KI-017 resolved — Check-In history UTC time-display fix)*

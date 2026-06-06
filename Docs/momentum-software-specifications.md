@@ -160,7 +160,7 @@ Key DTOs include:
 - `UpdateActivityLogDto` — includes optional `List<int>? DimensionIds`; when provided the entry's snapshot is fully replaced; when null and the activity changed, snapshot is re-derived from the new activity; when null and activity unchanged, existing snapshot is preserved; `Notes` has `[MaxLength(10000)]`
 - `ActivityLogService.SanitizeNotes()` — `public static` helper; applied to Notes on every create and update; strips disallowed HTML tags/attributes via `HtmlSanitizer` (allowlist: p, br, strong, em, b, i, u, ul, ol, li — includes `b`/`i` because browser `execCommand` outputs these); uses `KeepChildNodes = true` so structural wrappers (e.g. the `<div>` `execCommand` puts around a list when text precedes it) are unwrapped while allowed children survive; script/style tags are still removed; normalizes blank content to null
 - `RichNotesEditor` — Blazor component (`Momentum.Client/Components/`) replacing the plain textarea on Add/Edit Log Entry; `contenteditable` + custom toolbar; JS interop via `wwwroot/js/richNotesEditor.js`; parent reads content via `GetContentAsync()` at submit time; `ShouldRender()` returns false after first render to prevent Blazor from overwriting user edits
-- `CheckInDto` — response DTO for a check-in record; includes all fields except internal fields are present but CreatedAt is audit-only
+- `CheckInDto` — response DTO for a check-in record; includes `Id`, `UserId`, `CheckedInAt`, `BodyScore`/`EnergyScore`/`MoodScore`, `ActivityLogId`, `ActivityName` (display-only — the linked activity's name, null for standalone), and `CreatedAt` (audit-only)
 - `CreateCheckInRequestDto` — `CheckedInAt?` (optional, defaults to server UTC now), `BodyScore`/`EnergyScore`/`MoodScore` (int, `[Range(-5, 5)]`), `ActivityLogId?` (optional)
 - `UpdateCheckInRequestDto` — `CheckedInAt` (required), scores with `[Range(-5, 5)]`, `ActivityLogId?`; pass null ActivityLogId to detach from a log entry
 
@@ -182,7 +182,7 @@ Key DTOs include:
 Key repositories:
 - `IActivityRepository` / `ActivityRepository`
 - `IActivityLogRepository` / `ActivityLogRepository`
-- `ICheckInRepository` / `CheckInRepository` (CHK-002 Phase 2)
+- `ICheckInRepository` / `CheckInRepository` (CHK-002 Phase 2; `GetByIdAsync`/`GetByDateRangeAsync` eager-load `ActivityLog.Activity` so `CheckInDto.ActivityName` can be projected — Phase 5B)
 
 ### 6.3 Migrations
 - EF Core migrations are used to manage database schema changes.
@@ -286,7 +286,9 @@ The Reports section of the client contains two distinct pages:
 Both pages render charts as **custom inline SVG** — no charting library is imported.
 
 ### 8.2b Check-In Pages & Flow
-- `CheckInService` (`Momentum.Client/Services/`) wraps `/api/checkins`: `CreateAsync` (POST) and `GetMostRecentAsync` (wide-range GET, first by `CheckedInAt` desc) for form preload.
+- `CheckInService` (`Momentum.Client/Services/`) wraps `/api/checkins`: `CreateAsync` (POST), `GetAllAsync` (wide-range GET, newest first), `GetMostRecentAsync` (first of `GetAllAsync`, for form preload), `UpdateAsync` (PUT), `DeleteAsync` (DELETE).
+- **Check-Ins history (`/check-ins`, `CheckIns.razor` — CHK-002 Phase 5B):** lists check-ins newest first via `GetAllAsync`; shows Body/Energy/Mood and `After: {ActivityName}` for linked entries. Inline edit (date/time + scores via `UpdateAsync`, preserving `ActivityLogId`) and delete (trash→confirm via `DeleteAsync`). No charts/search/pagination.
+- **Time handling:** check-ins are stored UTC. `CheckInService.Map` marks `CheckedInAt`/`CreatedAt` as `DateTimeKind.Utc` (EF returns them `Unspecified`) so the `UtcDateTimeConverter` serializes a correct `Z` without re-converting against the server timezone — this prevented a double-shift on non-UTC hosts (KI-017). The client UTC-tags on read, sorts newest-first by the true instant, displays via `ToLocalTime()`, and converts edits back with `SpecifyKind(Local).ToUniversalTime()`.
 - `/check-in` (`CheckIn.razor`) is the Check-In form. It accepts two optional query parameters:
   - `activityLogId` (int) — when present, the saved check-in is linked to that activity log (post-activity flow); when absent, the check-in is standalone.
   - `from` (string) — display-only activity name for the "After: {activity}" context label.
@@ -375,3 +377,5 @@ The following are noted for future development and should be kept in mind when m
 *Momentum — Software Specifications Document*
 *Version 1.8 — §5.3, §6.2, §7.2: CheckIn DTOs, repository, and API endpoints added (CHK-002 Phase 2)*
 *Version 1.9 — §8.2b: Check-In client service, page query params, and post-activity flow documented (CHK-002 Phase 4); no API/schema change*
+*Version 1.10 — §5.3/§6.2/§8.2b: CheckInDto gains ActivityName (display-only, projected from eager-loaded ActivityLog.Activity); Check-Ins history screen with edit/delete (CHK-002 Phase 5B); no new endpoints*
+*Version 1.11 — §8.2b: documented check-in UTC time handling (CheckInService.Map marks timestamps Utc; client sorts/displays in local time) — fixes KI-017 double-shift on non-UTC hosts*

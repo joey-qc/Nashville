@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   Check-Ins history page (placeholder — CHK-002 Phase 5A)
+   Check-Ins history page (CHK-002 Phase 5B)
 ═══════════════════════════════════════════════════════════ */
 .checkins-page {
     display: flex;
@@ -44,7 +44,7 @@
     padding: 20px;
 }
 
-/* ── Placeholder card ────────────────────────────────────── */
+/* ── Empty / loading placeholder ─────────────────────────── */
 .checkins-placeholder {
     display: flex;
     flex-direction: column;
@@ -75,9 +75,328 @@
     font-weight: 600;
 }
 
+/* ── List ────────────────────────────────────────────────── */
+.checkin-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.checkin-card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+}
+
+.checkin-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.checkin-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex-shrink: 0;
+    width: 130px;
+}
+
+.checkin-time {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.checkin-context {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Score pills ─────────────────────────────────────────── */
+.checkin-scores {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.score-pill {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+}
+
+.score-pill-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.score-pill-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.score-pill-value.pos { color: var(--primary); }
+.score-pill-value.neg { color: var(--negative); }
+
+/* ── Row actions (edit + delete) ─────────────────────────── */
+.checkin-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.act-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.12s ease, color 0.12s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.act-btn.edit {
+    color: var(--text-muted);
+}
+
+.act-btn.edit:hover {
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.act-btn.delete {
+    color: var(--text-muted);
+}
+
+.act-btn.delete:hover {
+    background: rgba(255, 107, 107, 0.12);
+    color: var(--negative);
+}
+
+.act-btn.confirm {
+    color: var(--negative);
+    background: rgba(255, 107, 107, 0.12);
+}
+
+.act-btn.confirm:hover {
+    background: rgba(255, 107, 107, 0.22);
+}
+
+.act-btn.cancel-del {
+    color: var(--text-muted);
+}
+
+.act-btn.cancel-del:hover {
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+/* ── Inline edit form ────────────────────────────────────── */
+.checkin-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.edit-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.field-label {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.field-input {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color 0.15s ease;
+}
+
+.field-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.field-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.5);
+    cursor: pointer;
+}
+
+/* Score stepper (bounded −5…+5) — mirrors the Check-In form */
+.score-stepper {
+    display: flex;
+    align-items: stretch;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.score-btn {
+    width: 52px;
+    min-height: 48px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.12s ease, color 0.12s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.score-btn:hover:not(:disabled) {
+    background: var(--surface-3);
+    color: var(--text);
+}
+
+.score-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.score-value {
+    flex: 1;
+    text-align: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    line-height: 48px;
+    border-left: 1px solid var(--border-soft);
+    border-right: 1px solid var(--border-soft);
+    transition: color 0.15s ease;
+}
+
+.score-value.pos { color: var(--primary); }
+.score-value.neg { color: var(--negative); }
+
+.edit-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 2px;
+}
+
+.btn-submit {
+    padding: 10px 24px;
+    background: var(--primary);
+    color: #071a07;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 0 16px rgba(118, 224, 74, 0.18), 0 2px 6px rgba(0, 0, 0, 0.28);
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.btn-submit:hover:not(:disabled) {
+    background: var(--primary-dim);
+}
+
+.btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-text-cancel {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    padding: 4px 0;
+    white-space: nowrap;
+    transition: color 0.12s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.btn-text-cancel:hover:not(:disabled) {
+    color: var(--text-dim);
+}
+
+.btn-text-cancel:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ── Mobile ──────────────────────────────────────────────── */
 @media (max-width: 540px) {
     .checkins-title {
         font-size: 1.3rem;
+    }
+
+    .checkin-main {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .checkin-info {
+        width: auto;
+        flex: 1;
+    }
+
+    .checkin-scores {
+        order: 3;
+        flex-basis: 100%;
+        margin-top: 4px;
     }
 
     .checkins-placeholder {

@@ -85,11 +85,16 @@ public class CheckInService(
     {
         Id            = c.Id,
         UserId        = c.UserId,
-        CheckedInAt   = c.CheckedInAt,
+        // Timestamps are stored in UTC, but EF Core returns them as DateTimeKind.Unspecified.
+        // Mark them Utc here so the API's JSON serializer emits a proper 'Z' suffix without
+        // re-converting against the server's local timezone (which double-shifts on non-UTC
+        // hosts such as a developer machine). The client then converts to browser-local time.
+        CheckedInAt   = DateTime.SpecifyKind(c.CheckedInAt, DateTimeKind.Utc),
         BodyScore     = c.BodyScore,
         EnergyScore   = c.EnergyScore,
         MoodScore     = c.MoodScore,
         ActivityLogId = c.ActivityLogId,
-        CreatedAt     = c.CreatedAt
+        ActivityName  = c.ActivityLog?.Activity?.Name,
+        CreatedAt     = DateTime.SpecifyKind(c.CreatedAt, DateTimeKind.Utc)
     };
 }

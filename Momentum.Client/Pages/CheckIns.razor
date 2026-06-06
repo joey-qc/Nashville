@@ -1,5 +1,7 @@
 @page "/check-ins"
 @attribute [Authorize]
+@inject CheckInService CheckInService
+@inject ToastService Toast
 
 <PageTitle>Check Ins</PageTitle>
 
@@ -12,16 +14,258 @@
         <p class="checkins-subtitle">Your Body, Energy, and Mood history.</p>
     </header>
 
-    <!-- ══ Placeholder (CHK-002 Phase 5A) ══ -->
-    <div class="card checkins-placeholder">
-        <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true">
-            <path d="M13 3a9 9 0 0 0-9 9H1l3.9 3.9.1.1L9 12H6a7 7 0 1 1 7 7c-1.9 0-3.6-.8-4.8-2l-1.4 1.4A8.9 8.9 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.3 2.5.7-1.2-3.5-2.1V8H12z" fill="currentColor"/>
-        </svg>
-        <p class="placeholder-title">Check-In history is coming soon.</p>
-        <p class="placeholder-text">
-            Use the <strong>Check In</strong> button in the top bar to record how you're doing.
-            Your history will appear here.
-        </p>
-    </div>
+    @if (_loading)
+    {
+        <div class="card checkins-placeholder">
+            <p class="placeholder-text">Loading…</p>
+        </div>
+    }
+    else if (_checkIns.Count == 0)
+    {
+        <!-- ══ Empty state ══ -->
+        <div class="card checkins-placeholder">
+            <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true">
+                <path d="M13 3a9 9 0 0 0-9 9H1l3.9 3.9.1.1L9 12H6a7 7 0 1 1 7 7c-1.9 0-3.6-.8-4.8-2l-1.4 1.4A8.9 8.9 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.3 2.5.7-1.2-3.5-2.1V8H12z" fill="currentColor"/>
+            </svg>
+            <p class="placeholder-title">No check-ins yet.</p>
+            <p class="placeholder-text">
+                Use the <strong>Check In</strong> button in the top bar to record how you're doing.
+            </p>
+        </div>
+    }
+    else
+    {
+        <div class="checkin-list">
+            @foreach (var c in _checkIns)
+            {
+                <div class="checkin-card">
+                    @if (_editingId == c.Id)
+                    {
+                        <!-- ══ Inline edit form ══ -->
+                        <div class="checkin-edit">
+                            <div class="edit-row">
+                                <div class="edit-field">
+                                    <label class="field-label" for="edit-date-@c.Id">DATE</label>
+                                    <input id="edit-date-@c.Id" type="date" class="field-input"
+                                           value="@_editDate.ToString("yyyy-MM-dd")" @onchange="OnEditDateChange" />
+                                </div>
+                                <div class="edit-field">
+                                    <label class="field-label" for="edit-time-@c.Id">TIME</label>
+                                    <input id="edit-time-@c.Id" type="time" class="field-input"
+                                           value="@EditTimeValue" @onchange="OnEditTimeChange" />
+                                </div>
+                            </div>
+
+                            @foreach (var s in EditScores)
+                            {
+                                var val = s.Get();
+                                <div class="edit-field">
+                                    <label class="field-label">@s.Label.ToUpperInvariant()</label>
+                                    <div class="score-stepper">
+                                        <button type="button" class="score-btn" aria-label="Decrease @s.Label"
+                                                @onclick="@(() => AdjustEdit(s.Set, s.Get(), -1))"
+                                                disabled="@(val <= -5)">−</button>
+                                        <span class="score-value @(val > 0 ? "pos" : val < 0 ? "neg" : "")">
+                                            @(val > 0 ? "+" : "")@val
+                                        </span>
+                                        <button type="button" class="score-btn" aria-label="Increase @s.Label"
+                                                @onclick="@(() => AdjustEdit(s.Set, s.Get(), 1))"
+                                                disabled="@(val >= 5)">+</button>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="edit-actions">
+                                <button type="button" class="btn-submit" disabled="@_busy" @onclick="SaveEdit">
+                                    @(_busy ? "Saving…" : "Save")
+                                </button>
+                                <button type="button" class="btn-text-cancel" disabled="@_busy"
+                                        @onclick="CancelEdit">CANCEL</button>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- ══ Display row ══ -->
+                        <div class="checkin-main">
+                            <div class="checkin-info">
+                                <span class="checkin-time">@Timestamp(c)</span>
+                                @if (!string.IsNullOrWhiteSpace(c.ActivityName))
+                                {
+                                    <span class="checkin-context">After: @c.ActivityName</span>
+                                }
+                            </div>
+
+                            <div class="checkin-scores">
+                                @foreach (var (label, value) in DisplayScores(c))
+                                {
+                                    <span class="score-pill">
+                                        <span class="score-pill-label">@label</span>
+                                        <span class="score-pill-value @(value > 0 ? "pos" : value < 0 ? "neg" : "")">
+                                            @(value > 0 ? "+" : "")@value
+                                        </span>
+                                    </span>
+                                }
+                            </div>
+
+                            <!-- Actions: edit + delete (trash → confirm/cancel) -->
+                            <div class="checkin-actions">
+                                @if (_pendingDeleteId == c.Id)
+                                {
+                                    <button type="button" class="act-btn confirm" title="Confirm delete"
+                                            @onclick="@(() => ConfirmDelete(c.Id))">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
+                                        </svg>
+                                    </button>
+                                    <button type="button" class="act-btn cancel-del" title="Cancel"
+                                            @onclick="@(() => _pendingDeleteId = null)">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                                        </svg>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="button" class="act-btn edit" title="Edit"
+                                            @onclick="@(() => StartEdit(c))">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+                                        </svg>
+                                    </button>
+                                    <button type="button" class="act-btn delete" title="Delete"
+                                            @onclick="@(() => _pendingDeleteId = c.Id)">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                                        </svg>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
 
 </div>
+
+@code {
+    private List<CheckInDto> _checkIns = [];
+    private bool _loading = true;
+    private bool _busy;
+    private int? _pendingDeleteId;
+
+    // ── Inline edit state ──────────────────────────────────────
+    private int?     _editingId;
+    private int?     _editActivityLogId;   // preserved; never editable from history
+    private DateTime _editDate;
+    private TimeSpan _editTime;
+    private int      _editBody;
+    private int      _editEnergy;
+    private int      _editMood;
+
+    private IEnumerable<(string Label, Func<int> Get, Action<int> Set)> EditScores =>
+    [
+        ("Body",   () => _editBody,   v => _editBody   = v),
+        ("Energy", () => _editEnergy, v => _editEnergy = v),
+        ("Mood",   () => _editMood,   v => _editMood   = v)
+    ];
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Load()
+    {
+        _loading = true;
+        _checkIns = await CheckInService.GetAllAsync();
+        _loading = false;
+    }
+
+    private static string Timestamp(CheckInDto c)
+    {
+        var local = c.CheckedInAt.ToLocalTime();
+        return local.ToString("MMM d, yyyy") + " · " + local.ToString("h:mm tt");
+    }
+
+    private static IEnumerable<(string Label, int Value)> DisplayScores(CheckInDto c) =>
+    [
+        ("Body",   c.BodyScore),
+        ("Energy", c.EnergyScore),
+        ("Mood",   c.MoodScore)
+    ];
+
+    private string EditTimeValue => $"{(int)_editTime.TotalHours:D2}:{_editTime.Minutes:D2}";
+
+    private void StartEdit(CheckInDto c)
+    {
+        _pendingDeleteId   = null;
+        _editingId         = c.Id;
+        _editActivityLogId = c.ActivityLogId;
+        var local          = c.CheckedInAt.ToLocalTime();
+        _editDate          = local.Date;
+        _editTime          = local.TimeOfDay;
+        _editBody          = c.BodyScore;
+        _editEnergy        = c.EnergyScore;
+        _editMood          = c.MoodScore;
+    }
+
+    private void CancelEdit() => _editingId = null;
+
+    private void OnEditDateChange(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var d)) _editDate = d;
+    }
+
+    private void OnEditTimeChange(ChangeEventArgs e)
+    {
+        if (TimeSpan.TryParse(e.Value?.ToString(), out var t)) _editTime = t;
+    }
+
+    private void AdjustEdit(Action<int> set, int current, int delta)
+        => set(Math.Clamp(current + delta, -5, 5));
+
+    private async Task SaveEdit()
+    {
+        if (_editingId is null) return;
+        _busy = true;
+
+        var checkedInAt = DateTime.SpecifyKind(
+            _editDate.Add(_editTime), DateTimeKind.Local).ToUniversalTime();
+
+        var result = await CheckInService.UpdateAsync(_editingId.Value, new UpdateCheckInRequestDto
+        {
+            CheckedInAt   = checkedInAt,
+            BodyScore     = _editBody,
+            EnergyScore   = _editEnergy,
+            MoodScore     = _editMood,
+            ActivityLogId = _editActivityLogId   // preserved — link is not editable here
+        });
+
+        _busy = false;
+
+        if (result is null)
+        {
+            Toast.Show("Couldn't update the check-in. Please try again.", ToastType.Error);
+            return;
+        }
+
+        Toast.Show("Check-in updated.", ToastType.Success);
+        _editingId = null;
+        await Load();
+    }
+
+    private async Task ConfirmDelete(int id)
+    {
+        _pendingDeleteId = null;
+        var success = await CheckInService.DeleteAsync(id);
+        if (success)
+        {
+            Toast.Show("Check-in deleted.", ToastType.Success);
+            await Load();
+        }
+        else
+        {
+            Toast.Show("Failed to delete check-in.", ToastType.Error);
+        }
+    }
+}
