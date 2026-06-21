@@ -47,12 +47,18 @@
         }
     </div>
 
-    <!-- ═══ Controls: tabs + category filter ═══ -->
+    <!-- ═══ Controls: period dropdown + category filter ═══ -->
     <div class="controls-row">
-        <div class="view-tabs">
-            <button type="button" class="tab-btn @(_tabIndex == 0 ? "active" : "")" @onclick="@(() => SetTab(0))">Daily</button>
-            <button type="button" class="tab-btn @(_tabIndex == 1 ? "active" : "")" @onclick="@(() => SetTab(1))">Weekly</button>
-            <button type="button" class="tab-btn @(_tabIndex == 2 ? "active" : "")" @onclick="@(() => SetTab(2))">Monthly</button>
+        <div class="period-pill">
+            <span class="period-label">Period</span>
+            <select class="period-select" @onchange="OnTabChanged">
+                <option value="0" selected="@(_tabIndex == 0)">Daily</option>
+                <option value="1" selected="@(_tabIndex == 1)">Weekly</option>
+                <option value="2" selected="@(_tabIndex == 2)">Monthly</option>
+            </select>
+            <svg class="period-chevron" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                <path d="M7 10l5 5 5-5z" fill="currentColor"/>
+            </svg>
         </div>
         <div class="cat-filter">
             <button type="button"
@@ -241,6 +247,9 @@
 
     private async Task SetTab(int idx)      { _tabIndex   = idx; await LoadData(); }
     private async Task SetCategory(int? id) { _categoryId = id;  await LoadData(); }
+
+    private async Task OnTabChanged(ChangeEventArgs e)
+        => await SetTab(int.Parse(e.Value?.ToString() ?? "0"));
 
     private async Task LoadData()
     {

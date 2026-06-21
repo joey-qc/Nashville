@@ -136,16 +136,19 @@ Accessible by clicking on a score total (Today, This Week, This Month) from the 
   - Date and time logged
 
 #### Details toggle
-- A **Details** toggle appears on the summary line whenever there is at least one displayed entry. (Renamed from "Notes" in CHK-002 Phase 6A; it now reveals notes **and** linked check-ins.)
-- The toggle defaults **OFF**. When OFF, entries appear compact — no notes, check-ins, or extra rows.
-- When **ON**, each entry shows a details section containing:
-  - its full formatted note (bold, italic, underline, paragraphs, bullet lists), if present;
-  - its **linked check-ins**, if any — each showing the check-in's local date/time and Body / Energy / Mood scores;
-  - a **"+ Add Check-In"** action that starts a check-in linked to that log entry.
-- **Editing a linked check-in:** clicking a check-in row opens it for editing on the Check-Ins screen.
-- **Deleting a linked check-in:** a trash → confirm/cancel control deletes only that check-in; the log entry itself is unaffected.
+- A **Details** toggle appears on the summary line whenever there is at least one displayed entry **or** at least one standalone Check-In in the current period. (Renamed from "Notes" in CHK-002 Phase 6A; extended in CHK-004 to include standalone Check-Ins as top-level rows.)
+- The toggle defaults **OFF**. When OFF, entries appear compact — no notes, check-ins, or extra rows. **Standalone Check-Ins are not shown.**
+- When **ON**, Activity Log entries and **standalone Check-Ins** (those not linked to any Activity Log) are merged into a unified timeline, sorted newest-first. Each row is one of:
+
+  *Activity Log entry:* expands to show its note (if any), its linked check-ins (each showing local date/time and B/E/M scores), and a "+ Add Check-In" action.
+
+  *Standalone Check-In row:* heart badge; "Check-In" title (clicking the entire row opens it for editing); Body / Energy / Mood scores on the second line; right-aligned timestamp; two-step delete control.
+
+- **Filtering:** Date filters apply to both Activity Log entries and standalone Check-Ins. **Dimension filters apply only to Activity Log entries** — standalone Check-Ins appear regardless of which dimension is selected, as long as they fall within the selected date period.
+- **Editing a check-in:** clicking the row navigates to the Check-Ins history page where it opens for inline editing.
+- **Deleting a check-in:** a trash → confirm/cancel control deletes only that check-in; no Activity Log is affected.
 - **Returning to context:** adding or editing a check-in from View Log returns the user to the **same View Log view** (same period, Details still expanded) after Save, Skip, or Cancel.
-- Entries with no note and no check-ins still show the "+ Add Check-In" action when Details is ON, and are otherwise unchanged.
+- Activity Log entries with no note and no linked check-ins still show the "+ Add Check-In" action when Details is ON.
 
 ### 7.2 Editing a Log Entry
 - Each activity entry is **clickable/editable**.
@@ -324,9 +327,10 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
 - **Delete:** the user can delete any of their check-ins via a trash → confirm/cancel control. Deleting a check-in does **not** delete the associated activity log.
 - An empty state is shown when the user has no check-ins.
 
-### 11.4 View Log Details Integration (CHK-002 Phase 6A — implemented)
+### 11.4 View Log Details Integration (CHK-002 Phase 6A + CHK-004 — implemented)
 - The View Log **Details** toggle (§7.1) surfaces each entry's linked check-ins and a "+ Add Check-In" action, in addition to notes.
-- Adding a check-in from a log entry links it to that entry; editing/deleting is available inline. See §7.1 for behavior.
+- Adding a check-in from a log entry links it to that entry; editing/deleting is available inline.
+- **Standalone Check-Ins** (those not linked to any Activity Log) appear as top-level rows in the unified Details timeline, sorted newest-first alongside Activity Log entries. They are not shown in compact mode (Details OFF). See §7.1 for full behavior.
 
 ### 11.5 Not yet implemented
 - Edit Log Entry screen: associated check-in list with "add follow-up".
@@ -363,3 +367,4 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
 *Version 1.14 — CHK-002 Phase 5B fix: §11.3 clarifies check-in times display in the user's local browser time, ordered by the true check-in instant*
 *Version 1.15 — CHK-002 Phase 6A: §7.1 "Show Notes" toggle renamed to "Details" (now reveals notes + linked check-ins + "+ Add Check-In", with inline edit/delete); §11.4 View Log integration marked implemented*
 *Version 1.16 — CHK-002 Phase 6A polish: §7.1 add/edit check-in from View Log returns to the same View Log context (period + Details expanded) after save/skip/cancel*
+*Version 1.17 — CHK-004: §7.1 Details toggle extended — standalone Check-Ins appear as top-level rows in the unified Details timeline; dimension filter bypass for standalone rows; toggle visibility condition updated; §11.4 updated*

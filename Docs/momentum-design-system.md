@@ -968,7 +968,7 @@ Each report sub-page uses a consistent two-zone bottom-row layout: a wide `1fr` 
 │ Header: title · period label · improvement pill      │
 │ Stats line: total · avg · best period                │
 ├─────────────────────────────────────────────────────┤
-│ Controls: Daily / Weekly / Monthly tabs              │
+│ Controls: Period dropdown (Daily / Weekly / Monthly) │
 │           Category filter chips                      │
 ├─────────────────────────────────────────────────────┤
 │ Bar chart card (full width, stacked by category)     │
@@ -1134,15 +1134,15 @@ Duration defaults (set in one place in `ToastService.Show`): 3 s for Success/Inf
 
 `ToastHost.razor` renders a fixed-position overlay (`z-index: 9999`):
 
-- **Desktop:** bottom-right (`bottom: 24px; right: 24px`), `flex-direction: column-reverse`, max-width 380px.
-- **Mobile (≤540px):** bottom full-width (`left: 12px; right: 12px; bottom: 16px`).
-- Background: `var(--surface-2)`, border: `1px solid var(--border)`, radius: `var(--radius-sm)`.
+- **Desktop:** top-right, `top: 64px; right: 24px` (60px topbar + 4px gap), `flex-direction: column` (new toasts append below existing), `width: min(420px, calc(100vw - 2rem))`.
+- **Mobile (≤540px):** `top: 64px; left: 12px; right: 12px; width: auto` — full-width below topbar.
+- Background: `var(--surface-3)`, border: `1px solid var(--border)`, radius: `var(--radius-sm)`, `box-shadow: 0 4px 16px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3)`.
 - Left accent border (4px) by type:
   - `Success` → `var(--primary)` (green)
   - `Error` → `var(--negative)` (red)
   - `Warning` → `var(--cat-social)` (amber)
   - `Info` → `var(--accent)` (sky blue)
-- Entry animation: slide in from right (`translateX(16px)` → 0), 200ms ease-out.
+- Entry animation: drop down from above (`translateY(-12px)` → 0), 200ms ease-out. *(UX-002: was slide-right; changed to match top placement.)*
 - Manual dismiss: ✕ button per toast.
 
 ### Files
@@ -1219,6 +1219,60 @@ The View Log page (`ActivityDetail.razor`) shows an expandable **details** secti
 
 ---
 
-*Momentum Design System — v1.11*
-*CHK-002 Phase 6A: §18 — View Log "Notes" toggle renamed to "Details" (`.details-toggle`); details section now shows notes + linked check-in rows (`.log-checkins`, `.ci-row`, `.ci-add`) + Add Check-In action*
-*CHK-002 Phase 6A polish: §18 — linked check-in timestamp (`.ci-time`) is normal-weight/secondary so scores read as primary*
+## 19. Period Pill — Time-Range Selector
+
+A rounded pill control containing a `PERIOD` label, a native `<select>`, and a chevron SVG. Used on Balance, Check-Ins, and Trends to switch the time range driving all data on the page.
+
+### Markup pattern
+
+```html
+<div class="period-pill">
+    <span class="period-label">Period</span>
+    <select class="period-select" @onchange="OnPeriodChanged">
+        <option value="..." selected="@(...)">…</option>
+        …
+    </select>
+    <svg class="period-chevron" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+        <path d="M7 10l5 5 5-5z" fill="currentColor"/>
+    </svg>
+</div>
+```
+
+Use `@onchange` (not `@bind`) so the handler can call async data-fetch logic after updating the selection state. Bind the `selected` attribute on each `<option>` to the current state so re-renders keep the dropdown in sync.
+
+### CSS (must be duplicated per page — Blazor CSS isolation scopes by component)
+
+```css
+.period-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px 8px 16px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 20px; flex-shrink: 0; cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+.period-pill:focus-within { border-color: var(--primary); }
+.period-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; white-space: nowrap; pointer-events: none; }
+.period-select { background: transparent; border: none; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; outline: none; -webkit-appearance: none; appearance: none; padding: 0; margin: 0; }
+.period-select option { background: var(--surface-2); color: var(--text); }
+.period-chevron { color: var(--text-muted); flex-shrink: 0; pointer-events: none; }
+```
+
+### Notes
+
+- `pointer-events: none` on `.period-label` and `.period-chevron` ensures clicks always reach the invisible `<select>` sitting between them.
+- `:focus-within` provides keyboard-navigation feedback (green border) without JS.
+- CSS is **not global** — each page must include these rules in its own `.razor.css` file.
+
+### Pages using this pattern
+
+| Page | File | Options | Default |
+|---|---|---|---|
+| Balance | `Reports.Balance.razor.css` | This Week · This Month · This Year | This Week |
+| Check-Ins | `CheckIns.razor.css` | Day · Week · Month | Day |
+| Trends | `Reports.razor.css` | Daily · Weekly · Monthly | Daily |
+
+---
+
+*Momentum Design System — v1.12*
+*UX-002: §17 Toast — updated to top placement (top: 64px), wider container (min(420px, …)), surface-3 background, box-shadow, drop-down animation (translateY)*
+*UX-003: §14 Trends controls — "tabs" → "period dropdown"; §19 added — Period Pill documented as a cross-page reusable pattern*

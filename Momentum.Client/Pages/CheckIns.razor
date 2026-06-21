@@ -10,9 +10,22 @@
 
     <!-- ══ Page header ══ -->
     <header class="checkins-header">
-        <span class="kicker">CHECK-INS</span>
-        <h1 class="checkins-title">Check-Ins</h1>
-        <p class="checkins-subtitle">Your Body, Energy, and Mood history.</p>
+        <div>
+            <span class="kicker">CHECK-INS</span>
+            <h1 class="checkins-title">Check-Ins</h1>
+            <p class="checkins-subtitle">Your Body, Energy, and Mood history.</p>
+        </div>
+        <div class="period-pill">
+            <span class="period-label">Period</span>
+            <select class="period-select" @bind="_period">
+                <option value="day">Day</option>
+                <option value="week">Week</option>
+                <option value="month">Month</option>
+            </select>
+            <svg class="period-chevron" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                <path d="M7 10l5 5 5-5z" fill="currentColor"/>
+            </svg>
+        </div>
     </header>
 
     @if (_loading)
@@ -21,23 +34,31 @@
             <p class="placeholder-text">Loading…</p>
         </div>
     }
-    else if (_checkIns.Count == 0)
+    else if (FilteredCheckIns.Count == 0)
     {
         <!-- ══ Empty state ══ -->
         <div class="card checkins-placeholder">
             <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true">
                 <path d="M13 3a9 9 0 0 0-9 9H1l3.9 3.9.1.1L9 12H6a7 7 0 1 1 7 7c-1.9 0-3.6-.8-4.8-2l-1.4 1.4A8.9 8.9 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.3 2.5.7-1.2-3.5-2.1V8H12z" fill="currentColor"/>
             </svg>
-            <p class="placeholder-title">No check-ins yet.</p>
-            <p class="placeholder-text">
-                Use the <strong>Check In</strong> button in the top bar to record how you're doing.
-            </p>
+            @if (_allCheckIns.Count == 0)
+            {
+                <p class="placeholder-title">No check-ins yet.</p>
+                <p class="placeholder-text">
+                    Use the <strong>Check In</strong> button in the top bar to record how you're doing.
+                </p>
+            }
+            else
+            {
+                <p class="placeholder-title">@PeriodEmptyText</p>
+                <p class="placeholder-text">Switch to a wider period or use the <strong>Check In</strong> button to add one.</p>
+            }
         </div>
     }
     else
     {
         <div class="checkin-list">
-            @foreach (var c in _checkIns)
+            @foreach (var c in FilteredCheckIns)
             {
                 <div class="checkin-card">
                     @if (_editingId == c.Id)
@@ -152,10 +173,29 @@
 </div>
 
 @code {
-    private List<CheckInDto> _checkIns = [];
+    // Full 30-day data set fetched once on load.
+    private List<CheckInDto> _allCheckIns = [];
     private bool _loading = true;
     private bool _busy;
     private int? _pendingDeleteId;
+
+    // ── Period filter ──────────────────────────────────────────
+    private string _period = "day";
+
+    // Subset of _allCheckIns matching the selected period.
+    private List<CheckInDto> FilteredCheckIns => _period switch
+    {
+        "day"  => _allCheckIns.Where(c => c.CheckedInAt.ToLocalTime().Date == DateTime.Today).ToList(),
+        "week" => _allCheckIns.Where(c => c.CheckedInAt.ToLocalTime().Date >= DateTime.Today.AddDays(-6)).ToList(),
+        _      => _allCheckIns   // "month" — full 30-day window already fetched
+    };
+
+    private string PeriodEmptyText => _period switch
+    {
+        "day"  => "No check-ins today.",
+        "week" => "No check-ins this week.",
+        _      => "No check-ins this month."
+    };
 
     // ── Inline edit state ──────────────────────────────────────
     private int?     _editingId;
@@ -186,15 +226,26 @@
 
         if (EditId is not null)
         {
-            var target = _checkIns.FirstOrDefault(c => c.Id == EditId.Value);
-            if (target is not null) StartEdit(target);
+            var target = _allCheckIns.FirstOrDefault(c => c.Id == EditId.Value);
+            if (target is not null)
+            {
+                // Auto-widen the period filter so the target row is visible in the list.
+                var localDate = target.CheckedInAt.ToLocalTime().Date;
+                if (localDate != DateTime.Today)             _period = "week";
+                if (localDate < DateTime.Today.AddDays(-6)) _period = "month";
+                StartEdit(target);
+            }
         }
     }
 
     private async Task Load()
     {
         _loading = true;
-        _checkIns = await CheckInService.GetAllAsync();
+        // Fetch 30 days (local today − 29 days → tomorrow), converted to UTC.
+        // All period filtering (Day / Week / Month) is done client-side from this set.
+        var from = DateTime.Today.AddDays(-29).ToUniversalTime();
+        var to   = DateTime.Today.AddDays(1).ToUniversalTime();
+        _allCheckIns = await CheckInService.GetByDateRangeAsync(from, to);
         _loading = false;
     }
 

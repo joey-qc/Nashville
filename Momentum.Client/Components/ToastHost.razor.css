@@ -1,12 +1,13 @@
-/* ── Toast host — fixed overlay ───────────────────────────── */
+/* ── Toast host — fixed below topbar (60px) ───────────────── */
 .toast-host {
     position: fixed;
-    bottom: 24px;
+    top: 64px;
     right: 24px;
     z-index: 9999;
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     gap: 10px;
+    width: min(420px, calc(100vw - 2rem));
     pointer-events: none;
 }
 
@@ -15,13 +16,13 @@
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    min-width: 260px;
-    max-width: 380px;
+    width: 100%;
     padding: 13px 14px;
-    background: var(--surface-2);
+    background: var(--surface-3);
     border: 1px solid var(--border);
     border-left: 4px solid var(--border);
     border-radius: var(--radius-sm);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 1px 4px rgba(0, 0, 0, 0.3);
     pointer-events: all;
     animation: toast-in 0.2s ease-out;
 }
@@ -65,23 +66,18 @@
     background: rgba(255, 255, 255, 0.06);
 }
 
-/* ── Entry animation ──────────────────────────────────────── */
+/* ── Entry animation — slides down from above ─────────────── */
 @keyframes toast-in {
-    from { opacity: 0; transform: translateX(16px); }
-    to   { opacity: 1; transform: translateX(0); }
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Mobile: bottom full-width stack ─────────────────────── */
+/* ── Mobile: full-width below topbar ─────────────────────── */
 @media (max-width: 540px) {
     .toast-host {
+        top: 64px;
         left: 12px;
         right: 12px;
-        bottom: 16px;
-    }
-
-    .toast {
-        min-width: unset;
-        width: 100%;
-        max-width: unset;
+        width: auto;
     }
 }

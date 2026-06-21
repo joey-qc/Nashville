@@ -158,13 +158,24 @@ The existing View Log **"Notes" toggle is renamed to "Details."**
 ### Details toggle OFF
 
 - Activity rows remain compact — identical to today's default view.
+- Standalone Check-Ins are **not shown**.
 
 ### Details toggle ON
 
-- Show **Notes** if present (existing Rich Notes rendering).
-- Show **linked Check-Ins** if present (any Check-In whose `ActivityLogId` matches the entry).
+- Activity Log entries and **standalone Check-Ins** (those with no `ActivityLogId`) are merged into a **unified timeline**, sorted newest-first by their respective timestamps (`LoggedAt` for activity logs, `CheckedInAt` for standalone check-ins).
+- Each Activity Log entry expands to show: **Notes** if present, then its **linked Check-Ins** if any (each with local time and B/E/M scores), then a "**+ Add Check-In**" action.
+- **Standalone Check-Ins** appear as their own top-level rows in the timeline — they are **not** shown under any Activity Log. Each standalone row shows: heart badge, "Check-In" title (clickable → edit), Body / Energy / Mood scores on the second line, timestamp right-aligned, two-step delete control.
+- **Linked Check-Ins** remain embedded under their parent Activity Log entries. They are **not** duplicated as standalone rows.
 
-The toggle thus expands a single control's meaning from "notes" to "all supplementary detail for the entry" (notes + check-ins).
+### Filtering behavior
+
+- **Date filter** applies to both Activity Log entries and standalone Check-Ins.
+- **Dimension filter** applies only to Activity Log entries. Standalone Check-Ins appear regardless of which dimension is selected, as long as they fall within the selected date period. (Check-Ins are not dimension-based; hiding them by dimension would be misleading.)
+
+### Empty states
+
+- If the timeline has no items: compact and unified modes both show the existing "no entries" message.
+- If a dimension filter hides all Activity Logs but standalone Check-Ins exist in the period: Details ON shows only the standalone Check-In rows (timeline is not empty); Details OFF shows the existing "no entries match that dimension" message.
 
 ---
 
@@ -501,7 +512,46 @@ Surfaces linked check-ins inside View Log's expandable details and lets the user
 - "+ Add Check-In" opens `/check-in` with `activityLogId` populated; saving links it.
 - Post-activity flow still works; entries without notes/check-ins behave cleanly; no console errors; mobile usable.
 
+### CHK-004 — Unified View Log Timeline (COMPLETE 2026-06-21)
+
+Build: ✅ 0 errors · Tests: ✅ 54/54 (client-only; no server/API/DTO change)
+
+Implements §10 in full: standalone Check-Ins appear as top-level rows in the View Log Details timeline alongside Activity Log entries.
+
+**No server/DTO/API change** — reuses `CheckInService.GetAllAsync()` (already called in `LoadLogs()`). Standalone check-ins are extracted client-side using `c.ActivityLogId == null` and date-filtered to the current period.
+
+**`Momentum.Client/Pages/ActivityDetail.razor`:**
+- Added `_standaloneCheckIns: List<CheckInDto>` — populated in `LoadLogs()` from the same `GetAllAsync()` result, filtered to `!ActivityLogId.HasValue && CheckedInAt in [from, to)`.
+- Added private `sealed record TimelineItem(ActivityLogDto? Log, CheckInDto? CheckIn, DateTime SortKey)` — discriminated union for the unified loop.
+- Added `IsEmpty` — empty when Details OFF: no filtered logs; Details ON: no filtered logs AND no standalone check-ins.
+- Added `TimelineItems` computed property — Details OFF: activity logs only (preserves existing sort from API); Details ON: logs + standalones, `OrderByDescending(SortKey)`.
+- Added `StandaloneCheckInTimestamp()` — mirrors `LogTimestamp()`: time-only for Today, `"MMM d · h:mm tt"` for week/month.
+- Details toggle visibility updated: `@if (FilteredLogs.Any() || _standaloneCheckIns.Any())` — toggle appears whenever there's something to show in Details mode.
+- Unified `@foreach (var item in TimelineItems)` loop: `item.Log` branch = existing activity log card (with Details section shown when `_showDetails`); `item.CheckIn` branch = new standalone check-in card.
+- Standalone check-in card: heart badge (`.ci-badge`), "Check-In" log-name span, B/E/M scores in `.log-cats` using `.ci-metric`/`.ci-val`, right-aligned `.log-time`, same two-step `.act-btn` delete controls. Entire card row navigates to `/check-ins?editId={id}&returnUrl={ReturnUrl}` on click (mirrors activity log row behavior). Delete uses existing `ConfirmDeleteCheckIn`.
+
+**`Momentum.Client/Pages/ActivityDetail.razor.css`:**
+- Added `.ci-badge { background: var(--surface-2); color: var(--text-muted); }` — neutral look for the heart icon, visually distinct from colorful activity-letter badges.
+
+**Design decisions:**
+- Standalones are date-filtered but not dimension-filtered — Check-Ins are not dimension-based; hiding them by category filter would be confusing.
+- Linked check-in date may differ from the parent log's date (e.g., logged late-night, checked-in just after midnight). `_checkInsByLog` therefore still uses `GetAllAsync()` (full history), not a period-bounded fetch.
+- Entire card row click → edit (not just the title) mirrors Activity Log card behavior exactly.
+- `TimelineItem` record lives in the component's `@code` block — no shared DTO needed since it's a pure UI concept.
+
+**Manual QA checklist (CHK-004):**
+- Details OFF: no standalone Check-Ins visible; Activity Log compact mode unchanged.
+- Details ON: standalone Check-Ins appear as top-level rows with heart badge, "Check-In" title, B/E/M scores, timestamp.
+- Activity Log entries still appear with their linked Check-Ins embedded underneath.
+- Linked Check-Ins are not duplicated as standalone rows.
+- Timeline is newest-first (mixed log+standalones, sorted by their respective timestamps).
+- Dimension filter active: standalone Check-Ins remain visible if in the date period.
+- Date filter change: standalone Check-Ins update to match the new period.
+- Clicking a standalone row opens the Check-In edit experience; saving returns to View Log (same period, Details ON).
+- Deleting a standalone Check-In removes only that check-in; Activity Logs unaffected.
+- No browser console errors; mobile layout usable.
+
 ---
 
 *Check-In Feature Design Specification — created 2026-06-04*
-*Status: 🔨 IN PROGRESS — Phase 6A complete (View Log Details integration); Edit Log Entry check-in list, reporting not started*
+*Status: 🔨 IN PROGRESS — CHK-004 complete (Unified View Log Timeline); Edit Log Entry check-in list, reporting not started*

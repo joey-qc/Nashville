@@ -393,6 +393,12 @@
     text-transform: uppercase;
 }
 
+/* Standalone check-in badge — heart icon, neutral surface/muted-text */
+.ci-badge {
+    background: var(--surface-2);
+    color: var(--text-muted);
+}
+
 /* Name + category tags */
 .log-info {
     flex: 1;

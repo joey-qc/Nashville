@@ -31,8 +31,8 @@
                     · <span class="@(NetTotal >= 0 ? "stat-pos" : "stat-neg")">@(NetTotal > 0 ? "+" : "")@NetTotal pts</span>
                 </p>
 
-                <!-- Details toggle — reveals notes, linked check-ins, and "+ Add Check-In" -->
-                @if (FilteredLogs.Any())
+                <!-- Details toggle — reveals notes, linked check-ins, standalone check-ins -->
+                @if (FilteredLogs.Any() || _standaloneCheckIns.Any())
                 {
                     <button type="button"
                             class="details-toggle @(_showDetails ? "active" : "")"
@@ -100,7 +100,7 @@
             <p class="loading-text">Loading…</p>
         </div>
     }
-    else if (!FilteredLogs.Any())
+    else if (IsEmpty)
     {
         <div class="empty-state">
             @if (_logs.Any())
@@ -117,135 +117,197 @@
     else
     {
         <div class="log-list">
-            @foreach (var log in FilteredLogs)
+            @foreach (var item in TimelineItems)
             {
-                <div class="log-card">
+                @if (item.Log is { } log)
+                {
+                    <div class="log-card">
 
-                    <!-- Clickable row → edit -->
-                    <div class="log-card-row" @onclick="@(() => Navigation.NavigateTo($"/log?editId={log.Id}"))">
+                        <!-- Clickable row → edit -->
+                        <div class="log-card-row" @onclick="@(() => Navigation.NavigateTo($"/log?editId={log.Id}"))">
 
-                        <!-- Badge -->
-                        <div class="log-badge" style="background:@BadgeBg(log);color:@BadgeColor(log)">
-                            @(string.IsNullOrEmpty(log.ActivityName) ? "?" : log.ActivityName[..1].ToUpper())
-                        </div>
+                            <!-- Badge -->
+                            <div class="log-badge" style="background:@BadgeBg(log);color:@BadgeColor(log)">
+                                @(string.IsNullOrEmpty(log.ActivityName) ? "?" : log.ActivityName[..1].ToUpper())
+                            </div>
 
-                        <!-- Name + category tags -->
-                        <div class="log-info">
-                            <span class="log-name" title="@log.ActivityName">@log.ActivityName</span>
-                            <div class="log-cats">
-                                @foreach (var cat in log.Categories)
+                            <!-- Name + category tags -->
+                            <div class="log-info">
+                                <span class="log-name" title="@log.ActivityName">@log.ActivityName</span>
+                                <div class="log-cats">
+                                    @foreach (var cat in log.Categories)
+                                    {
+                                        <span class="log-cat-dot" style="background:@cat.ColorHex"></span>
+                                        <span class="log-cat-label" title="@DimensionDisplayHelper.GetDisplayName(cat)">
+                                            <span class="dim-full">@DimensionDisplayHelper.GetDisplayName(cat)</span>
+                                            <span class="dim-abbr" aria-hidden="true">@DimensionDisplayHelper.GetMobileLabel(cat)</span>
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Time + points -->
+                            <div class="log-right">
+                                <span class="log-time">@LogTimestamp(log)</span>
+                                <span class="log-pts @(log.PointsRecorded >= 0 ? "pos" : "neg")">
+                                    @(log.PointsRecorded > 0 ? "+" : "")@log.PointsRecorded
+                                </span>
+                            </div>
+
+                            <!-- Delete controls -->
+                            <div class="log-actions" @onclick:stopPropagation>
+                                @if (_pendingDeleteId == log.Id)
                                 {
-                                    <span class="log-cat-dot" style="background:@cat.ColorHex"></span>
-                                    <span class="log-cat-label" title="@DimensionDisplayHelper.GetDisplayName(cat)">
-                                        <span class="dim-full">@DimensionDisplayHelper.GetDisplayName(cat)</span>
-                                        <span class="dim-abbr" aria-hidden="true">@DimensionDisplayHelper.GetMobileLabel(cat)</span>
-                                    </span>
+                                    <button type="button" class="act-btn confirm" title="Confirm delete"
+                                            @onclick="@(() => ConfirmDelete(log.Id))">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
+                                        </svg>
+                                    </button>
+                                    <button type="button" class="act-btn cancel-del" title="Cancel"
+                                            @onclick="@(() => _pendingDeleteId = null)">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                                        </svg>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="button" class="act-btn delete" title="Delete"
+                                            @onclick="@(() => _pendingDeleteId = log.Id)">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                                        </svg>
+                                    </button>
                                 }
                             </div>
+
                         </div>
 
-                        <!-- Time + points -->
-                        <div class="log-right">
-                            <span class="log-time">@LogTimestamp(log)</span>
-                            <span class="log-pts @(log.PointsRecorded >= 0 ? "pos" : "neg")">
-                                @(log.PointsRecorded > 0 ? "+" : "")@log.PointsRecorded
-                            </span>
-                        </div>
-
-                        <!-- Delete controls -->
-                        <div class="log-actions" @onclick:stopPropagation>
-                            @if (_pendingDeleteId == log.Id)
-                            {
-                                <button type="button" class="act-btn confirm" title="Confirm delete"
-                                        @onclick="@(() => ConfirmDelete(log.Id))">
-                                    <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
-                                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
-                                    </svg>
-                                </button>
-                                <button type="button" class="act-btn cancel-del" title="Cancel"
-                                        @onclick="@(() => _pendingDeleteId = null)">
-                                    <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
-                                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
-                                    </svg>
-                                </button>
-                            }
-                            else
-                            {
-                                <button type="button" class="act-btn delete" title="Delete"
-                                        @onclick="@(() => _pendingDeleteId = log.Id)">
-                                    <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
-                                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
-                                    </svg>
-                                </button>
-                            }
-                        </div>
-
-                    </div>
-
-                    <!-- Details (notes + linked check-ins + add action) when toggle ON -->
-                    @if (_showDetails)
-                    {
-                        @if (!string.IsNullOrWhiteSpace(log.Notes))
+                        <!-- Details (notes + linked check-ins + add action) when toggle ON -->
+                        @if (_showDetails)
                         {
-                            <div class="log-note-body">@((MarkupString)log.Notes!)</div>
+                            @if (!string.IsNullOrWhiteSpace(log.Notes))
+                            {
+                                <div class="log-note-body">@((MarkupString)log.Notes!)</div>
+                            }
+
+                            <div class="log-checkins">
+                                @foreach (var ci in CheckInsFor(log.Id))
+                                {
+                                    <div class="ci-row">
+                                        <button type="button" class="ci-main"
+                                                title="Edit check-in"
+                                                @onclick="@(() => Navigation.NavigateTo($"/check-ins?editId={ci.Id}&returnUrl={ReturnUrl}"))">
+                                            <span class="ci-time">@CheckInTime(ci)</span>
+                                            <span class="ci-scores">
+                                                <span class="ci-metric">B
+                                                    <span class="ci-val @ScoreClass(ci.BodyScore)">@Signed(ci.BodyScore)</span>
+                                                </span>
+                                                <span class="ci-metric">E
+                                                    <span class="ci-val @ScoreClass(ci.EnergyScore)">@Signed(ci.EnergyScore)</span>
+                                                </span>
+                                                <span class="ci-metric">M
+                                                    <span class="ci-val @ScoreClass(ci.MoodScore)">@Signed(ci.MoodScore)</span>
+                                                </span>
+                                            </span>
+                                        </button>
+                                        <div class="ci-del">
+                                            @if (_pendingCheckInDeleteId == ci.Id)
+                                            {
+                                                <button type="button" class="act-btn confirm" title="Confirm delete"
+                                                        @onclick="@(() => ConfirmDeleteCheckIn(ci.Id))">
+                                                    <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
+                                                    </svg>
+                                                </button>
+                                                <button type="button" class="act-btn cancel-del" title="Cancel"
+                                                        @onclick="@(() => _pendingCheckInDeleteId = null)">
+                                                    <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                                                    </svg>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" class="act-btn delete" title="Delete check-in"
+                                                        @onclick="@(() => _pendingCheckInDeleteId = ci.Id)">
+                                                    <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                                                    </svg>
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+
+                                <button type="button" class="ci-add" @onclick="@(() => AddCheckIn(log))">
+                                    + Add Check-In
+                                </button>
+                            </div>
                         }
 
-                        <div class="log-checkins">
-                            @foreach (var ci in CheckInsFor(log.Id))
-                            {
-                                <div class="ci-row">
-                                    <button type="button" class="ci-main"
-                                            title="Edit check-in"
-                                            @onclick="@(() => Navigation.NavigateTo($"/check-ins?editId={ci.Id}&returnUrl={ReturnUrl}"))">
-                                        <span class="ci-time">@CheckInTime(ci)</span>
-                                        <span class="ci-scores">
-                                            <span class="ci-metric">B
-                                                <span class="ci-val @ScoreClass(ci.BodyScore)">@Signed(ci.BodyScore)</span>
-                                            </span>
-                                            <span class="ci-metric">E
-                                                <span class="ci-val @ScoreClass(ci.EnergyScore)">@Signed(ci.EnergyScore)</span>
-                                            </span>
-                                            <span class="ci-metric">M
-                                                <span class="ci-val @ScoreClass(ci.MoodScore)">@Signed(ci.MoodScore)</span>
-                                            </span>
-                                        </span>
-                                    </button>
-                                    <div class="ci-del">
-                                        @if (_pendingCheckInDeleteId == ci.Id)
-                                        {
-                                            <button type="button" class="act-btn confirm" title="Confirm delete"
-                                                    @onclick="@(() => ConfirmDeleteCheckIn(ci.Id))">
-                                                <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
-                                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
-                                                </svg>
-                                            </button>
-                                            <button type="button" class="act-btn cancel-del" title="Cancel"
-                                                    @onclick="@(() => _pendingCheckInDeleteId = null)">
-                                                <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
-                                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
-                                                </svg>
-                                            </button>
-                                        }
-                                        else
-                                        {
-                                            <button type="button" class="act-btn delete" title="Delete check-in"
-                                                    @onclick="@(() => _pendingCheckInDeleteId = ci.Id)">
-                                                <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
-                                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
-                                                </svg>
-                                            </button>
-                                        }
-                                    </div>
+                    </div>
+                }
+                else if (item.CheckIn is { } ci)
+                {
+                    <!-- ══ Standalone Check-In top-level row (Details ON only) ══ -->
+                    <div class="log-card">
+                        <div class="log-card-row" @onclick="@(() => Navigation.NavigateTo($"/check-ins?editId={ci.Id}&returnUrl={ReturnUrl}"))">
+
+                            <!-- Badge: heart icon, neutral surface style -->
+                            <div class="log-badge ci-badge">
+                                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
+                                </svg>
+                            </div>
+
+                            <!-- Title + B/E/M scores as second line -->
+                            <div class="log-info">
+                                <span class="log-name">Check-In</span>
+                                <div class="log-cats">
+                                    <span class="ci-metric">B <span class="ci-val @ScoreClass(ci.BodyScore)">@Signed(ci.BodyScore)</span></span>
+                                    <span class="ci-metric">E <span class="ci-val @ScoreClass(ci.EnergyScore)">@Signed(ci.EnergyScore)</span></span>
+                                    <span class="ci-metric">M <span class="ci-val @ScoreClass(ci.MoodScore)">@Signed(ci.MoodScore)</span></span>
                                 </div>
-                            }
+                            </div>
 
-                            <button type="button" class="ci-add" @onclick="@(() => AddCheckIn(log))">
-                                + Add Check-In
-                            </button>
+                            <!-- Time only (standalone check-ins have no points) -->
+                            <div class="log-right">
+                                <span class="log-time">@StandaloneCheckInTimestamp(ci)</span>
+                            </div>
+
+                            <!-- Delete controls -->
+                            <div class="log-actions" @onclick:stopPropagation>
+                                @if (_pendingCheckInDeleteId == ci.Id)
+                                {
+                                    <button type="button" class="act-btn confirm" title="Confirm delete"
+                                            @onclick="@(() => ConfirmDeleteCheckIn(ci.Id))">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
+                                        </svg>
+                                    </button>
+                                    <button type="button" class="act-btn cancel-del" title="Cancel"
+                                            @onclick="@(() => _pendingCheckInDeleteId = null)">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                                        </svg>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="button" class="act-btn delete" title="Delete check-in"
+                                            @onclick="@(() => _pendingCheckInDeleteId = ci.Id)">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                                        </svg>
+                                    </button>
+                                }
+                            </div>
+
                         </div>
-                    }
-
-                </div>
+                    </div>
+                }
             }
         </div>
     }
@@ -267,7 +329,12 @@
 
     // Linked check-ins keyed by ActivityLogId (user-scoped; loaded with the logs).
     private Dictionary<int, List<CheckInDto>> _checkInsByLog = [];
+    // Standalone check-ins in the current period (ActivityLogId == null), for the unified timeline.
+    private List<CheckInDto> _standaloneCheckIns = [];
     private int? _pendingCheckInDeleteId;
+
+    // Discriminated-union timeline item used by the Details-mode unified timeline.
+    private sealed record TimelineItem(ActivityLogDto? Log, CheckInDto? CheckIn, DateTime SortKey);
 
     private string DateDisplay => DateTime.Now.ToString("d MMM ddd");
 
@@ -275,6 +342,26 @@
         _categoryFilter.HasValue
             ? _logs.Where(l => l.Categories.Any(c => c.Id == _categoryFilter))
             : _logs;
+
+    // Empty when: Details OFF → no filtered logs; Details ON → no filtered logs AND no standalone check-ins.
+    // Standalone check-ins are date-filtered but not dimension-filtered, so they keep the timeline
+    // non-empty even when a dimension filter hides all activity logs.
+    private bool IsEmpty => _showDetails
+        ? !FilteredLogs.Any() && !_standaloneCheckIns.Any()
+        : !FilteredLogs.Any();
+
+    // When Details OFF: activity logs only (preserves existing compact-mode order from the API).
+    // When Details ON: activity logs + standalone check-ins merged, newest first by sort key.
+    private IEnumerable<TimelineItem> TimelineItems
+    {
+        get
+        {
+            var logItems = FilteredLogs.Select(l => new TimelineItem(l, null, l.LoggedAt));
+            if (!_showDetails) return logItems;
+            var ciItems = _standaloneCheckIns.Select(c => new TimelineItem(null, c, c.CheckedInAt));
+            return logItems.Concat(ciItems).OrderByDescending(t => t.SortKey);
+        }
+    }
 
     private int Earned   => FilteredLogs.Where(l => l.PointsRecorded > 0).Sum(l => l.PointsRecorded);
     private int Setbacks => Math.Abs(FilteredLogs.Where(l => l.PointsRecorded < 0).Sum(l => l.PointsRecorded));
@@ -311,14 +398,25 @@
         var (from, to) = GetDateRange();
         _logs = await LogService.GetByDateRangeAsync(from, to);
 
-        // Load the user's check-ins and group the linked ones by ActivityLogId so each
-        // log entry's details section can show its check-ins. GetAllAsync is user-scoped
-        // and UTC-tagged; standalone check-ins (no ActivityLogId) are ignored here.
+        // Load all user check-ins (user-scoped, UTC-tagged).
         var checkIns = await CheckInService.GetAllAsync();
+
+        // Linked check-ins: grouped by ActivityLogId for display under their parent entries.
+        // Uses the full set (not period-filtered) since a check-in's date may differ from its
+        // parent log's date (e.g., logged late-night, checked in just after midnight).
         _checkInsByLog = checkIns
             .Where(c => c.ActivityLogId.HasValue)
             .GroupBy(c => c.ActivityLogId!.Value)
             .ToDictionary(g => g.Key, g => g.OrderByDescending(c => c.CheckedInAt).ToList());
+
+        // Standalone check-ins: no linked activity log, filtered to the current date period.
+        // These appear as top-level timeline rows when Details is ON.
+        _standaloneCheckIns = checkIns
+            .Where(c => !c.ActivityLogId.HasValue
+                     && c.CheckedInAt >= from
+                     && c.CheckedInAt < to)
+            .OrderByDescending(c => c.CheckedInAt)
+            .ToList();
 
         _loading = false;
     }
@@ -371,6 +469,15 @@
     {
         var local = ci.CheckedInAt.ToLocalTime();
         return local.ToString("MMM d") + " · " + local.ToString("h:mm tt");
+    }
+
+    // Standalone check-in timestamp mirrors LogTimestamp: time-only for Today, date+time otherwise.
+    private string StandaloneCheckInTimestamp(CheckInDto ci)
+    {
+        var local = ci.CheckedInAt.ToLocalTime();
+        return _period == "today"
+            ? local.ToString("h:mm tt")
+            : local.ToString("MMM d") + " · " + local.ToString("h:mm tt");
     }
 
     private static string Signed(int v) => v > 0 ? $"+{v}" : v.ToString();

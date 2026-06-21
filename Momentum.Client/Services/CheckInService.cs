@@ -62,16 +62,25 @@ public class CheckInService(HttpClient http)
     /// </summary>
     public async Task<List<CheckInDto>> GetAllAsync()
     {
+        var from = DateTime.UtcNow.AddYears(-5);
+        var to   = DateTime.UtcNow.AddDays(1);
+        return await GetByDateRangeAsync(from, to);
+    }
+
+    /// <summary>
+    /// Fetches Check-Ins within an explicit UTC date range, newest first.
+    /// Used by the Check-Ins history page to request a bounded 30-day window so
+    /// the server never returns unbounded history.
+    /// Returns an empty list on failure.
+    /// </summary>
+    public async Task<List<CheckInDto>> GetByDateRangeAsync(DateTime fromUtc, DateTime toUtc)
+    {
         try
         {
-            var from = DateTime.UtcNow.AddYears(-5);
-            var to   = DateTime.UtcNow.AddDays(1);
-            var response = await http.GetAsync($"api/checkins?from={from:O}&to={to:O}");
+            var response = await http.GetAsync($"api/checkins?from={fromUtc:O}&to={toUtc:O}");
             if (!response.IsSuccessStatusCode) return [];
             var list = await response.Content.ReadFromJsonAsync<List<CheckInDto>>() ?? [];
             TagUtc(list);
-            // Sort newest-first by the true instant. TagUtc marks each CheckedInAt as UTC,
-            // so the comparison is by the actual point in time (not a local/Unspecified mix).
             return list.OrderByDescending(c => c.CheckedInAt).ToList();
         }
         catch

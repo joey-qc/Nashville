@@ -9,7 +9,65 @@
 }
 
 .checkins-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
     margin-bottom: 4px;
+}
+
+/* ── Period pill (same pattern as Balance page) ───────────── */
+.period-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px 8px 16px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.period-pill:focus-within {
+    border-color: var(--primary);
+}
+
+.period-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.period-select {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 0;
+    margin: 0;
+}
+
+.period-select option {
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.period-chevron {
+    color: var(--text-muted);
+    flex-shrink: 0;
+    pointer-events: none;
 }
 
 .kicker {
@@ -379,6 +437,11 @@
 
 /* ── Mobile ──────────────────────────────────────────────── */
 @media (max-width: 540px) {
+    .checkins-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+
     .checkins-title {
         font-size: 1.3rem;
     }

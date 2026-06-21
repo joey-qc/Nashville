@@ -6,9 +6,9 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** CHK-002 Phase 6A — View Log Details integration (linked check-ins shown/added/edited/deleted in View Log); Edit Log Entry check-in list, reporting not started  
+**Phase:** CHK-004 complete — Unified View Log Timeline (standalone Check-Ins as top-level Details rows); CHK-002 Phase 6B (Edit Log Entry check-in list) and B/E/M reporting not started  
 **Build Status:** ✅ All projects build clean (0 errors); 54/54 tests pass  
-**Last Updated:** 2026-06-06
+**Last Updated:** 2026-06-21
 
 ### v2 Migration Deployment Summary
 
@@ -149,6 +149,77 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
   - `Momentum.Infrastructure/Data/AppDbContext.cs` — `DbSet<CheckIn>`, FK configured with `SetNull` on ActivityLog delete, indexes on `UserId` and `CheckedInAt`.
   - `Momentum.Infrastructure/Migrations/20260605193819_CHK001_AddCheckIn.cs` — creates `CheckIns` table; `Down()` drops it cleanly.
 - **Not yet implemented:** DTOs, repository, API endpoints, client service, UI, navigation, reporting.
+
+### CHK-003 — Check-Ins History Period Filtering (2026-06-21)
+
+- **Status:** ✅ Complete. The Check-Ins history page now supports Day / Week / Month filtering with a single 30-day server fetch.
+- **Build/tests:** ✅ 0 errors; 54/54 tests pass. No server/API/DTO/entity changes — client-only feature.
+- **What shipped:**
+  - `Momentum.Client/Services/CheckInService.cs` — added `GetByDateRangeAsync(DateTime fromUtc, DateTime toUtc)` for an explicit bounded fetch. `GetAllAsync` now delegates to it (no behavior change for `GetMostRecentAsync`).
+  - `Momentum.Client/Pages/CheckIns.razor`:
+    - Page loads a single 30-day window on init: local today − 29 days → tomorrow (converted to UTC, no new API endpoint).
+    - `_checkIns` renamed to `_allCheckIns` (the full 30-day cache).
+    - `FilteredCheckIns` computed property applies Day / Week / Month client-side: Day = today only, Week = last 7 days including today, Month = last 30 days (the full cached set).
+    - `_period` string field, default `"day"`, bound to a period-pill `<select>`. Filter changes are instant — no additional network requests.
+    - Header restructured with a left title block and right period-pill, matching the Balance page pattern exactly.
+    - Empty state now differentiates "no check-ins ever" (existing message + CTA) from "none in this period" (`PeriodEmptyText`: "No check-ins today/this week/this month" + hint to widen the period).
+    - `EditId` path auto-widens `_period` so the target row is visible in `FilteredCheckIns` before `StartEdit` is called.
+  - `Momentum.Client/Pages/CheckIns.razor.css` — `.checkins-header` changed to `flex; space-between`; period-pill + related styles added (identical visual treatment to Balance page). Mobile: header stacks vertically at ≤540px.
+- **Design decisions:**
+  - 30-day server window was chosen over unbounded history to bound server cost from day one. All three filter periods fit within 30 days; "Month" is defined as the last 30 days, so the 30-day window is the exact minimum needed.
+  - Client-side filtering keeps filter changes instant and avoids extra round-trips.
+  - `GetAllAsync` (wide window, used by `GetMostRecentAsync` on the Check-In form) is preserved unchanged to avoid regressions on preloaded defaults.
+
+### CHK-004 — Unified View Log Timeline (2026-06-21)
+
+- **Status:** ✅ Complete. Standalone Check-Ins (those with no `ActivityLogId`) now appear as top-level rows in the View Log Details timeline alongside Activity Log entries, sorted newest-first.
+- **Build/tests:** ✅ 0 errors; 54/54 tests pass. Client-only change — no server, DTO, API, service, or schema changes.
+- **What shipped:**
+  - `Momentum.Client/Pages/ActivityDetail.razor`:
+    - Added `_standaloneCheckIns: List<CheckInDto>` — populated in `LoadLogs()` from the same `CheckInService.GetAllAsync()` call already used for linked check-ins. Filtered to `!ActivityLogId.HasValue && CheckedInAt in [from, to)` (date-period match, no dimension filter).
+    - Added private `sealed record TimelineItem(ActivityLogDto? Log, CheckInDto? CheckIn, DateTime SortKey)` — discriminated union used by the unified loop.
+    - Added `IsEmpty` — false (show content) when Details ON and standalones exist even if dimension filter hides all logs.
+    - Added `TimelineItems` computed property — Details OFF: activity logs in existing API order; Details ON: logs + standalones merged, `OrderByDescending(SortKey)`.
+    - Added `StandaloneCheckInTimestamp()` — same format logic as `LogTimestamp()` (time-only for Today, date+time for week/month).
+    - Details toggle visibility updated to `FilteredLogs.Any() || _standaloneCheckIns.Any()` — toggle appears whenever there's something to reveal in Details mode.
+    - Unified `@foreach (var item in TimelineItems)` loop replaces the old `@foreach (var log in FilteredLogs)`. `item.Log` branch = existing activity log card (unchanged); `item.CheckIn` branch = new standalone check-in card.
+    - Standalone check-in card: heart badge (`.ci-badge`), "Check-In" title (`.log-name`), B/E/M scores in `.log-cats` using existing `.ci-metric`/`.ci-val` classes, right-aligned `.log-time`, two-step `.act-btn` delete. Entire card row navigates to `/check-ins?editId={id}&returnUrl={ReturnUrl}` on click, matching Activity Log row behavior. Reuses existing `ConfirmDeleteCheckIn`.
+  - `Momentum.Client/Pages/ActivityDetail.razor.css`:
+    - Added `.ci-badge { background: var(--surface-2); color: var(--text-muted); }` — neutral heart-icon badge, visually distinct from colorful activity-letter badges.
+  - `Docs/check-in-feature-design-spec.md` — §10 rewritten to describe unified timeline, filtering rules, and empty states; CHK-004 implementation section added.
+  - `Docs/momentum-functional-requirements.md` — §7.1 Details toggle expanded with unified timeline description, dimension-filter bypass rule; §11.4 updated; version bumped to v1.17.
+- **Design decisions:**
+  - Standalone check-ins use date filtering but bypass dimension filtering — Check-Ins are not dimension-based; hiding them by a dimension category filter would be misleading.
+  - `_checkInsByLog` (for linked check-ins) still uses `GetAllAsync()` (5-year window) so check-ins with a `CheckedInAt` outside the current period (e.g., logged late-night, checked in after midnight) are still correctly associated with their parent log entry.
+  - `TimelineItem` is a component-local record — no shared DTO needed since it's a pure UI concept.
+  - Entire standalone card row is clickable (same as Activity Log rows) rather than only the title text, for consistency.
+
+### UX-003 — Standardize Trends Period Selector (2026-06-21)
+
+- **Status:** ✅ Complete. The Trends page now uses the same period-pill dropdown as Balance and Check-Ins, replacing the segmented Daily / Weekly / Monthly tab buttons.
+- **Build/tests:** ✅ 0 errors; 54/54 tests pass. Client-only change — no server, DTO, API, or service changes.
+- **What shipped:**
+  - `Momentum.Client/Pages/Reports.razor` — `.view-tabs` / `.tab-btn` block replaced with a `.period-pill` containing a `<select>` (options: Daily=0, Weekly=1, Monthly=2). Added `OnTabChanged(ChangeEventArgs e)` handler that delegates to the existing `SetTab(int idx)`. `_tabIndex` (int, 0/1/2) and all downstream logic (`PeriodLabel`, `AvgUnit`, `TopCardTitle`, `LoadData()`, `ComputeImprovementFromData()`) are entirely unchanged.
+  - `Momentum.Client/Pages/Reports.razor.css` — removed `.view-tabs`, `.tab-btn`, `.tab-btn:hover`, `.tab-btn.active`. Added `.period-pill`, `.period-label`, `.period-select`, `.period-select option`, `.period-chevron` using the identical CSS as Balance and Check-Ins. Mobile `controls-row` column-stacking at ≤768px preserved.
+  - `Docs/momentum-design-system.md` — §14 Trends controls description updated from "tabs" to "period dropdown"; §17 Toast corrected to reflect UX-002 changes (top placement, drop-down animation, wider surface); §19 Period Pill added as a documented cross-page reusable pattern (Balance, Check-Ins, Trends).
+- **Design decisions:**
+  - `_tabIndex` (int 0/1/2) was retained as-is — it drives all chart logic and is not exposed in the URL; changing its type would be unnecessary churn.
+  - The period pill uses `@onchange` + `selected="@(_tabIndex == N)"` per-option (same pattern as CheckIns) rather than `@bind` because the change must also trigger `SetTab` → `LoadData()` asynchronously.
+  - The period-pill pattern is now consistent across three pages; it is documented as a named pattern in the design system.
+
+### UX-002 — Toast Placement and Visibility Improvements (2026-06-21)
+
+- **Status:** ✅ Complete. Toast notifications repositioned to appear below the masthead and are visually distinct from page content.
+- **Build/tests:** ✅ 0 errors; 54/54 tests pass. CSS-only change — no server, DTO, API, service, or Razor logic changed.
+- **What shipped (`Momentum.Client/Components/ToastHost.razor.css`):**
+  - **Position:** moved from `bottom: 24px / right: 24px` to `top: 64px / right: 24px` (60px topbar + 4px gap). Toasts no longer cover bottom-page actions (Save / Skip / Cancel).
+  - **Stacking:** `flex-direction` changed from `column-reverse` to `column`; new toasts append below existing ones (stack downward).
+  - **Width:** container now uses `width: min(420px, calc(100vw - 2rem))` so it is consistently sized on desktop without wrapping or causing horizontal scroll.
+  - **Surface:** background changed from `--surface-2` → `--surface-3` (existing lighter token, `#1A3B66`) for better contrast against the dark page background.
+  - **Shadow:** added `box-shadow: 0 4px 16px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3)` to lift toasts off the page visually.
+  - **Animation:** updated from `translateX(16px)` (slide from right) to `translateY(-12px)` (drop down from above), matching the new top placement.
+  - **Mobile (≤540px):** `top: 64px; left: 12px; right: 12px; width: auto` — full-width below topbar, no bottom positioning.
+- **No changes to:** `ToastHost.razor` (Razor markup unchanged), `MainLayout.razor` (toast host is `position: fixed` so DOM placement is irrelevant), `ToastService.cs` (API unchanged), timeout behavior.
 
 ### KI-009 + KI-015 + KI-016 Cleanup Cycle — COMPLETE & DEPLOYED (2026-06-05)
 
@@ -454,4 +525,4 @@ Full detail: `Docs/momentum-known-issues.md`
 
 ---
 
-*Momentum Handoff — Updated 2026-06-06 (CHK-002 Phase 6A — View Log Details integration: linked check-ins shown/added/edited/deleted; 54/54 tests)*
+*Momentum Handoff — Updated 2026-06-21 (CHK-003 — Check-Ins history Day/Week/Month filter, 30-day server window, client-side filtering; 54/54 tests)*
