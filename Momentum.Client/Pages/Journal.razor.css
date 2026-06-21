@@ -1,0 +1,370 @@
+/* ═══════════════════════════════════════════════════════════
+   Journal page (REP-001)
+═══════════════════════════════════════════════════════════ */
+.journal-page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 680px;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+.journal-header {
+    margin-bottom: 4px;
+}
+
+.journal-kicker {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--primary);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.journal-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 6px;
+    line-height: 1.2;
+}
+
+.journal-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin: 0;
+}
+
+/* ── Period pill + date pill controls row ─────────────────── */
+.period-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.period-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px 8px 16px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.period-pill:focus-within {
+    border-color: var(--primary);
+}
+
+.period-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.period-select {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 0;
+    margin: 0;
+}
+
+.period-select option {
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.period-chevron {
+    color: var(--text-muted);
+    flex-shrink: 0;
+    pointer-events: none;
+}
+
+/* ── Date pill (anchor date picker) ─────────────────────── */
+.date-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px 8px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.date-pill:focus-within {
+    border-color: var(--primary);
+}
+
+.date-input {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 0;
+    margin: 0;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.5);
+    cursor: pointer;
+}
+
+/* ── Loading / state ─────────────────────────────────────── */
+.journal-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+.loading-text {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0;
+    animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50%       { opacity: 1; }
+}
+
+/* ── Empty state ─────────────────────────────────────────── */
+.journal-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    padding: 52px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+}
+
+.empty-icon {
+    opacity: 0.35;
+    margin-bottom: 4px;
+}
+
+.empty-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+}
+
+.empty-text {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin: 0;
+    max-width: 360px;
+    line-height: 1.5;
+}
+
+.empty-text strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.empty-cta {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 9px 22px;
+    background: var(--primary);
+    color: #071a07;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 0.15s ease;
+    box-shadow: 0 0 16px rgba(118, 224, 74, 0.18), 0 2px 6px rgba(0, 0, 0, 0.28);
+}
+
+.empty-cta:hover {
+    background: var(--primary-dim);
+}
+
+/* ── Journal entry list ──────────────────────────────────── */
+.journal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ── Journal entry card ──────────────────────────────────── */
+.journal-entry {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Timestamp — secondary metadata above the notes */
+.entry-timestamp {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+}
+
+/* Notes — primary reading content, full-width, comfortable line-height */
+.entry-notes {
+    font-size: 0.92rem;
+    color: var(--text);
+    line-height: 1.65;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Rich text rendered via MarkupString bypasses CSS isolation — use ::deep */
+.entry-notes ::deep p {
+    margin: 0 0 8px;
+}
+
+.entry-notes ::deep p:last-child {
+    margin-bottom: 0;
+}
+
+.entry-notes ::deep ul,
+.entry-notes ::deep ol {
+    margin: 0 0 8px;
+    padding-left: 22px;
+    list-style-position: outside;
+}
+
+.entry-notes ::deep ul { list-style-type: disc; }
+.entry-notes ::deep ol { list-style-type: decimal; }
+
+.entry-notes ::deep li {
+    margin-bottom: 3px;
+}
+
+.entry-notes ::deep strong,
+.entry-notes ::deep b { font-weight: 700; }
+
+.entry-notes ::deep em,
+.entry-notes ::deep i { font-style: italic; }
+
+.entry-notes ::deep u { text-decoration: underline; }
+
+/* Placeholder when an entry was logged with no note text */
+.entry-no-notes {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-style: italic;
+    margin: 0;
+}
+
+/* ── Linked check-ins ────────────────────────────────────── */
+.entry-checkins {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-soft);
+}
+
+.entry-ci {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Check-in timestamp */
+.ci-ts {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Score pills — matches CheckIns page for consistency */
+.ci-scores {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.score-pill {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+}
+
+.score-pill-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.score-pill-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.score-pill-value.pos { color: var(--primary); }
+.score-pill-value.neg { color: var(--negative); }
+
+/* ── Mobile ──────────────────────────────────────────────── */
+@media (max-width: 540px) {
+    .period-controls {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .journal-title {
+        font-size: 1.3rem;
+    }
+
+    .journal-entry {
+        padding: 18px 16px;
+    }
+
+    .journal-list {
+        gap: 12px;
+    }
+}

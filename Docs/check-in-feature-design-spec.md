@@ -584,10 +584,11 @@ CHK-002 Phase 6B ("Edit Log Entry check-in list with add follow-up") is retired.
 - Post-activity Skip → lands on View Log / Today / Details ON (previously went to Home).
 - Check-In history edit Save → lands on View Log / Today / Details ON (previously stayed on list).
 - Check-In history edit Cancel → lands on View Log / Today / Details ON (previously stayed on list).
-- Launching any Check-In flow **from View Log** (via `returnUrl`) still returns to that exact View Log context (period + details=true preserved).
+- Launching any Check-In flow **from View Log** (via `returnUrl`) still returns to that exact View Log context (period + anchor date + details=true preserved). *(NAV-001: anchor date is now encoded in the ReturnUrl so historical date context is fully preserved.)*
 - No browser console errors.
 
 ---
 
 *Check-In Feature Design Specification — created 2026-06-04*
 *Status: CHK-005 complete (Default Check-In Return Behavior); Edit Log Entry check-in list (CHK-002 Phase 6B) retired; reporting not started*
+*NAV-001 (2026-06-21): anchor date now included in View Log's ReturnUrl — CHK-005 QA item updated to reflect full context preservation (period + anchor + details=true)*

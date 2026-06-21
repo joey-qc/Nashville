@@ -57,17 +57,26 @@
     <!-- ═══ Filter bar ═══ -->
     <div class="filter-bar">
 
-        <!-- Period pill -->
-        <div class="period-pill">
-            <span class="period-label">Period</span>
-            <select class="period-select" @onchange="OnPeriodChanged">
-                <option value="today"  selected="@(_period == "today")">Today</option>
-                <option value="week"   selected="@(_period == "week")">This Week</option>
-                <option value="month"  selected="@(_period == "month")">This Month</option>
-            </select>
-            <svg class="period-chevron" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-                <path d="M7 10l5 5 5-5z" fill="currentColor"/>
-            </svg>
+        <!-- Period pill + anchor date picker on the same row -->
+        <div class="period-controls">
+            <div class="period-pill">
+                <span class="period-label">Period</span>
+                <select class="period-select" @onchange="OnPeriodChanged">
+                    <option value="today"  selected="@(_period == "today")">Today</option>
+                    <option value="week"   selected="@(_period == "week")">This Week</option>
+                    <option value="month"  selected="@(_period == "month")">This Month</option>
+                </select>
+                <svg class="period-chevron" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                    <path d="M7 10l5 5 5-5z" fill="currentColor"/>
+                </svg>
+            </div>
+            <label class="date-pill">
+                <input type="date" class="date-input"
+                       value="@_anchorStr"
+                       max="@_todayStr"
+                       aria-label="Select anchor date"
+                       @onchange="OnAnchorChanged" />
+            </label>
         </div>
 
         <!-- Category filter chips -->
@@ -318,8 +327,13 @@
     [SupplyParameterFromQuery] private string? Period { get; set; }
     // When returning from an add/edit check-in flow, this restores the expanded Details state.
     [SupplyParameterFromQuery(Name = "details")] private string? DetailsParam { get; set; }
+    // Anchor date passed back via returnUrl so browsing context is preserved.
+    [SupplyParameterFromQuery(Name = "anchor")]  private string? AnchorParam { get; set; }
 
     private string _period = "today";
+    private DateTime _anchor = DateTime.Today;
+    private string _anchorStr => _anchor.ToString("yyyy-MM-dd");
+    private string _todayStr  => DateTime.Today.ToString("yyyy-MM-dd");
     private List<ActivityLogDto> _logs = [];
     private List<CategoryDto> _categories = [];
     private int? _categoryFilter;
@@ -336,7 +350,13 @@
     // Discriminated-union timeline item used by the Details-mode unified timeline.
     private sealed record TimelineItem(ActivityLogDto? Log, CheckInDto? CheckIn, DateTime SortKey);
 
-    private string DateDisplay => DateTime.Now.ToString("d MMM ddd");
+    // Show date range in header based on selected period and anchor.
+    private string DateDisplay => _period switch
+    {
+        "week"  => $"{_anchor.AddDays(-6):MMM d} – {_anchor:MMM d}",
+        "month" => $"{_anchor.AddDays(-29):MMM d} – {_anchor:MMM d}",
+        _       => _anchor.ToString("d MMM ddd")
+    };
 
     private IEnumerable<ActivityLogDto> FilteredLogs =>
         _categoryFilter.HasValue
@@ -371,6 +391,8 @@
     {
         if (!string.IsNullOrEmpty(Period))
             _period = Period;
+        if (!string.IsNullOrEmpty(AnchorParam) && DateTime.TryParse(AnchorParam, out var parsed))
+            _anchor = parsed.Date <= DateTime.Today ? parsed.Date : DateTime.Today;
         // Restore expanded Details when returning from an add/edit check-in flow.
         _showDetails = DetailsParam == "true";
         _categories = (await CategoryService.GetAllAsync()).ToList();
@@ -378,13 +400,22 @@
     }
 
     // Encoded return target so add/edit check-in flows can come back to this exact
-    // View Log context (same period, Details expanded). Generic returnUrl pattern.
+    // View Log context (same period, anchor date, Details expanded). Generic returnUrl pattern.
     private string ReturnUrl =>
-        Uri.EscapeDataString($"/log/detail?period={_period}&details=true");
+        Uri.EscapeDataString($"/log/detail?period={_period}&anchor={_anchorStr}&details=true");
 
     private async Task OnPeriodChanged(ChangeEventArgs e)
     {
         _period = e.Value?.ToString() ?? "today";
+        await LoadLogs();
+    }
+
+    private async Task OnAnchorChanged(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var d))
+            _anchor = d.Date <= DateTime.Today ? d.Date : DateTime.Today;
+        else
+            _anchor = DateTime.Today;
         await LoadLogs();
     }
 
@@ -426,17 +457,16 @@
 
     private (DateTime from, DateTime to) GetDateRange()
     {
-        // DateTime.Today is the browser's local midnight (DateTimeKind.Local).
-        // ToUniversalTime() converts to the correct UTC equivalent so the API
-        // query uses inclusive-start / exclusive-end UTC boundaries that align
-        // with the user's local calendar day rather than UTC midnight.
-        var localToday = DateTime.Today;
-        var toUtc      = localToday.AddDays(1).ToUniversalTime();
+        // _anchor is a local calendar date. Convert boundaries to UTC so the API
+        // query uses inclusive-start / exclusive-end UTC ranges aligned to the
+        // user's local calendar day. Rolling windows: Day=1d, Week=7d, Month=30d.
+        var anchor = _anchor.Date;
+        var to     = anchor.AddDays(1).ToUniversalTime();
         return _period switch
         {
-            "week"  => (localToday.AddDays(-(int)localToday.DayOfWeek).ToUniversalTime(), toUtc),
-            "month" => (localToday.AddDays(1 - localToday.Day).ToUniversalTime(),         toUtc),
-            _       => (localToday.ToUniversalTime(),                                      toUtc)
+            "week"  => (anchor.AddDays(-6).ToUniversalTime(),  to),
+            "month" => (anchor.AddDays(-29).ToUniversalTime(), to),
+            _       => (anchor.ToUniversalTime(),               to)
         };
     }
 
@@ -458,6 +488,7 @@
     private string LogTimestamp(ActivityLogDto log)
     {
         var local = log.LoggedAt.ToLocalTime();
+        // Day period = single date → show time only. Week/Month → show date + time.
         return _period == "today"
             ? local.ToString("h:mm tt")
             : local.ToString("MMM d") + " · " + local.ToString("h:mm tt");

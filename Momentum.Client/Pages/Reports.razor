@@ -47,7 +47,7 @@
         }
     </div>
 
-    <!-- ═══ Controls: period dropdown + category filter ═══ -->
+    <!-- ═══ Controls: period dropdown + anchor date + category filter ═══ -->
     <div class="controls-row">
         <div class="period-pill">
             <span class="period-label">Period</span>
@@ -60,6 +60,13 @@
                 <path d="M7 10l5 5 5-5z" fill="currentColor"/>
             </svg>
         </div>
+        <label class="date-pill">
+            <input type="date" class="date-input"
+                   value="@_anchorStr"
+                   max="@_todayStr"
+                   aria-label="Select anchor date"
+                   @onchange="OnAnchorChanged" />
+        </label>
         <div class="cat-filter">
             <button type="button"
                     class="cat-chip @(_categoryId == null ? "active all" : "")"
@@ -184,6 +191,11 @@
     private bool _loading = true;
     private int  _improvementPct;
 
+    // ── Anchor date ────────────────────────────────────────────
+    private DateTime _anchor = DateTime.Today;
+    private string _anchorStr => _anchor.ToString("yyyy-MM-dd");
+    private string _todayStr  => DateTime.Today.ToString("yyyy-MM-dd");
+
     // ── Computed text ────────────────────────────────────────
     private string PeriodLabel  => _tabIndex switch { 1 => "Last 8 weeks", 2 => "Last 6 months", _ => "Last 14 days" };
     private string AvgUnit      => _tabIndex switch { 1 => "per week", 2 => "per month", _ => "per day" };
@@ -192,20 +204,19 @@
     private int GrandTotal => _data.Sum(d => d.Total);
     private int AvgPts     => _data.Count == 0 ? 0 : (int)Math.Round(GrandTotal / (double)_data.Count);
 
-    // Points for the single current period (today / this week / this month)
+    // Points for the period containing the anchor date
     private int CurrentPeriodTotal
     {
         get
         {
-            var now   = DateTime.UtcNow;
-            var today = DateOnly.FromDateTime(now.Date);
+            var anchor = DateOnly.FromDateTime(_anchor);
             return _tabIndex switch
             {
                 1 => _data.FirstOrDefault(d =>
-                         d.Date == DateOnly.FromDateTime(now.Date.AddDays(-(int)now.DayOfWeek)))?.Total ?? 0,
+                         d.Date == DateOnly.FromDateTime(_anchor.AddDays(-(int)_anchor.DayOfWeek)))?.Total ?? 0,
                 2 => _data.FirstOrDefault(d =>
-                         d.Date == DateOnly.FromDateTime(new DateTime(now.Year, now.Month, 1)))?.Total ?? 0,
-                _ => _data.FirstOrDefault(d => d.Date == today)?.Total ?? 0
+                         d.Date == new DateOnly(_anchor.Year, _anchor.Month, 1))?.Total ?? 0,
+                _ => _data.FirstOrDefault(d => d.Date == anchor)?.Total ?? 0
             };
         }
     }
@@ -251,16 +262,26 @@
     private async Task OnTabChanged(ChangeEventArgs e)
         => await SetTab(int.Parse(e.Value?.ToString() ?? "0"));
 
+    private async Task OnAnchorChanged(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var d))
+            _anchor = d.Date <= DateTime.Today ? d.Date : DateTime.Today;
+        else
+            _anchor = DateTime.Today;
+        await LoadData();
+    }
+
     private async Task LoadData()
     {
         _loading = true;
         StateHasChanged();
 
+        var anchor = DateOnly.FromDateTime(_anchor);
         _data = _tabIndex switch
         {
-            1 => await ReportsService.GetWeeklyAsync(8,  _categoryId),
-            2 => await ReportsService.GetMonthlyAsync(6, _categoryId),
-            _ => await ReportsService.GetDailyAsync(14,  _categoryId)
+            1 => await ReportsService.GetWeeklyAsync(8,  _categoryId, anchor),
+            2 => await ReportsService.GetMonthlyAsync(6, _categoryId, anchor),
+            _ => await ReportsService.GetDailyAsync(14,  _categoryId, anchor)
         };
 
         ComputeImprovementFromData();

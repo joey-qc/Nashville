@@ -84,12 +84,22 @@
     color: var(--negative);
 }
 
-/* ── Controls row ────────────────────────────────────────── */
+/* ── Controls row: period pill left | date pill right | cat chips below ── */
 .controls-row {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 12px;
     flex-wrap: wrap;
+}
+
+/* Date pill pushed to the right */
+.controls-row .date-pill {
+    margin-left: auto;
+}
+
+/* Cat chips on their own row below */
+.controls-row .cat-filter {
+    flex-basis: 100%;
 }
 
 /* ── Period pill ─────────────────────────────────────────── */
@@ -144,6 +154,43 @@
     color: var(--text-muted);
     flex-shrink: 0;
     pointer-events: none;
+}
+
+/* ── Date pill (anchor date picker) ─────────────────────── */
+.date-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px 8px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.date-pill:focus-within {
+    border-color: var(--primary);
+}
+
+.date-input {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 0;
+    margin: 0;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.5);
+    cursor: pointer;
 }
 
 /* Category chips */
@@ -410,12 +457,6 @@
 
     .trends-period-label {
         font-size: 0.88rem;
-    }
-
-    .controls-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
     }
 
     .bottom-row {

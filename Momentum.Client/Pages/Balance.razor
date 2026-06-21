@@ -10,12 +10,12 @@
 
     @* ═══ Header ═══ *@
     <div class="bal-header">
-        <div class="bal-header-left">
-            <p class="bal-kicker">REPORTS · BALANCE</p>
-            <h1 class="bal-title">How balanced are you?</h1>
-            <p class="bal-sub">A look at where your momentum came from this @PeriodWord.</p>
-        </div>
+        <p class="bal-kicker">REPORTS · BALANCE</p>
+        <h1 class="bal-title">How balanced are you?</h1>
+        <p class="bal-sub">A look at where your momentum came from this @PeriodWord.</p>
+    </div>
 
+    <div class="bal-controls">
         <div class="period-pill">
             <span class="period-label">Period</span>
             <select class="period-select" @onchange="OnPeriodChanged">
@@ -27,6 +27,13 @@
                 <path d="M7 10l5 5 5-5z" fill="currentColor"/>
             </svg>
         </div>
+        <label class="date-pill">
+            <input type="date" class="date-input"
+                   value="@_anchorStr"
+                   max="@_todayStr"
+                   aria-label="Select anchor date"
+                   @onchange="OnAnchorChanged" />
+        </label>
     </div>
 
     @if (_loading)
@@ -167,6 +174,9 @@
 
 @code {
     private string                  _period     = "week";
+    private DateTime                _anchor     = DateTime.Today;
+    private string _anchorStr => _anchor.ToString("yyyy-MM-dd");
+    private string _todayStr  => DateTime.Today.ToString("yyyy-MM-dd");
     private List<CategoryTotalDto>  _balance    = [];
     private List<CategoryDto>       _categories = [];
     private List<ActivityLogDto>    _periodLogs = [];
@@ -209,13 +219,27 @@
         await LoadData();
     }
 
+    private async Task OnAnchorChanged(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var d))
+            _anchor = d.Date <= DateTime.Today ? d.Date : DateTime.Today;
+        else
+            _anchor = DateTime.Today;
+        await LoadData();
+    }
+
     private async Task LoadData()
     {
         _loading = true;
         StateHasChanged();
 
-        var tBalance = ReportsService.GetBalanceAsync(_period);
-        var tLogs    = LogService.GetByDateRangeAsync(GetPeriodFrom(), DateTime.UtcNow);
+        // Year is always current calendar year-to-date; pass null anchor so the server
+        // uses its own UTC now. Week/Month anchor to the selected date.
+        var anchor   = _period == "year" ? (DateOnly?)null : DateOnly.FromDateTime(_anchor);
+        var logTo    = _period == "year" ? DateTime.UtcNow : _anchor.AddDays(1).ToUniversalTime();
+
+        var tBalance = ReportsService.GetBalanceAsync(_period, anchor);
+        var tLogs    = LogService.GetByDateRangeAsync(GetPeriodFrom(), logTo);
 
         await Task.WhenAll(tBalance, tLogs);
 
@@ -227,12 +251,12 @@
 
     private DateTime GetPeriodFrom()
     {
-        var localToday = DateTime.Today; // browser local midnight
+        var anchor = _anchor.Date;
         return _period switch
         {
-            "month" => localToday.AddDays(1 - localToday.Day).ToUniversalTime(),
-            "year"  => localToday.AddDays(1 - localToday.DayOfYear).ToUniversalTime(),
-            _       => localToday.AddDays(-(int)localToday.DayOfWeek).ToUniversalTime()
+            "month" => anchor.AddDays(-29).ToUniversalTime(),
+            "year"  => new DateTime(DateTime.Today.Year, 1, 1, 0, 0, 0, DateTimeKind.Local).ToUniversalTime(),
+            _       => anchor.AddDays(-6).ToUniversalTime()
         };
     }
 

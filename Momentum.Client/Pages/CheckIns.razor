@@ -10,11 +10,13 @@
 
     <!-- ══ Page header ══ -->
     <header class="checkins-header">
-        <div>
-            <span class="kicker">CHECK-INS</span>
-            <h1 class="checkins-title">Check-Ins</h1>
-            <p class="checkins-subtitle">Your Body, Energy, and Mood history.</p>
-        </div>
+        <span class="kicker">CHECK-INS</span>
+        <h1 class="checkins-title">Check-Ins</h1>
+        <p class="checkins-subtitle">Your Body, Energy, and Mood history.</p>
+    </header>
+
+    <!-- ══ Period + anchor date controls ══ -->
+    <div class="period-controls">
         <div class="period-pill">
             <span class="period-label">Period</span>
             <select class="period-select" @bind="_period">
@@ -26,7 +28,14 @@
                 <path d="M7 10l5 5 5-5z" fill="currentColor"/>
             </svg>
         </div>
-    </header>
+        <label class="date-pill">
+            <input type="date" class="date-input"
+                   value="@_anchorStr"
+                   max="@_todayStr"
+                   aria-label="Select anchor date"
+                   @onchange="OnAnchorChanged" />
+        </label>
+    </div>
 
     @if (_loading)
     {
@@ -173,21 +182,30 @@
 </div>
 
 @code {
-    // Full 30-day data set fetched once on load.
+    // 30-day data set fetched around the anchor date.
     private List<CheckInDto> _allCheckIns = [];
     private bool _loading = true;
     private bool _busy;
     private int? _pendingDeleteId;
 
+    // ── Anchor date ────────────────────────────────────────────
+    private DateTime _anchor = DateTime.Today;
+    private string _anchorStr => _anchor.ToString("yyyy-MM-dd");
+    private string _todayStr  => DateTime.Today.ToString("yyyy-MM-dd");
+
     // ── Period filter ──────────────────────────────────────────
     private string _period = "day";
 
-    // Subset of _allCheckIns matching the selected period.
+    // Subset of _allCheckIns matching the selected period relative to the anchor date.
     private List<CheckInDto> FilteredCheckIns => _period switch
     {
-        "day"  => _allCheckIns.Where(c => c.CheckedInAt.ToLocalTime().Date == DateTime.Today).ToList(),
-        "week" => _allCheckIns.Where(c => c.CheckedInAt.ToLocalTime().Date >= DateTime.Today.AddDays(-6)).ToList(),
-        _      => _allCheckIns   // "month" — full 30-day window already fetched
+        "day"  => _allCheckIns.Where(c => c.CheckedInAt.ToLocalTime().Date == _anchor.Date).ToList(),
+        "week" => _allCheckIns.Where(c =>
+        {
+            var d = c.CheckedInAt.ToLocalTime().Date;
+            return d >= _anchor.AddDays(-6).Date && d <= _anchor.Date;
+        }).ToList(),
+        _      => _allCheckIns   // "month" — full anchor window fetched
     };
 
     private string PeriodEmptyText => _period switch
@@ -243,12 +261,22 @@
     private async Task Load()
     {
         _loading = true;
-        // Fetch 30 days (local today − 29 days → tomorrow), converted to UTC.
-        // All period filtering (Day / Week / Month) is done client-side from this set.
-        var from = DateTime.Today.AddDays(-29).ToUniversalTime();
-        var to   = DateTime.Today.AddDays(1).ToUniversalTime();
+        // When in edit-by-id mode, load relative to today so the target is always in range.
+        // When browsing history, load the 30-day window ending on the anchor date.
+        var loadAnchor = EditId.HasValue ? DateTime.Today : _anchor;
+        var from = loadAnchor.AddDays(-29).ToUniversalTime();
+        var to   = loadAnchor.AddDays(1).ToUniversalTime();
         _allCheckIns = await CheckInService.GetByDateRangeAsync(from, to);
         _loading = false;
+    }
+
+    private async Task OnAnchorChanged(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var d))
+            _anchor = d.Date <= DateTime.Today ? d.Date : DateTime.Today;
+        else
+            _anchor = DateTime.Today;
+        await Load();
     }
 
     private static string Timestamp(CheckInDto c)

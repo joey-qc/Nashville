@@ -31,6 +31,7 @@
   - **View Log** (Activity Detail View — browsable history by period)
   - **Check Ins** (Check-In history — see §11; route `/check-ins`)
   - **Reports** (Reporting & Analytics — contains Trends and Balance sub-pages)
+  - **Journal** (Reading surface for Journaling activity entries — see §14; route `/journal`)
   - **Manage Activities** (Data Management)
   - **Settings**
 - **Persistent top action buttons** are visible on every authenticated screen in the top bar, side by side:
@@ -128,6 +129,7 @@ Accessible by clicking on a score total (Today, This Week, This Month) from the 
 
 ### 7.1 Activity List
 - Displays all activities logged within the selected time period (day, week, or month).
+- An **anchor-date picker** (compact date pill, right-aligned beside the period pill) sets the end boundary for the selected period. Defaults to today; future dates are blocked. Day = anchor date only; Week = anchor date + previous 6 days; Month = anchor date + previous 29 days.
 - Activities are listed in **chronological order**, earliest at the top, most recent at the bottom.
 - Each entry displays:
   - Activity name
@@ -147,7 +149,7 @@ Accessible by clicking on a score total (Today, This Week, This Month) from the 
 - **Filtering:** Date filters apply to both Activity Log entries and standalone Check-Ins. **Dimension filters apply only to Activity Log entries** — standalone Check-Ins appear regardless of which dimension is selected, as long as they fall within the selected date period.
 - **Editing a check-in:** clicking the row navigates to the Check-Ins history page where it opens for inline editing.
 - **Deleting a check-in:** a trash → confirm/cancel control deletes only that check-in; no Activity Log is affected.
-- **Returning to context:** adding or editing a check-in from View Log returns the user to the **same View Log view** (same period, Details still expanded) after Save, Skip, or Cancel.
+- **Returning to context:** adding or editing a check-in from View Log returns the user to the **same View Log view** (same period, same anchor date, Details still expanded) after Save, Skip, or Cancel. The anchor date is encoded in the `returnUrl` so the date context is fully preserved.
 - Activity Log entries with no note and no linked check-ins still show the "+ Add Check-In" action when Details is ON.
 
 ### 7.2 Editing a Log Entry
@@ -181,6 +183,8 @@ The user selects one of the following aggregation levels:
 - **Weekly** — weekly totals for the past 8 weeks
 - **Monthly** — monthly totals for the past 6 months
 
+An **anchor-date picker** (compact date pill) sets the end boundary for the data window. Defaults to today; future dates are blocked. The Dimension Trend sparklines (§8.1.4) always use today as their anchor regardless of the picker, since they are labeled "last 8 weeks."
+
 #### 8.1.2 Dimension Filter
 The user can filter the chart by dimension (Body, Mind, Spirit, Connections, Responsibilities, or **All**). When a specific dimension is selected, only points from activities in that dimension are shown, using that dimension's color.
 
@@ -211,7 +215,7 @@ The five highest-scoring periods for the selected aggregation level.
 Focused on dimension distribution: how balanced the user's activity is across the five wellness dimensions for a chosen period.
 
 #### 8.2.1 Period Selector
-Dropdown (presented as a styled pill): **This Week**, **This Month**, **This Year**.
+Dropdown (presented as a styled pill): **This Week**, **This Month**, **This Year**. An **anchor-date picker** (compact date pill) sets the end of the rolling week and month windows: Week = anchor date + previous 6 days; Month = anchor date + previous 29 days. **This Year** is always the current calendar year-to-date (Jan 1 → today) and is not affected by the anchor-date picker.
 
 #### 8.2.2 Donut Chart + Dimension List
 - Donut ring chart showing each dimension's proportional share of total points for the selected period.
@@ -326,6 +330,7 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
 - **Edit:** the user can edit a check-in's date/time and Body/Energy/Mood scores inline. The activity link cannot be changed from this screen.
 - **Delete:** the user can delete any of their check-ins via a trash → confirm/cancel control. Deleting a check-in does **not** delete the associated activity log.
 - An empty state is shown when the user has no check-ins.
+- A **period-filter pill** (Day / Week / Month) and **anchor-date picker** (compact date pill) allow filtering the displayed list to a specific date window. Day = anchor date only; Week = anchor date + previous 6 days; Month = all fetched records. The screen fetches the user's check-ins for the 30-day window ending on the anchor date; the period pill filters the displayed results client-side.
 
 ### 11.4 View Log Details Integration (CHK-002 Phase 6A + CHK-004 — implemented)
 - The View Log **Details** toggle (§7.1) surfaces each entry's linked check-ins and a "+ Add Check-In" action, in addition to notes.
@@ -343,19 +348,59 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
 
 ---
 
-## 12. Settings Screen
+## 12. Journal (REP-001 — implemented)
 
-### 12.1 Profile
+The Journal screen (`/journal`) presents entries logged against the **Journaling** activity as a clean chronological reading experience. It is a read-only surface — entries are created via the normal Add Entry flow.
+
+### 12.1 Entry Source
+- Journal entries are `ActivityLog` records whose `ActivityName` equals `"Journaling"` (case-insensitive match, client-side filter on the existing date-range endpoint).
+- Non-Journaling activity logs are never shown on the Journal page.
+
+### 12.2 Navigation
+- A **Journal** item appears in the primary left navigation between the Reports group (Trends / Balance) and Manage Activities.
+- Route: `/journal`.
+
+### 12.3 Period & Date Navigation
+- Uses the NAV-001 anchor-date pattern: a **period pill** (Day / Week / Month) on the left and a **date pill** (anchor-date picker) on the right.
+- Default state: **Period = Week**, **Anchor = Today**.
+- Period semantics: Day = anchor date only; Week = anchor date + previous 6 days; Month = anchor date + previous 29 days.
+
+### 12.4 Entry Display
+- Entries are sorted **newest first**.
+- The Journal is permanently in Details ON mode — no toggle is shown.
+- Each entry displays:
+  - **Logged timestamp** — local date + time (e.g., "Jun 21, 2026 · 9:15 AM").
+  - **Rendered rich notes** — the primary visual element; displayed at full card width with comfortable line-height.
+  - **Linked check-ins** — Body / Energy / Mood scores shown as full-label score pills if any exist for the entry.
+- Not displayed: dimension chips, activity badges, point values, Details toggle, View Log-specific controls.
+
+### 12.5 Empty State
+- When no Journaling entries exist for the selected period, a centered card shows:
+  - Illustration icon.
+  - **"No journal entries yet."**
+  - Body copy: "Your Journal is populated from entries logged using the **Journaling** activity template."
+  - **"Write Your First Entry"** CTA button → navigates to `/log`.
+
+### 12.6 Out of Scope (v1)
+- Search, export, streaks, analytics, editing from Journal, non-Journaling entries.
+- Protecting the Journaling activity from deletion.
+- Body / Energy / Mood correlation analytics.
+
+---
+
+## 13. Settings Screen
+
+### 13.1 Profile
 - **Display Name** — editable text field; used for the personalized welcome greeting throughout the app
 - **Email Address** — read-only; displayed for reference but cannot be changed after registration
 - **Password** — *(planned for future release)* change password with current password confirmation
 
-### 12.2 Appearance
+### 13.2 Appearance
 - The application uses **permanent dark mode**. There is no theme toggle — light mode is not available.
 
 ---
 
-## 13. General UX Requirements
+## 14. General UX Requirements
 
 - The application is **responsive** and usable on desktop and tablet browsers.
 - **Color coding** for dimensions is consistent across all screens — charts, activity lists, dimension chips, and form elements all use the same color per dimension.
@@ -374,3 +419,5 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
 *Version 1.16 — CHK-002 Phase 6A polish: §7.1 add/edit check-in from View Log returns to the same View Log context (period + Details expanded) after save/skip/cancel*
 *Version 1.17 — CHK-004: §7.1 Details toggle extended — standalone Check-Ins appear as top-level rows in the unified Details timeline; dimension filter bypass for standalone rows; toggle visibility condition updated; §11.4 updated*
 *Version 1.18 — CHK-005: §6.4/§6.5/§11.1/§11.2 updated — all Check-In save/skip destinations changed from Home/stay-on-page to View Log / Today / Details ON; §11.5 add return-behavior; §11.7 CHK-002 Phase 6B retired (superseded by CHK-004 View Log Details)*
+*Version 1.19 — NAV-001: §7.1 anchor-date picker added (Day/Week/Month rolling windows ending on anchor); §7.1 returnUrl now preserves anchor date; §8.1.1 anchor-date picker added (sparklines remain today-anchored); §8.2.1 anchor-date picker and rolling-window description added; §11.3 period filter + anchor-date picker added*
+*Version 1.20 — REP-001: §3 nav updated (Journal added between Reports and Manage Activities); §12 Journal screen added (entry source, period/anchor navigation, display rules, empty state, v1 out-of-scope items); §13/§14 renumbered*

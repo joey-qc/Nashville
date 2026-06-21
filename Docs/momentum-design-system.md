@@ -1270,9 +1270,180 @@ Use `@onchange` (not `@bind`) so the handler can call async data-fetch logic aft
 | Balance | `Reports.Balance.razor.css` | This Week · This Month · This Year | This Week |
 | Check-Ins | `CheckIns.razor.css` | Day · Week · Month | Day |
 | Trends | `Reports.razor.css` | Daily · Weekly · Monthly | Daily |
+| View Log | `ActivityDetail.razor.css` | Today · This Week · This Month | Today |
 
 ---
 
-*Momentum Design System — v1.12*
+## 20. Date Pill — Anchor Date Picker
+
+A compact, pill-shaped native date input. Placed to the right of the Period pill on each filtered page. The selected date becomes the anchor for all period calculations.
+
+### Purpose
+
+Allows users to browse historical data by selecting any past date. The Period dropdown then applies its window relative to the anchor:
+
+| Period | Window |
+|---|---|
+| Today / Day | Selected date only |
+| Week | Selected date + previous 6 days (7 total) |
+| Month | Selected date + previous 29 days (30 total) |
+| Year (Balance only) | Jan 1 of current year → today (anchor has no effect) |
+
+### Markup pattern
+
+```html
+<label class="date-pill">
+    <input type="date" class="date-input"
+           value="@_anchorStr"
+           max="@_todayStr"
+           aria-label="Select anchor date"
+           @onchange="OnAnchorChanged" />
+</label>
+```
+
+Using `<label>` as the container means clicking anywhere (including any decorative element inside) focuses the `<input>`. `max="@_todayStr"` prevents future dates at the browser level; the `OnAnchorChanged` handler also clamps any out-of-range value back to today.
+
+**No visible label text** — the element uses `aria-label="Select anchor date"` for accessible labeling.
+
+### Supporting C# (per page, in `@code`)
+
+```csharp
+private DateTime _anchor = DateTime.Today;
+private string _anchorStr => _anchor.ToString("yyyy-MM-dd");
+private string _todayStr  => DateTime.Today.ToString("yyyy-MM-dd");
+
+private async Task OnAnchorChanged(ChangeEventArgs e)
+{
+    if (DateTime.TryParse(e.Value?.ToString(), out var d))
+        _anchor = d.Date <= DateTime.Today ? d.Date : DateTime.Today;
+    else
+        _anchor = DateTime.Today;
+    await LoadData(); // or LoadLogs()
+}
+```
+
+### CSS (duplicated per page — Blazor CSS isolation)
+
+```css
+.date-pill {
+    display: inline-flex; align-items: center;
+    padding: 8px 12px 8px 14px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 20px; flex-shrink: 0; cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+.date-pill:focus-within { border-color: var(--primary); }
+.date-input {
+    background: transparent; border: none; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600;
+    cursor: pointer; outline: none; -webkit-appearance: none; appearance: none;
+    padding: 0; margin: 0;
+}
+.date-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.5);
+    cursor: pointer;
+}
+```
+
+### Layout: Period pill + Date pill row
+
+Period pill sits on the left; date pill is right-aligned. Implementation varies per page:
+
+- **View Log**: wrapped together in `.period-controls { display: flex; justify-content: space-between; }` inside `.filter-bar`.
+- **Check-Ins**: `.period-controls { display: flex; justify-content: space-between; }` row below the header.
+- **Journal**: `.period-controls { display: flex; justify-content: space-between; }` row below the header (matches Check-Ins layout).
+- **Trends**: `.controls-row { display: flex; flex-wrap: wrap; gap: 12px; }` with `.controls-row .date-pill { margin-left: auto; }` (pushes date pill right) and `.controls-row .cat-filter { flex-basis: 100%; }` (forces category chips to their own row below). *(NAV-001A)*
+- **Balance**: period pill + date pill in `.bal-controls { display: flex; justify-content: space-between; gap: 12px; }` placed below the header text block. *(NAV-001A)*
+
+### Notes
+
+- CSS must be **duplicated per page** — Blazor CSS isolation prevents sharing.
+- `_anchor` is page-local state (`private DateTime`), not a shared service — pages have independent browsing contexts.
+- The date input value uses "yyyy-MM-dd" format for the `value`/`max` attributes (HTML date input wire format); the browser renders it in the user's locale (e.g., "6/21/2026" in US).
+- Firefox does not support `::-webkit-calendar-picker-indicator`; the native FF calendar button remains visible and functional (acceptable cross-browser behavior).
+
+### Pages using this pattern
+
+| Page | Layout container | Notes |
+|---|---|---|
+| View Log | `.period-controls` (inside `.filter-bar`) | `ReturnUrl` includes `anchor=` param for context restore |
+| Check-Ins | `.period-controls` (below header) | Period filtering is client-side; only anchor change triggers `Load()` |
+| Journal | `.period-controls` (below header) | Same pattern as Check-Ins; default period = Week |
+| Trends | `.controls-row` | Date pill right-aligned via `margin-left: auto`; cat chips on own row via `flex-basis: 100%`; sparklines stay today-anchored |
+| Balance | `.bal-controls` (below header) | Year period ignores anchor (always current calendar year-to-date) |
+
+---
+
+## 21. Journal Page — Reading Surface Pattern (REP-001)
+
+The Journal page (`/journal`) is a reading-optimized surface for Journaling activity entries. It reuses the period-controls + date-pill header pattern and the score-pill component from Check-Ins, with a card design tuned for long-form prose.
+
+### Entry card
+
+Each entry is an `<article class="journal-entry">` card with:
+- `padding: 24px` (more generous than the 14px in View Log cards)
+- `gap: 14px` between child elements (timestamp → notes → check-in section)
+- No activity badge, no dimension chips, no points column
+
+### Timestamp
+
+```html
+<time class="entry-timestamp" datetime="@entry.LoggedAt.ToString("O")">
+    Jun 21, 2026 · 9:15 AM
+</time>
+```
+
+`.entry-timestamp`: `0.72rem`, `font-weight: 600`, `color: var(--text-muted)`.
+
+### Notes body (primary visual element)
+
+```html
+<div class="entry-notes">@((MarkupString)entry.Notes!)</div>
+```
+
+```css
+.entry-notes {
+    font-size: 0.92rem;      /* larger than View Log's 0.82rem */
+    color: var(--text);
+    line-height: 1.65;       /* airier than View Log's 1.55 */
+    word-break: break-word;
+}
+/* Rich text via ::deep (MarkupString bypasses CSS isolation) */
+.entry-notes ::deep p { margin: 0 0 8px; }
+.entry-notes ::deep ul, .entry-notes ::deep ol { padding-left: 22px; }
+.entry-notes ::deep strong, .entry-notes ::deep b { font-weight: 700; }
+.entry-notes ::deep em, .entry-notes ::deep i { font-style: italic; }
+.entry-notes ::deep u { text-decoration: underline; }
+```
+
+Notes render at full card width (no `padding-left` indent — there is no activity badge to align under).
+
+### Linked check-ins section
+
+Appears below a `border-top` separator when the entry has linked check-ins. Uses the same `.score-pill` components as the Check-Ins history page, with **full label names** ("Body", "Energy", "Mood") rather than abbreviations.
+
+```html
+<div class="entry-checkins">
+    <div class="entry-ci">
+        <span class="ci-ts">Jun 21 · 9:20 AM</span>
+        <div class="ci-scores">
+            <span class="score-pill"><span class="score-pill-label">Body</span><span class="score-pill-value pos">+2</span></span>
+            <span class="score-pill"><span class="score-pill-label">Energy</span><span class="score-pill-value">0</span></span>
+            <span class="score-pill"><span class="score-pill-label">Mood</span><span class="score-pill-value pos">+1</span></span>
+        </div>
+    </div>
+</div>
+```
+
+### Empty state
+
+Icon (book SVG, 35% opacity) + title + body copy + green CTA button (`.empty-cta`) → `/log`.
+
+---
+
+*Momentum Design System — v1.14*
 *UX-002: §17 Toast — updated to top placement (top: 64px), wider container (min(420px, …)), surface-3 background, box-shadow, drop-down animation (translateY)*
 *UX-003: §14 Trends controls — "tabs" → "period dropdown"; §19 added — Period Pill documented as a cross-page reusable pattern*
+*NAV-001: §19 Period Pill pages table — added View Log; §20 added — Date Pill (anchor date picker) documented as a cross-page reusable pattern*
+*NAV-001A: §20 layout descriptions corrected — Trends uses `date-pill { margin-left: auto }` + `cat-filter { flex-basis: 100% }`; Balance uses `.bal-controls` row; Journal added to pages table*
+*REP-001: §21 added — Journal page reading-surface pattern (entry card, notes body, check-in section, empty state)*

@@ -61,26 +61,33 @@ public class ScoreService(IActivityLogRepository logRepo) : IScoreService
         };
     }
 
-    public async Task<IEnumerable<DailyScoreDto>> GetDailyTotalsAsync(string userId, int days, int? categoryId, int? localOffsetMinutes = null)
+    public async Task<IEnumerable<DailyScoreDto>> GetDailyTotalsAsync(string userId, int days, int? categoryId, int? localOffsetMinutes = null, DateOnly? anchorDate = null)
     {
         var offset = localOffsetMinutes ?? 0;
-        // Convert the local end-of-today to UTC so the range captures the user's current day.
-        var localToday = DateTime.UtcNow.AddMinutes(offset).Date;
+        // Use client-supplied anchor date (local) when provided; otherwise derive from UTC+offset.
+        var localToday = anchorDate.HasValue
+            ? anchorDate.Value.ToDateTime(TimeOnly.MinValue)
+            : DateTime.UtcNow.AddMinutes(offset).Date;
         var to   = localToday.AddDays(1).AddMinutes(-offset);
         var from = to.AddDays(-days);
         return await GetTotalsAsync(userId, from, to, "day", categoryId, localOffsetMinutes);
     }
 
-    public async Task<IEnumerable<DailyScoreDto>> GetWeeklyTotalsAsync(string userId, int weeks, int? categoryId)
+    public async Task<IEnumerable<DailyScoreDto>> GetWeeklyTotalsAsync(string userId, int weeks, int? categoryId, DateOnly? anchorDate = null)
     {
-        var to   = DateTime.UtcNow.Date.AddDays(1);
+        // Anchor date is a local calendar date; treat as UTC end boundary for weekly aggregation.
+        var to   = anchorDate.HasValue
+            ? anchorDate.Value.ToDateTime(TimeOnly.MinValue).AddDays(1)
+            : DateTime.UtcNow.Date.AddDays(1);
         var from = to.AddDays(-weeks * 7);
         return await GetTotalsAsync(userId, from, to, "week", categoryId);
     }
 
-    public async Task<IEnumerable<DailyScoreDto>> GetMonthlyTotalsAsync(string userId, int months, int? categoryId)
+    public async Task<IEnumerable<DailyScoreDto>> GetMonthlyTotalsAsync(string userId, int months, int? categoryId, DateOnly? anchorDate = null)
     {
-        var to   = DateTime.UtcNow.Date.AddDays(1);
+        var to   = anchorDate.HasValue
+            ? anchorDate.Value.ToDateTime(TimeOnly.MinValue).AddDays(1)
+            : DateTime.UtcNow.Date.AddDays(1);
         var from = to.AddMonths(-months);
         return await GetTotalsAsync(userId, from, to, "month", categoryId);
     }
@@ -129,14 +136,17 @@ public class ScoreService(IActivityLogRepository logRepo) : IScoreService
         };
     }
 
-    public async Task<IEnumerable<CategoryTotalDto>> GetCategoryTotalsAsync(string userId, string period)
+    public async Task<IEnumerable<CategoryTotalDto>> GetCategoryTotalsAsync(string userId, string period, DateOnly? anchorDate = null)
     {
-        var now = DateTime.UtcNow;
-        var (from, to) = period switch
+        var now    = DateTime.UtcNow;
+        var anchor = anchorDate.HasValue ? anchorDate.Value.ToDateTime(TimeOnly.MinValue) : now.Date;
+        var to     = anchor.AddDays(1);
+        // Week/Month anchor to the selected date; Year is always current calendar year-to-date.
+        var from   = period switch
         {
-            "month" => (new DateTime(now.Year, now.Month, 1), now.Date.AddDays(1)),
-            "year"  => (new DateTime(now.Year, 1, 1),         now.Date.AddDays(1)),
-            _       => (now.Date.AddDays(-(int)now.DayOfWeek), now.Date.AddDays(1))
+            "month" => anchor.AddDays(-29),
+            "year"  => new DateTime(now.Year, 1, 1),
+            _       => anchor.AddDays(-6)
         };
 
         var logs = await logRepo.GetByDateRangeAsync(userId, from, to);

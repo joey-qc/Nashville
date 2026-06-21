@@ -65,9 +65,53 @@
 /* ── Filter bar ──────────────────────────────────────────── */
 .filter-bar {
     display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Period pill + date pill on the same row, date pill right-aligned */
+.period-controls {
+    display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 12px;
-    flex-wrap: wrap;
+}
+
+/* ── Date pill (anchor date picker) ─────────────────────── */
+.date-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px 6px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.date-pill:focus-within {
+    border-color: var(--primary);
+}
+
+.date-input {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 0;
+    margin: 0;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.5);
+    cursor: pointer;
 }
 
 /* Period pill */
@@ -580,10 +624,9 @@
         padding: 7px 14px;
     }
 
-    .filter-bar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
+    .period-controls {
+        flex-wrap: wrap;
+        gap: 8px;
     }
 
     .log-card {

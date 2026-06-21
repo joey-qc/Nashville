@@ -6,7 +6,7 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** CHK-005 complete — Default Check-In Return Behavior (all flows return to View Log / Today / Details ON); CHK-002 Phase 6B (Edit Log Entry check-in list) retired/superseded by CHK-004; B/E/M reporting not started  
+**Phase:** REP-001 complete — Journal page (v1); B/E/M reporting not started  
 **Build Status:** ✅ All projects build clean (0 errors); 54/54 tests pass  
 **Last Updated:** 2026-06-21
 
@@ -207,6 +207,63 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 - **Design decisions:**
   - `DefaultReturn` is a `private const` in each page's `@code` block independently — the two call sites are in different pages; a shared static class would add cross-component coupling for two strings.
   - Explicit `returnUrl` always takes precedence — the View Log context-return pattern from CHK-006A is fully preserved.
+
+### REP-001 — Journal Page v1 (2026-06-21)
+
+- **Status:** ✅ Complete. New `/journal` page surfacing Journaling activity entries as a clean reading experience. Journal nav item added to primary left nav between Balance and Manage Activities.
+- **Build/tests:** ✅ 0 errors; 54/54 tests pass. No schema, DTO, or API changes.
+- **Approach:** Client-side filter on `ActivityName == "Journaling"` after `GetByDateRangeAsync` — no new endpoint needed. Check-ins loaded via `GetAllAsync()` (full history) so linked check-ins whose `CheckedInAt` differs from the parent log's `LoggedAt` are still associated correctly (matches ActivityDetail pattern).
+- **Behavior:**
+  - Default period: Week, anchor: Today. Supported periods: Day / Week / Month (same rolling-window semantics as other pages).
+  - Permanently in Details ON mode — no toggle. Every entry shows: timestamp, rendered rich notes, linked check-ins with full Body / Energy / Mood score pills.
+  - Entries sorted newest-first within the selected period.
+  - Empty state: icon + "No journal entries yet." + body copy explaining the Journaling activity template + "Write Your First Entry" CTA → `/log`.
+  - No dimension chips, no activity badge, no points — reading surface only.
+- **Files created:**
+  - `Momentum.Client/Pages/Journal.razor` — page component
+  - `Momentum.Client/Pages/Journal.razor.css` — scoped CSS (period-controls, date-pill, entry cards, rich-text `::deep` rules, score pills, empty state, mobile)
+- **Files modified:**
+  - `Momentum.Client/Layout/MainLayout.razor` — Journal nav item (book icon, `/journal` path, between Balance group and Manage Activities); `PageTitle` switch updated for `/journal`
+- **Design decisions:**
+  - Score pills use full labels ("Body", "Energy", "Mood") not abbreviations — Journal is a reading surface; clarity over compactness.
+  - `entry-notes` at `0.92rem` / `line-height: 1.65` — larger and airier than View Log's `0.82rem` for comfortable long-form reading.
+  - No `padding-left` indent on notes (no activity badge to align under) — full-width makes prose more readable.
+  - Check-in section separated by a `border-top` rule; shows all linked check-ins for each entry ordered newest-first.
+
+### NAV-001 — Historical Date Navigation (2026-06-21)
+
+- **Status:** ✅ Complete. All four date-filtered pages — View Log, Check-Ins, Trends, Balance — now have a compact anchor-date picker. The selected date becomes the end-boundary for the period window. Default anchor is today; future dates are blocked (via `max` attribute + clamp on change).
+- **Build/tests:** ✅ 0 errors; 54/54 tests pass. No schema or DTO changes. No new API endpoints — only optional `anchorDate` query params added to existing report endpoints.
+- **Behavior:**
+  - **Day/Today** = selected date only. **Week** = selected date + previous 6 days (7 total). **Month** = selected date + previous 29 days (30 total). Balance Year = unchanged (always Jan 1 of current year → today).
+  - Balance Week/Month now use rolling windows (7 / 30 days ending on anchor) rather than the previous calendar-week / calendar-month starts.
+  - Trends chart sparklines (dimension trend) remain anchored to today — they always show "last 8 weeks" regardless of anchor.
+  - View Log `ReturnUrl` now includes `anchor=` so the date context is restored when returning from check-in add/edit flows.
+  - View Log `DateDisplay` header updates to show the date range when Week or Month is selected.
+- **Files changed:**
+  - `Momentum.Application/Interfaces/IScoreService.cs` — added `DateOnly? anchorDate = null` to 4 interface methods
+  - `Momentum.Application/Services/ScoreService.cs` — `GetDailyTotalsAsync`, `GetWeeklyTotalsAsync`, `GetMonthlyTotalsAsync`, `GetCategoryTotalsAsync` use anchor when provided; Balance week/month changed from calendar-based to rolling windows
+  - `Momentum.API/Controllers/ReportsController.cs` — `[FromQuery] DateOnly? anchorDate = null` added to `GetDaily`, `GetWeekly`, `GetMonthly`, `GetBalance` actions
+  - `Momentum.Client/Services/ReportsService.cs` — `GetDailyAsync`, `GetWeeklyAsync`, `GetMonthlyAsync`, `GetBalanceAsync` accept and pass `DateOnly? anchorDate`
+  - `Momentum.Client/Pages/ActivityDetail.razor` + `.css` — anchor state, `[SupplyParameterFromQuery]` Anchor param, `GetDateRange()` uses anchor, `DateDisplay` shows range, `ReturnUrl` includes anchor, period-controls row + date-pill markup + CSS
+  - `Momentum.Client/Pages/CheckIns.razor` + `.css` — anchor state, period-pill moved from header to new period-controls row, `Load()` uses anchor, `FilteredCheckIns` uses anchor, date-pill markup + CSS
+  - `Momentum.Client/Pages/Reports.razor` + `.css` — anchor state, `LoadData()` passes anchor to all service calls, `CurrentPeriodTotal` uses anchor, date-pill in controls-row + CSS
+  - `Momentum.Client/Pages/Balance.razor` + `.css` — anchor state, `GetPeriodFrom()` uses anchor for week/month, `LoadData()` passes anchor, `bal-header-controls` wrapper + date-pill markup + CSS
+- **Design decisions:**
+  - `_anchor` state is `private DateTime` in each page's `@code` — not a shared singleton/service, since each page has independent browsing context.
+  - CSS is duplicated in each `.razor.css` file due to Blazor CSS isolation scoping (same approach as period-pill).
+  - Balance Year period always remains current calendar year-to-date; anchor has no effect when Year is selected (spec: "Do not invent a new Year behavior without documenting it").
+  - Check-Ins `Load()` uses `DateTime.Today` as anchor when `EditId` is set (edit-by-id mode) so the target check-in is guaranteed to be in the 30-day fetch window regardless of the current anchor.
+
+### NAV-002 — Rolling-Window Semantics Verification (2026-06-21)
+
+- **Status:** ✅ Complete — verification only, no code changes.
+- **Build/tests:** ✅ 0 errors; 54/54 tests pass. No files modified.
+- **Verified:**
+  - `GetDateRange()` in `ActivityDetail.razor` uses rolling windows exclusively — Day = anchor only, Week = anchor − 6 days, Month = anchor − 29 days. No `DayOfWeek` or calendar-month-start logic anywhere.
+  - Activity logs and standalone check-ins both receive the same `(from, to)` from `GetDateRange()`. Linked check-ins intentionally use the full unfiltered set (a check-in's date may differ from its parent log's date).
+  - UTC boundaries are derived from `_anchor.Date.ToUniversalTime()` where `_anchor` is always a local `DateTime` (`DateTime.Today` or user-selected). No `DateTime.UtcNow.Date` in the date path.
+  - `ReturnUrl` at `/log/detail?period={_period}&anchor={_anchorStr}&details=true` preserves all three context parameters.
 
 ### UX-003 — Standardize Trends Period Selector (2026-06-21)
 

@@ -1,0 +1,191 @@
+@page "/journal"
+@attribute [Authorize]
+@inject ActivityLogService LogService
+@inject CheckInService CheckInService
+@inject NavigationManager Navigation
+
+<PageTitle>Journal</PageTitle>
+
+<div class="journal-page">
+
+    <!-- ══ Header ══ -->
+    <header class="journal-header">
+        <span class="journal-kicker">JOURNAL</span>
+        <h1 class="journal-title">Journal</h1>
+        <p class="journal-subtitle">Your personal journal entries.</p>
+    </header>
+
+    <!-- ══ Period + anchor date controls ══ -->
+    <div class="period-controls">
+        <div class="period-pill">
+            <span class="period-label">Period</span>
+            <select class="period-select" @onchange="OnPeriodChanged">
+                <option value="day"   selected="@(_period == "day")">Day</option>
+                <option value="week"  selected="@(_period == "week")">Week</option>
+                <option value="month" selected="@(_period == "month")">Month</option>
+            </select>
+            <svg class="period-chevron" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                <path d="M7 10l5 5 5-5z" fill="currentColor"/>
+            </svg>
+        </div>
+        <label class="date-pill">
+            <input type="date" class="date-input"
+                   value="@_anchorStr"
+                   max="@_todayStr"
+                   aria-label="Select anchor date"
+                   @onchange="OnAnchorChanged" />
+        </label>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="journal-state">
+            <p class="loading-text">Loading…</p>
+        </div>
+    }
+    else if (!JournalEntries.Any())
+    {
+        <!-- ══ Empty state ══ -->
+        <div class="journal-empty">
+            <svg class="empty-icon" viewBox="0 0 24 24" width="48" height="48" aria-hidden="true" fill="currentColor">
+                <path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 3.75.4 5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/>
+            </svg>
+            <p class="empty-title">No journal entries yet.</p>
+            <p class="empty-text">
+                Your Journal is populated from entries logged using the <strong>Journaling</strong> activity template.
+            </p>
+            <a href="/log" class="empty-cta">Write Your First Entry</a>
+        </div>
+    }
+    else
+    {
+        <div class="journal-list">
+            @foreach (var entry in JournalEntries)
+            {
+                var checkIns = CheckInsFor(entry.Id);
+                <article class="journal-entry">
+
+                    <time class="entry-timestamp" datetime="@entry.LoggedAt.ToString("O")">
+                        @EntryTimestamp(entry)
+                    </time>
+
+                    @if (!string.IsNullOrWhiteSpace(entry.Notes))
+                    {
+                        <div class="entry-notes">@((MarkupString)entry.Notes!)</div>
+                    }
+                    else
+                    {
+                        <p class="entry-no-notes">(No notes recorded)</p>
+                    }
+
+                    @if (checkIns.Count > 0)
+                    {
+                        <div class="entry-checkins">
+                            @foreach (var ci in checkIns)
+                            {
+                                <div class="entry-ci">
+                                    <span class="ci-ts">@CheckInTimestamp(ci)</span>
+                                    <div class="ci-scores">
+                                        <span class="score-pill">
+                                            <span class="score-pill-label">Body</span>
+                                            <span class="score-pill-value @ScoreClass(ci.BodyScore)">@Signed(ci.BodyScore)</span>
+                                        </span>
+                                        <span class="score-pill">
+                                            <span class="score-pill-label">Energy</span>
+                                            <span class="score-pill-value @ScoreClass(ci.EnergyScore)">@Signed(ci.EnergyScore)</span>
+                                        </span>
+                                        <span class="score-pill">
+                                            <span class="score-pill-label">Mood</span>
+                                            <span class="score-pill-value @ScoreClass(ci.MoodScore)">@Signed(ci.MoodScore)</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                </article>
+            }
+        </div>
+    }
+
+</div>
+
+@code {
+    private string   _period    = "week";
+    private DateTime _anchor    = DateTime.Today;
+    private string _anchorStr => _anchor.ToString("yyyy-MM-dd");
+    private string _todayStr  => DateTime.Today.ToString("yyyy-MM-dd");
+
+    private List<ActivityLogDto>            _logs           = [];
+    private Dictionary<int, List<CheckInDto>> _checkInsByLog = [];
+    private bool _loading = true;
+
+    private IEnumerable<ActivityLogDto> JournalEntries =>
+        _logs.Where(l => string.Equals(l.ActivityName, "Journaling", StringComparison.OrdinalIgnoreCase))
+             .OrderByDescending(l => l.LoggedAt);
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task OnPeriodChanged(ChangeEventArgs e)
+    {
+        _period = e.Value?.ToString() ?? "week";
+        await LoadData();
+    }
+
+    private async Task OnAnchorChanged(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var d))
+            _anchor = d.Date <= DateTime.Today ? d.Date : DateTime.Today;
+        else
+            _anchor = DateTime.Today;
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        var (from, to) = GetDateRange();
+        _logs = await LogService.GetByDateRangeAsync(from, to);
+
+        // Load all user check-ins so linked check-ins whose CheckedInAt differs from the
+        // parent log's LoggedAt (e.g. checked in just after midnight) are still associated.
+        var checkIns = await CheckInService.GetAllAsync();
+        _checkInsByLog = checkIns
+            .Where(c => c.ActivityLogId.HasValue)
+            .GroupBy(c => c.ActivityLogId!.Value)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(c => c.CheckedInAt).ToList());
+
+        _loading = false;
+    }
+
+    private (DateTime from, DateTime to) GetDateRange()
+    {
+        var anchor = _anchor.Date;
+        var to     = anchor.AddDays(1).ToUniversalTime();
+        return _period switch
+        {
+            "week"  => (anchor.AddDays(-6).ToUniversalTime(),  to),
+            "month" => (anchor.AddDays(-29).ToUniversalTime(), to),
+            _       => (anchor.ToUniversalTime(),               to)
+        };
+    }
+
+    private List<CheckInDto> CheckInsFor(int logId) =>
+        _checkInsByLog.TryGetValue(logId, out var list) ? list : [];
+
+    private static string EntryTimestamp(ActivityLogDto log)
+    {
+        var local = log.LoggedAt.ToLocalTime();
+        return local.ToString("MMM d, yyyy") + " · " + local.ToString("h:mm tt");
+    }
+
+    private static string CheckInTimestamp(CheckInDto ci)
+    {
+        var local = ci.CheckedInAt.ToLocalTime();
+        return local.ToString("MMM d") + " · " + local.ToString("h:mm tt");
+    }
+
+    private static string Signed(int v)    => v > 0 ? $"+{v}" : v.ToString();
+    private static string ScoreClass(int v) => v > 0 ? "pos" : v < 0 ? "neg" : "";
+}

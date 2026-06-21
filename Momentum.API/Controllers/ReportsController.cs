@@ -16,11 +16,12 @@ public class ReportsController(IScoreService scoreService, ILogger<ReportsContro
     public async Task<IActionResult> GetDaily(
         [FromQuery] int days = 30,
         [FromQuery] int? categoryId = null,
-        [FromQuery] int? localOffsetMinutes = null)
+        [FromQuery] int? localOffsetMinutes = null,
+        [FromQuery] DateOnly? anchorDate = null)
     {
         try
         {
-            var data = await scoreService.GetDailyTotalsAsync(UserId, days, categoryId, localOffsetMinutes);
+            var data = await scoreService.GetDailyTotalsAsync(UserId, days, categoryId, localOffsetMinutes, anchorDate);
             return Ok(data);
         }
         catch (Exception ex)
@@ -31,11 +32,11 @@ public class ReportsController(IScoreService scoreService, ILogger<ReportsContro
     }
 
     [HttpGet("weekly")]
-    public async Task<IActionResult> GetWeekly([FromQuery] int weeks = 12, [FromQuery] int? categoryId = null)
+    public async Task<IActionResult> GetWeekly([FromQuery] int weeks = 12, [FromQuery] int? categoryId = null, [FromQuery] DateOnly? anchorDate = null)
     {
         try
         {
-            var data = await scoreService.GetWeeklyTotalsAsync(UserId, weeks, categoryId);
+            var data = await scoreService.GetWeeklyTotalsAsync(UserId, weeks, categoryId, anchorDate);
             return Ok(data);
         }
         catch (Exception ex)
@@ -46,11 +47,11 @@ public class ReportsController(IScoreService scoreService, ILogger<ReportsContro
     }
 
     [HttpGet("monthly")]
-    public async Task<IActionResult> GetMonthly([FromQuery] int months = 12, [FromQuery] int? categoryId = null)
+    public async Task<IActionResult> GetMonthly([FromQuery] int months = 12, [FromQuery] int? categoryId = null, [FromQuery] DateOnly? anchorDate = null)
     {
         try
         {
-            var data = await scoreService.GetMonthlyTotalsAsync(UserId, months, categoryId);
+            var data = await scoreService.GetMonthlyTotalsAsync(UserId, months, categoryId, anchorDate);
             return Ok(data);
         }
         catch (Exception ex)
@@ -70,11 +71,11 @@ public class ReportsController(IScoreService scoreService, ILogger<ReportsContro
     });
 
     [HttpGet("balance")]
-    public async Task<IActionResult> GetBalance([FromQuery] string period = "week")
+    public async Task<IActionResult> GetBalance([FromQuery] string period = "week", [FromQuery] DateOnly? anchorDate = null)
     {
         try
         {
-            var data = await scoreService.GetCategoryTotalsAsync(UserId, period);
+            var data = await scoreService.GetCategoryTotalsAsync(UserId, period, anchorDate);
             return Ok(data);
         }
         catch (Exception ex)

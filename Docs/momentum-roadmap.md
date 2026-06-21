@@ -482,26 +482,27 @@ All pages are fully converted to custom HTML/CSS. MudBlazor has been fully remov
 - ✅ Blazor-ApexCharts NuGet removed (KI-010, 2026-06-04)
 ## Planned View Log Enhancements
 
-Status: Planned
-
 ### Dynamic Period Navigation
 
+**Status:** ✅ Anchor-date picker delivered (NAV-001, 2026-06-21) · Aggregation/grouping still planned
+
 The View Log screen will evolve from a static filter model into a navigable time-based activity browser.
+
+**NAV-001 (delivered):** All four date-filtered pages (View Log, Check-Ins, Trends, Balance) now have a compact anchor-date picker (date pill beside the period pill). Selecting a date sets the end boundary for the selected period window: Day = that date only; Week = selected date + previous 6 days; Month = selected date + previous 29 days. Future dates are blocked. The period pill label remains Day/Week/Month; the date picker provides the historical navigation capability.
+
+The originally-planned aggregation views (grouped Week/Month/Year with activity-level rollups, previous/next navigation arrows, and a Year period for View Log) remain on the roadmap below.
 
 ---
 
 ### Day View
 
 Current filter label:
-- Today
-
-Planned label:
-- Day
+- Today → Day
 
 Behavior:
-- Show selected date beside the Day filter.
-- Clicking the displayed date opens a calendar/date picker.
-- User can navigate to any available log date.
+- Show selected date beside the Day filter. ✅ (NAV-001)
+- Clicking the displayed date opens a calendar/date picker. ✅ (NAV-001)
+- User can navigate to any available log date. ✅ (NAV-001)
 
 Display mode:
 - Raw activity log entries for the selected calendar day.
