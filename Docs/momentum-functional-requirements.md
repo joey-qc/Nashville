@@ -113,11 +113,11 @@ Accessible via the persistent "+" button from any screen.
 ### 6.4 Submission
 - User submits the form to log the activity.
 - A success confirmation (toast) confirms the activity was logged.
-- **Upon successfully logging a *new* activity, the user is taken to the Check-In form** (post-activity Check-In flow — see Section 11.2) with that activity pre-associated. The user may save a linked check-in or skip; either way they then land on the **Home / Score Summary** screen (see Section 5).
+- **Upon successfully logging a *new* activity, the user is taken to the Check-In form** (post-activity Check-In flow — see Section 11.2) with that activity pre-associated. The user may save a linked check-in or skip; either way they are returned to **View Log / Today / Details ON** (`/log/detail?period=day&details=true`). *(CHK-005: previously Home.)*
 - **Editing an existing log entry** does not trigger the Check-In flow — the user returns to the View Log screen.
 
-### 6.5 Score Summary After Logging
-- After completing (or skipping) the post-activity check-in, the user lands on the **Home / Score Summary** screen, which shows today's, this week's, and this month's running point totals and the day's logged activities (see Section 5).
+### 6.5 After Logging
+- After completing (or skipping) the post-activity check-in, the user lands on **View Log / Today / Details ON**, where they can immediately see the new log entry and any linked check-in. *(CHK-005: previously Home.)*
 - The persistent "+" button remains available to log another activity.
 
 ---
@@ -308,7 +308,7 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
 - **Smart defaults:** when the form opens, the three scores preload from the user's most recent Check-In; if the user has no prior Check-In, all three default to 0.
 - Scores are adjusted with bounded +/− steppers and cannot exceed the −5…+5 range.
 - **No notes field** in this version — capture stays minimal.
-- On save, a success toast confirms the check-in. The entered scores are retained (the natural starting point for the next check-in) and the timestamp resets to now; the user remains on the page.
+- On save, a success toast confirms the check-in and the user is returned to **View Log / Today / Details ON**. *(CHK-005: previously stayed on page.)*
 - Saved Check-Ins from this screen are **standalone** (not linked to any activity log).
 
 ### 11.2 Post-Activity Check-In Flow (CHK-002 Phase 4 — implemented)
@@ -316,7 +316,7 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
 - The form shows an **"After: {activity}"** context label so the user knows the check-in will link to what they just logged.
 - The form behaves the same as the standalone form (same metrics, scale, date/time, and smart defaults), with two differences:
   - A **Skip** option is available. Skipping creates **no** Check-In.
-  - After **Save** or **Skip**, the user is taken to the **Home / Score Summary** screen.
+  - After **Save** or **Skip**, the user is returned to **View Log / Today / Details ON**. *(CHK-005: previously Home.)*
 - A saved check-in from this flow is **linked** to the activity log entry; a skipped one creates nothing.
 
 ### 11.3 Check-Ins History (CHK-002 Phase 5B — implemented)
@@ -332,9 +332,14 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
 - Adding a check-in from a log entry links it to that entry; editing/deleting is available inline.
 - **Standalone Check-Ins** (those not linked to any Activity Log) appear as top-level rows in the unified Details timeline, sorted newest-first alongside Activity Log entries. They are not shown in compact mode (Details OFF). See §7.1 for full behavior.
 
-### 11.5 Not yet implemented
-- Edit Log Entry screen: associated check-in list with "add follow-up".
+### 11.5 Check-In Edit/Cancel Return Behavior (CHK-005 — implemented)
+- Saving or cancelling a Check-In edit on the Check-Ins history screen returns the user to **View Log / Today / Details ON** when no explicit `returnUrl` is provided. The explicit `returnUrl` pattern (used by View Log's linked-check-in edit flows) is preserved. *(CHK-005: previously stayed on the Check-Ins history page.)*
+
+### 11.6 Not yet implemented
 - Body/Energy/Mood reporting and correlation.
+
+### 11.7 CHK-002 Phase 6B — Retired
+- **Edit Log Entry check-in list with "add follow-up"** — originally planned for the Activity Log edit screen. This work is **retired / superseded** by View Log Details mode (CHK-004), which already provides associated check-in visibility, add, edit, and delete for all log entries. No additional work is required on the edit screen.
 
 ---
 
@@ -368,3 +373,4 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
 *Version 1.15 — CHK-002 Phase 6A: §7.1 "Show Notes" toggle renamed to "Details" (now reveals notes + linked check-ins + "+ Add Check-In", with inline edit/delete); §11.4 View Log integration marked implemented*
 *Version 1.16 — CHK-002 Phase 6A polish: §7.1 add/edit check-in from View Log returns to the same View Log context (period + Details expanded) after save/skip/cancel*
 *Version 1.17 — CHK-004: §7.1 Details toggle extended — standalone Check-Ins appear as top-level rows in the unified Details timeline; dimension filter bypass for standalone rows; toggle visibility condition updated; §11.4 updated*
+*Version 1.18 — CHK-005: §6.4/§6.5/§11.1/§11.2 updated — all Check-In save/skip destinations changed from Home/stay-on-page to View Log / Today / Details ON; §11.5 add return-behavior; §11.7 CHK-002 Phase 6B retired (superseded by CHK-004 View Log Details)*

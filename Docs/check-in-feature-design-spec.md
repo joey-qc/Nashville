@@ -179,14 +179,15 @@ The existing View Log **"Notes" toggle is renamed to "Details."**
 
 ---
 
-## 11. Edit Log Entry Integration
+## 11. Edit Log Entry Integration — RETIRED (superseded by CHK-004)
 
-The Edit Log Entry screen should **eventually** show:
+**This phase was retired 2026-06-21.** The required functionality is already provided by View Log Details mode (CHK-004):
 
-- A **compact list of associated Check-Ins** for that activity log entry.
-- An option to **add a follow-up Check-In** (routes to the Check-In form with this `ActivityLogId` pre-populated, per §7).
+- Associated Check-Ins are visible under each Activity Log entry when Details is ON.
+- Follow-up Check-Ins can be created via the "+ Add Check-In" action.
+- Inline edit and delete are available.
 
-Full edit/delete management of individual check-ins from this screen can be **phased** — the initial increment may be read-only display + "add follow-up," with inline edit/delete added later.
+No additional work on the Activity Log edit screen is needed.
 
 ---
 
@@ -366,7 +367,7 @@ Build: ✅ 0 errors · Tests: ✅ 50/50 (unchanged — no new server tests; clie
 - Temporary **Check In** nav item added after View Log (documented as interim; persistent action button per §14 comes later).
 - `PageTitle` switch maps `/check-in` → "Check In".
 
-**Save behavior (decision):** After a successful save the user **stays on the page**, the entered scores are **retained** (the natural starting point for a follow-up check-in), and the **timestamp resets to now**. Chosen as the simplest behavior that also supports rapid repeat check-ins.
+**Save behavior (CHK-005 update):** After a successful save the user is returned to **View Log / Today / Details ON** (`/log/detail?period=day&details=true`). *(Previously: stayed on page with retained scores. Changed by CHK-005 to create a consistent post-check-in destination.)*
 
 **Score range enforcement:** Steppers clamp to `[-5, 5]` client-side and disable at bounds; DTO `[Range(-5,5)]` + server `CheckInService` validation remain the authoritative guards (Phase 2).
 
@@ -393,21 +394,21 @@ Implements the §7 flow: `Save Activity Log → Check-In form opens → user sav
 - `IsLinked => ActivityLogId.HasValue`.
 - When linked, a context chip shows `After: {FromActivity}` (or a generic line if the name is absent).
 - Save passes `ActivityLogId` through to `CreateCheckInRequestDto` — ownership is validated server-side by the existing Phase 2 `CheckInService` (`ArgumentException` → 400 if the log isn't the user's).
-- **Linked mode** adds a **SKIP** text button; both Save and Skip then navigate to Home (`/`).
-- **Standalone mode** (`/check-in` with no query) is **unchanged**: Save keeps the user on the page, retains scores, resets timestamp.
+- **Linked mode** adds a **SKIP** text button; both Save and Skip return to View Log / Today / Details ON. *(CHK-005: previously Home.)*
+- **Standalone mode** (`/check-in` with no query): Save returns to View Log / Today / Details ON. *(CHK-005: previously stayed on page.)*
 
-**Save / skip behavior (decision):**
-- Linked Save → creates a check-in with the populated `ActivityLogId`, success toast, navigate to Home.
-- Linked Skip → **no check-in created**, navigate to Home.
-- Standalone Save → unchanged (stay on page).
+**Save / skip behavior (updated by CHK-005):** When no explicit `returnUrl` is provided, all flows return to `/log/detail?period=day&details=true`.
+- Linked Save: creates a check-in with the populated `ActivityLogId`, success toast, navigate to View Log / Today / Details ON.
+- Linked Skip: **no check-in created**, navigate to View Log / Today / Details ON.
+- Standalone Save: navigate to View Log / Today / Details ON.
 
 **No schema, API, repository, or service changes** — Phase 4 is entirely client-side routing + the page's optional-link handling. Linked check-ins are ordinary records; `ActivityLogId` SetNull-on-delete behavior (Phase 1) is untouched.
 
 **Manual QA checklist (Phase 4):**
 - Save a new activity → Check-In form opens automatically with an `After: {activity}` context chip.
-- Save the linked check-in → Dev DB row has `ActivityLogId` populated; lands on Home.
-- Save another activity → **Skip** → no check-in row created; lands on Home.
-- Open `/check-in` directly → standalone flow unchanged (no skip button, stays on page after save).
+- Save the linked check-in → Dev DB row has `ActivityLogId` populated; lands on View Log / Today / Details ON.
+- Save another activity → **Skip** → no check-in row created; lands on View Log / Today / Details ON.
+- Open `/check-in` directly → standalone flow (no skip button), lands on View Log / Today / Details ON after save.
 - No browser console errors.
 
 ### CHK-002 Phase 5A — Check-In Navigation Structure (COMPLETE 2026-06-06)
@@ -551,7 +552,42 @@ Implements §10 in full: standalone Check-Ins appear as top-level rows in the Vi
 - Deleting a standalone Check-In removes only that check-in; Activity Logs unaffected.
 - No browser console errors; mobile layout usable.
 
+### CHK-005 — Default Check-In Return Behavior (COMPLETE 2026-06-21)
+
+Build: ✅ 0 errors · Tests: ✅ 54/54 (client-only; no server/API/DTO change)
+
+Standardizes all Check-In save / skip / cancel flows so that when no explicit `returnUrl` is provided, the user lands on `/log/detail?period=day&details=true` (View Log / Today / Details ON). Previously, standalone save stayed on the page and linked flows returned to Home.
+
+**Files changed:**
+
+`Momentum.Client/Pages/CheckIn.razor`:
+- Added `private const string DefaultReturn = "/log/detail?period=day&details=true"`.
+- `HandleSubmit` post-toast navigation: `Navigation.NavigateTo(!string.IsNullOrEmpty(ReturnUrl) ? ReturnUrl : DefaultReturn)`. The `IsLinked` branch is eliminated — both linked and standalone save use the same fallback.
+- `Skip`: fallback changed from `"/"` to `DefaultReturn`.
+
+`Momentum.Client/Pages/CheckIns.razor`:
+- Added `private const string DefaultReturn = "/log/detail?period=day&details=true"`.
+- `CancelEdit`: replaced the 6-line if/else (which only called `Navigation.NavigateTo(ReturnUrl)` or reset `_editingId`) with a single expression: `Navigation.NavigateTo(!string.IsNullOrEmpty(ReturnUrl) ? ReturnUrl : DefaultReturn)`.
+- `SaveEdit` post-toast: replaced 5-line if/await-Load block with `Navigation.NavigateTo(!string.IsNullOrEmpty(ReturnUrl) ? ReturnUrl : DefaultReturn)`.
+
+**Retirement of CHK-002 Phase 6B:**
+CHK-002 Phase 6B ("Edit Log Entry check-in list with add follow-up") is retired. CHK-004 (Unified View Log Timeline in Details mode) already provides the equivalent experience — standalone Check-Ins are visible and editable from View Log without requiring a separate Edit Log Entry integration. Phase 6B has been marked retired in §11 of this document and in `momentum-functional-requirements.md`.
+
+**Design decisions:**
+- `DefaultReturn` is defined as a `private const` in each `@code` block independently — not abstracted to a shared static class. The two call sites are in different pages; a shared constant would add coupling without meaningful benefit at this scale.
+- Explicit `returnUrl` always takes precedence — the View Log context-return pattern (CHK-006A) is fully preserved.
+- No API, DTO, server, or routing changes.
+
+**Manual QA checklist (CHK-005):**
+- Standalone `/check-in` save → lands on View Log / Today / Details ON (previously stayed on page).
+- Post-activity Check-In save → lands on View Log / Today / Details ON (previously went to Home).
+- Post-activity Skip → lands on View Log / Today / Details ON (previously went to Home).
+- Check-In history edit Save → lands on View Log / Today / Details ON (previously stayed on list).
+- Check-In history edit Cancel → lands on View Log / Today / Details ON (previously stayed on list).
+- Launching any Check-In flow **from View Log** (via `returnUrl`) still returns to that exact View Log context (period + details=true preserved).
+- No browser console errors.
+
 ---
 
 *Check-In Feature Design Specification — created 2026-06-04*
-*Status: 🔨 IN PROGRESS — CHK-004 complete (Unified View Log Timeline); Edit Log Entry check-in list, reporting not started*
+*Status: CHK-005 complete (Default Check-In Return Behavior); Edit Log Entry check-in list (CHK-002 Phase 6B) retired; reporting not started*

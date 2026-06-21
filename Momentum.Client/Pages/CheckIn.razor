@@ -95,8 +95,10 @@
     [SupplyParameterFromQuery(Name = "from")] public string? FromActivity { get; set; }
 
     // Optional: where to return after save/skip (generic returnUrl pattern). When absent,
-    // the default flow applies (linked → Home; standalone → stay on page).
+    // defaults to View Log / Today / Details ON.
     [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }
+
+    private const string DefaultReturn = "/log/detail?period=day&details=true";
 
     private bool IsLinked => ActivityLogId.HasValue;
 
@@ -181,30 +183,14 @@
 
         Toast.Show("Check-in saved.", ToastType.Success);
 
-        if (!string.IsNullOrEmpty(ReturnUrl))
-        {
-            // Caller supplied a return context (e.g. View Log) — go back to it.
-            Navigation.NavigateTo(ReturnUrl);
-            return;
-        }
-
-        if (IsLinked)
-        {
-            // Post-activity flow: the check-in is the final step — return to Home.
-            Navigation.NavigateTo("/");
-            return;
-        }
-
-        // Standalone flow: keep the entered scores (the natural starting point for the
-        // next check-in) but reset the timestamp to now. User stays on the page.
-        _form.Date = DateTime.Today;
-        _form.Time = DateTime.Now.TimeOfDay;
+        // Explicit returnUrl takes precedence; otherwise go to View Log / Today / Details ON.
+        Navigation.NavigateTo(!string.IsNullOrEmpty(ReturnUrl) ? ReturnUrl : DefaultReturn);
     }
 
-    // Linked-flow dismiss without creating a Check-In: return to the caller's context
-    // when provided, otherwise Home.
+    // Linked-flow dismiss without creating a Check-In: explicit returnUrl takes precedence,
+    // otherwise go to View Log / Today / Details ON.
     private void Skip() => Navigation.NavigateTo(
-        !string.IsNullOrEmpty(ReturnUrl) ? ReturnUrl : "/");
+        !string.IsNullOrEmpty(ReturnUrl) ? ReturnUrl : DefaultReturn);
 
     private sealed class CheckInForm
     {

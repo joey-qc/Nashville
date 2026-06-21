@@ -6,7 +6,7 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** CHK-004 complete — Unified View Log Timeline (standalone Check-Ins as top-level Details rows); CHK-002 Phase 6B (Edit Log Entry check-in list) and B/E/M reporting not started  
+**Phase:** CHK-005 complete — Default Check-In Return Behavior (all flows return to View Log / Today / Details ON); CHK-002 Phase 6B (Edit Log Entry check-in list) retired/superseded by CHK-004; B/E/M reporting not started  
 **Build Status:** ✅ All projects build clean (0 errors); 54/54 tests pass  
 **Last Updated:** 2026-06-21
 
@@ -193,6 +193,20 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
   - `_checkInsByLog` (for linked check-ins) still uses `GetAllAsync()` (5-year window) so check-ins with a `CheckedInAt` outside the current period (e.g., logged late-night, checked in after midnight) are still correctly associated with their parent log entry.
   - `TimelineItem` is a component-local record — no shared DTO needed since it's a pure UI concept.
   - Entire standalone card row is clickable (same as Activity Log rows) rather than only the title text, for consistency.
+
+### CHK-005 — Default Check-In Return Behavior (2026-06-21)
+
+- **Status:** ✅ Complete. All Check-In save / skip / cancel flows now return to View Log / Today / Details ON (`/log/detail?period=day&details=true`) when no explicit `returnUrl` is provided. Previously, standalone save stayed on the Check-In form and linked flows returned to Home (`/`).
+- **Build/tests:** ✅ 0 errors; 54/54 tests pass. Client-only change — no server, DTO, API, service, or schema changes.
+- **What shipped:**
+  - `Momentum.Client/Pages/CheckIn.razor` — Added `private const string DefaultReturn = "/log/detail?period=day&details=true"`. `HandleSubmit` post-toast navigation consolidated to a single expression (explicit `returnUrl` takes precedence, else `DefaultReturn`); the `IsLinked` branch is removed since both modes share the same fallback. `Skip` fallback changed from `"/"` to `DefaultReturn`.
+  - `Momentum.Client/Pages/CheckIns.razor` — Added `private const string DefaultReturn`. `CancelEdit` replaced 6-line if/else with a single `NavigateTo` expression using the same precedence pattern. `SaveEdit` post-toast replaced 5-line if/await-Load block with one `NavigateTo` line.
+  - `Docs/check-in-feature-design-spec.md` — Phase 4 save/skip behavior bullets updated; Phase 3 note updated; §11 (Edit Log Entry integration) marked retired; CHK-005 implementation section added; status line updated.
+  - `Docs/momentum-functional-requirements.md` — §6.4, §6.5, §11.1, §11.2, §11.5 updated to reflect new destination; §11.6/§11.7 Phase 6B retirement documented; version bumped to v1.18.
+- **CHK-002 Phase 6B retired:** "Edit Log Entry check-in list with add follow-up" is superseded by CHK-004 (unified View Log Details timeline). No equivalent functionality gap remains.
+- **Design decisions:**
+  - `DefaultReturn` is a `private const` in each page's `@code` block independently — the two call sites are in different pages; a shared static class would add cross-component coupling for two strings.
+  - Explicit `returnUrl` always takes precedence — the View Log context-return pattern from CHK-006A is fully preserved.
 
 ### UX-003 — Standardize Trends Period Selector (2026-06-21)
 
