@@ -14,7 +14,7 @@ Before performing any implementation task:
 ## 1. Project Identity
 
 - **Application Name:** Momentum
-- **Purpose:** Personal wellness activity tracker with weighted scoring across life categories
+- **Purpose:** Personal wellness activity tracker with weighted scoring across life dimensions
 - **Architecture:** Blazor WebAssembly frontend + ASP.NET Core Web API backend + SQL Server database
 - **Multi-user:** All data is scoped to the authenticated user. Never query or return data without filtering by the current user's ID.
 
@@ -62,21 +62,21 @@ Momentum uses fully custom Razor markup, plain HTML/CSS, shared design tokens (`
 
 ---
 
-## 4. Category Color Scheme
+## 4. Dimension Color Scheme
 
-These colors are the single source of truth for category representation throughout the entire application. Apply them consistently in charts, chips, badges, and any other UI element that represents a category.
+These colors are the single source of truth for dimension representation throughout the entire application. Apply them consistently in charts, chips, badges, and any other UI element that represents a dimension.
 
-| Category | Color | Hex |
+| Dimension | Color | Hex |
 |---|---|---|
-| Physical | Bright Green | #76E04A |
-| Mental | Sky Blue | #5BC8FF |
-| Spiritual | Soft Purple | #B894FF |
-| Social | Amber | #F7B500 |
-| Housekeeping | Salmon | #FF9472 |
+| Body | Bright Green | #76E04A |
+| Mind | Sky Blue | #5BC8FF |
+| Spirit | Soft Purple | #B894FF |
+| Connections | Amber | #F7B500 |
+| Responsibilities | Salmon | #FF9472 |
 | All (reporting filter) | Medium Gray | #9E9E9E |
 
-- Category colors are stored in the `Categories` database table and returned via `CategoryDto.ColorHex`. Never hardcode hex values inline in components — always read the color from the `CategoryDto` returned by the API or the client `CategoryService`.
-- The `Categories` table is seeded with these five rows (IDs 1–5 in the order above) via EF Core `HasData` in `AppDbContext`. They are not user-editable.
+- Dimension colors are stored in the `Dimensions` database table (entity `Momentum.Domain.Entities.Dimension`) and returned via `CategoryDto.ColorHex`. Note: the DTO type is still named `CategoryDto` (in `Momentum.Shared`), and the corresponding controller/service types (`CategoriesController`, `ICategoryService`/`CategoryService`, endpoint `/api/categories`) also retain their pre-v2 names for API and client compatibility — do not rename them to "Dimension*" without a coordinated cross-layer change. Never hardcode hex values inline in components — always read the color from the `CategoryDto` returned by the API or the client `CategoryService`.
+- The `Dimensions` table is seeded with these five rows (IDs 1–5 in the order above) via EF Core `HasData` in `AppDbContext`. They are not user-editable.
 
 ---
 
@@ -90,7 +90,7 @@ These colors are the single source of truth for category representation througho
 - Async methods are suffixed with `Async` (e.g., `GetActivitiesAsync`)
 
 ### Blazor Components
-- Component files use **PascalCase** (e.g., `ActivityCard.razor`, `CategoryChip.razor`)
+- Component files use **PascalCase** (e.g., `ActivityCard.razor`, `DimensionChip.razor`)
 - Component parameters use **PascalCase**
 - Event callbacks are named with `On` prefix (e.g., `OnActivitySelected`)
 
@@ -124,7 +124,7 @@ These colors are the single source of truth for category representation througho
 
 ### 6.4 Client-Side Caching
 - The activity library is fetched once on login and cached in `ActivityService` in memory.
-- The category list is fetched once on login and cached in `CategoryService` in memory.
+- The dimension list is fetched once on login and cached in `CategoryService` in memory.
 - Both caches use a lazy-load pattern: `GetAllAsync()` checks `_cache` and calls `LoadAsync()` if null, so components that inject the service never need to worry about load order.
 - The activity cache is invalidated and refreshed on any CRUD operation in the Manage Activities screen.
 - Never make redundant API calls for data that is already cached.
@@ -210,6 +210,7 @@ Note: negative default points are intentional — they track detrimental habits.
 
 *Momentum — CLAUDE.md Skills File*
 *Version 1.5 — Removed all MudBlazor and ApexCharts references now that both are fully removed from the app; §3.1 rewritten for custom HTML/CSS + native ToastService; §3.2 charting note updated; obsolete §7.1 MudBlazor type-aliases section deleted; §8 error-handling toast reference updated*
+*Version 1.6 — §4 renamed to "Dimension Color Scheme" and updated to match the v2 Dimension Model migration: table/entity is now `Dimensions`/`Dimension`, category names replaced with Body/Mind/Spirit/Connections/Responsibilities (matching §10), hex values reconfirmed against `AppDbContext.HasData`. Documented that `CategoryDto`, `CategoryService`/`ICategoryService`, `CategoriesController`, and the `/api/categories` endpoint intentionally retain their pre-v2 names for API/client compatibility. Swept remaining stale "Category"/"Categories" references in §1 and §5–§6.4 (purpose statement, `DimensionChip.razor` example, dimension-list caching note).*
 
 
 ## Documentation Maintenance Rule
