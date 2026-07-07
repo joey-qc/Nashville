@@ -176,7 +176,7 @@ Key planned characteristics (full detail in the design spec):
 - A **separate model from Dimensions** — Check-In metrics describe user state, not activity impact areas; they do not reuse the `Dimensions` table.
 - New `CheckIn` entity with a user-editable `CheckedInAt` (used for analytics/display) and an internal `CreatedAt` (audit only).
 - **Optional ActivityLog association** — a check-in can be standalone (e.g. morning) or linked to one activity log (e.g. post-Exercise). One activity log can have many check-ins.
-- **Post-activity flow** — saving an activity log automatically navigates to the Check-In form with the new `ActivityLogId` pre-populated (`Save Activity Log → Check-In form opens → user saves or cancels`). The post-activity check-in is the expected next step; creating the check-in record is optional because the user can cancel.
+- **Post-activity flow — retired (CHK-006, 2026-07-07):** an earlier iteration automatically navigated to the Check-In form after saving a new activity log. This automatic redirect has been retired — new logs now go straight to View Log / Today / Details ON, and a Check-In can still be linked to the entry from there via "+ Add Check-In." See `Docs/check-in-feature-design-spec.md` §7.
 - **Smart defaults** — preload from the most recent check-in, or default all scores to `0` if none exists.
 - **No check-in notes in v1** — capture stays lightweight.
 - **View Log integration** — rename the existing "Notes" toggle to **"Details"**; when ON, show both notes and linked check-ins.

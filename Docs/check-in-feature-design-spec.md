@@ -1,7 +1,7 @@
 # Check-In Feature — Design Specification
 
-**Status:** 🔨 IN PROGRESS — CHK-002 Phase 4 complete (post-activity flow); history screen, View Log integration, persistent action button, reporting not yet implemented
-**Last Updated:** 2026-06-06
+**Status:** 🔨 IN PROGRESS — CHK-005 complete (default return behavior); CHK-006 retires the automatic post-activity Check-In redirect (§7); reporting not yet implemented
+**Last Updated:** 2026-07-07
 
 ---
 
@@ -113,22 +113,28 @@ A single activity log can accumulate multiple check-ins over time (e.g. immediat
 
 ---
 
-## 7. Post-Activity Flow
+## 7. Post-Activity Flow — RETIRED (CHK-006)
 
-Saving a new Activity Log entry **automatically navigates to the Check-In form** with the newly created `ActivityLogId` pre-populated.
+**This automatic redirect was retired 2026-07-07.** Saving a new Activity Log entry no longer navigates to the Check-In form automatically. The original design (implemented in CHK-002 Phase 4) is documented below for history.
 
-The intended flow is:
+Saving now takes the user directly to **View Log / Today / Details ON** (`/log/detail?period=day&details=true`). From there, a Check-In can still be linked to the new entry via the "+ Add Check-In" action (§10), or recorded standalone via the persistent Check In button (§14). Nothing about the `CheckIn` data model, the standalone `/check-in` flow, or the Check-Ins history screen changed — only the automatic redirect was removed.
+
+### Original design (CHK-002 Phase 4, retired)
+
+Saving a new Activity Log entry **automatically navigated to the Check-In form** with the newly created `ActivityLogId` pre-populated.
+
+The flow was:
 
 ```
 Save Activity Log → Check-In form opens → user saves or cancels
 ```
 
-From the Check-In form the user can:
+From the Check-In form the user could:
 
 - **Save** — creates a Check-In associated with that ActivityLog via `ActivityLogId`.
 - **Cancel / skip** — dismisses the form without creating a Check-In record.
 
-The post-activity Check-In is the **expected next step** after activity logging, not an incidentally offered option. Creating the Check-In record itself remains optional because the user can always cancel.
+The post-activity Check-In was the **expected next step** after activity logging, not an incidentally offered option. This is superseded by the direct-to-View-Log behavior above; Check-In creation is now always an explicit user choice rather than an automatic interstitial step.
 
 ---
 
@@ -587,8 +593,35 @@ CHK-002 Phase 6B ("Edit Log Entry check-in list with add follow-up") is retired.
 - Launching any Check-In flow **from View Log** (via `returnUrl`) still returns to that exact View Log context (period + anchor date + details=true preserved). *(NAV-001: anchor date is now encoded in the ReturnUrl so historical date context is fully preserved.)*
 - No browser console errors.
 
+### CHK-006 — Retire Automatic Post-Activity Check-In Redirect (COMPLETE 2026-07-07)
+
+Build: ✅ 0 errors · Tests: ✅ 54/54 (client-only; no server/API/DTO/schema change)
+
+Retires the §7 automatic redirect. Saving a new Activity Log entry now navigates straight to View Log / Today / Details ON instead of opening the Check-In form.
+
+**File changed:**
+
+`Momentum.Client/Pages/LogActivity.razor` — in `HandleSubmit`, the create-path (`else` branch, no `EditId`) navigation changed from `/check-in?activityLogId={result.Id}&from={activityName}` to `/log/detail?period=day&details=true`. Edit-path navigation (`EditId.HasValue` branch) is unchanged.
+
+**Explicitly not changed:**
+- The `CheckIn` entity, `ActivityLogId` nullable FK, and `SetNull`-on-delete behavior.
+- The standalone `/check-in` form and its save/skip return behavior (CHK-005).
+- The persistent top "Check In" action button and the Check-Ins history screen (`/check-ins`).
+- The "+ Add Check-In" action in View Log Details (CHK-004/CHK-002 Phase 6A) — still navigates to `/check-in?activityLogId={log.Id}&from={activityName}&returnUrl={ReturnUrl}`, so a Check-In can still be linked to a freshly logged entry from View Log.
+- No API, DTO, repository, service, or migration changes.
+
+**Manual QA checklist (CHK-006):**
+- Log a new activity → lands directly on View Log / Today / Details ON (no Check-In form interstitial).
+- The newly logged activity is visible in the timeline.
+- "+ Add Check-In" on that entry still opens `/check-in` with `activityLogId` populated and links correctly on save.
+- Editing an existing log entry still returns to View Log as before (unaffected).
+- Standalone `/check-in` (via the persistent Check In button) still works and still returns to View Log / Today / Details ON on save.
+- Check-Ins history screen still lists and edits/deletes check-ins normally.
+- No browser console errors.
+
 ---
 
 *Check-In Feature Design Specification — created 2026-06-04*
-*Status: CHK-005 complete (Default Check-In Return Behavior); Edit Log Entry check-in list (CHK-002 Phase 6B) retired; reporting not started*
+*Status: CHK-006 complete (automatic post-activity Check-In redirect retired); Edit Log Entry check-in list (CHK-002 Phase 6B) retired; reporting not started*
 *NAV-001 (2026-06-21): anchor date now included in View Log's ReturnUrl — CHK-005 QA item updated to reflect full context preservation (period + anchor + details=true)*
+*CHK-006 (2026-07-07): §7 Post-Activity Flow marked retired — new logs route directly to View Log / Today / Details ON; original design preserved inline for history; §18 implementation entry added*

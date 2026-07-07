@@ -549,11 +549,10 @@
             var activityName = _selectedActivity.Name;
             Toast.Show($"{activityName} logged!", ToastType.Success);
 
-            // Post-activity Check-In flow (CHK-002 Phase 4): route to the Check-In form
-            // with the new ActivityLogId pre-populated so a follow-up check-in links to it.
-            // The user may save or skip; skipping creates no Check-In.
-            Navigation.NavigateTo(
-                $"/check-in?activityLogId={result.Id}&from={Uri.EscapeDataString(activityName)}");
+            // CHK-006: automatic post-activity Check-In redirect (CHK-002 Phase 4) retired.
+            // New logs now land directly on View Log / Today / Details ON, where a linked
+            // Check-In can still be added via the existing "+ Add Check-In" action.
+            Navigation.NavigateTo("/log/detail?period=day&details=true");
         }
     }
 

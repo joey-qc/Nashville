@@ -114,11 +114,12 @@ Accessible via the persistent "+" button from any screen.
 ### 6.4 Submission
 - User submits the form to log the activity.
 - A success confirmation (toast) confirms the activity was logged.
-- **Upon successfully logging a *new* activity, the user is taken to the Check-In form** (post-activity Check-In flow — see Section 11.2) with that activity pre-associated. The user may save a linked check-in or skip; either way they are returned to **View Log / Today / Details ON** (`/log/detail?period=day&details=true`). *(CHK-005: previously Home.)*
-- **Editing an existing log entry** does not trigger the Check-In flow — the user returns to the View Log screen.
+- **Upon successfully logging a *new* activity, the user is taken directly to View Log / Today / Details ON** (`/log/detail?period=day&details=true`). *(CHK-006: previously routed through the Check-In form — see §11.2 for the retired flow.)*
+- **Editing an existing log entry** returns the user to the View Log screen (unchanged).
 
 ### 6.5 After Logging
-- After completing (or skipping) the post-activity check-in, the user lands on **View Log / Today / Details ON**, where they can immediately see the new log entry and any linked check-in. *(CHK-005: previously Home.)*
+- After a new log is saved, the user lands on **View Log / Today / Details ON**, where they can immediately see the new log entry. *(CHK-006: previously landed here only after completing or skipping the automatic Check-In step.)*
+- From there, the user can add a linked Check-In for the new entry via the existing **"+ Add Check-In"** action (§11.4) if they choose to.
 - The persistent "+" button remains available to log another activity.
 
 ---
@@ -315,13 +316,10 @@ The Check-In screen (`/check-in`) captures the user's **current state** (how the
 - On save, a success toast confirms the check-in and the user is returned to **View Log / Today / Details ON**. *(CHK-005: previously stayed on page.)*
 - Saved Check-Ins from this screen are **standalone** (not linked to any activity log).
 
-### 11.2 Post-Activity Check-In Flow (CHK-002 Phase 4 — implemented)
-- After a user successfully logs a **new** activity, the Check-In form opens automatically with that activity pre-associated.
-- The form shows an **"After: {activity}"** context label so the user knows the check-in will link to what they just logged.
-- The form behaves the same as the standalone form (same metrics, scale, date/time, and smart defaults), with two differences:
-  - A **Skip** option is available. Skipping creates **no** Check-In.
-  - After **Save** or **Skip**, the user is returned to **View Log / Today / Details ON**. *(CHK-005: previously Home.)*
-- A saved check-in from this flow is **linked** to the activity log entry; a skipped one creates nothing.
+### 11.2 Post-Activity Check-In Flow — RETIRED (CHK-006)
+- **Retired 2026-07-07.** Saving a new activity log no longer automatically opens the Check-In form. New logs route directly to View Log / Today / Details ON (§6.4/§6.5).
+- The underlying Check-In capability is **not removed**: the user can still add a Check-In linked to the just-created entry via the **"+ Add Check-In"** action in View Log Details (§11.4), or record a standalone Check-In via the persistent **Check In** button (§11.1).
+- The linked-Check-In data model (`CheckIn.ActivityLogId`), the standalone `/check-in` flow, the Check-Ins history screen, and the persistent Check In button are all unchanged.
 
 ### 11.3 Check-Ins History (CHK-002 Phase 5B — implemented)
 - A **Check Ins** left-nav item routes to the Check-In history screen (`/check-ins`).
@@ -421,3 +419,4 @@ The Journal screen (`/journal`) presents entries logged against the **Journaling
 *Version 1.18 — CHK-005: §6.4/§6.5/§11.1/§11.2 updated — all Check-In save/skip destinations changed from Home/stay-on-page to View Log / Today / Details ON; §11.5 add return-behavior; §11.7 CHK-002 Phase 6B retired (superseded by CHK-004 View Log Details)*
 *Version 1.19 — NAV-001: §7.1 anchor-date picker added (Day/Week/Month rolling windows ending on anchor); §7.1 returnUrl now preserves anchor date; §8.1.1 anchor-date picker added (sparklines remain today-anchored); §8.2.1 anchor-date picker and rolling-window description added; §11.3 period filter + anchor-date picker added*
 *Version 1.20 — REP-001: §3 nav updated (Journal added between Reports and Manage Activities); §12 Journal screen added (entry source, period/anchor navigation, display rules, empty state, v1 out-of-scope items); §13/§14 renumbered*
+*Version 1.21 — CHK-006: §6.4/§6.5 updated — new activity logs now route directly to View Log / Today / Details ON instead of through the Check-In form; §11.2 automatic post-activity Check-In flow marked retired (linked/standalone Check-In capability, "+ Add Check-In" action, and persistent Check In button all unchanged)*

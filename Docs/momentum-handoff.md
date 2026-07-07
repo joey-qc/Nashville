@@ -6,9 +6,9 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** REP-001 complete — Journal page (v1); B/E/M reporting not started  
+**Phase:** CHK-006 complete — automatic post-activity Check-In redirect retired; B/E/M reporting not started  
 **Build Status:** ✅ All projects build clean (0 errors); 54/54 tests pass  
-**Last Updated:** 2026-06-21
+**Last Updated:** 2026-07-07
 
 ### v2 Migration Deployment Summary
 
@@ -66,6 +66,15 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 ---
 
 ## Completed Work
+
+### CHK-006 — Retire Automatic Post-Activity Check-In Redirect (2026-07-07)
+
+- **Status:** ✅ Complete. Saving a new Activity Log entry no longer automatically navigates to the Check-In form. It now lands directly on **View Log / Today / Details ON** (`/log/detail?period=day&details=true`).
+- **Build/tests:** ✅ 0 errors; 54/54 tests pass. Client-only change — no server, DTO, API, service, or schema changes.
+- **What shipped:**
+  - `Momentum.Client/Pages/LogActivity.razor` — in `HandleSubmit`'s create path (`else` branch), the navigation target changed from `/check-in?activityLogId={result.Id}&from={activityName}` to `/log/detail?period=day&details=true`. Edit-path navigation is unchanged.
+- **Not changed:** the `CheckIn` entity/model, the standalone `/check-in` flow, the persistent top "Check In" button, the Check-Ins history screen, and the "+ Add Check-In" action in View Log Details (`ActivityDetail.razor`) — a Check-In can still be linked to a freshly logged entry from there.
+- **Docs:** `Docs/check-in-feature-design-spec.md` §7 marked retired (original design preserved inline for history); CHK-006 implementation section added. `Docs/momentum-functional-requirements.md` §6.4/§6.5/§11.2 updated (v1.21). `Docs/momentum-roadmap.md` post-activity flow bullet marked retired.
 
 ### CHK-002 Phase 6A — View Log Details Integration (2026-06-06)
 
@@ -583,7 +592,7 @@ Full detail: `Docs/momentum-known-issues.md`
 | AUTH-001 refresh tokens (long-term) | Low | Near-term done. Long-term: `RefreshToken` entity/table, `/api/auth/refresh` endpoint, rotation, revocation — implement before PWA/mobile work. See `Docs/session-persistence-design-spec.md` §6. |
 | Check-In Phase 2 — API + DTOs | Medium | ✅ Complete (CHK-002 Phase 2, 2026-06-05). DTOs, repository, service, controller all implemented. 15 tests added. |
 | Check-In Phase 3 — standalone form | Medium | ✅ Complete (CHK-002 Phase 3, 2026-06-05). `/check-in` page, client service, temporary nav item. |
-| Check-In Phase 4 — post-activity flow | Medium | ✅ Complete (CHK-002 Phase 4, 2026-06-06). Add Entry routes to Check-In with linked `ActivityLogId`; save or skip. |
+| Check-In Phase 4 — post-activity flow | Medium | ⛔ Retired (CHK-006, 2026-07-07). Originally: Add Entry routed to Check-In with linked `ActivityLogId`; save or skip. Now: Add Entry routes directly to View Log / Today / Details ON; linking a Check-In is an explicit "+ Add Check-In" action from there. |
 | Check-In Phase 5A — nav structure | Medium | ✅ Complete (CHK-002 Phase 5A, 2026-06-06). Persistent top "Check In" button, "Check Ins" history nav, `/check-ins` placeholder, mobile "Manage" title. |
 | Check-In Phase 5B — history screen | Medium | ✅ Complete (CHK-002 Phase 5B, 2026-06-06). `/check-ins` list with inline edit + delete; `ActivityName` on DTO. |
 | Check-In Phase 6A — View Log integration | Medium | ✅ Complete (CHK-002 Phase 6A, 2026-06-06). "Details" toggle shows/adds/edits/deletes linked check-ins in View Log. |
@@ -596,4 +605,4 @@ Full detail: `Docs/momentum-known-issues.md`
 
 ---
 
-*Momentum Handoff — Updated 2026-06-21 (CHK-003 — Check-Ins history Day/Week/Month filter, 30-day server window, client-side filtering; 54/54 tests)*
+*Momentum Handoff — Updated 2026-07-07 (CHK-006 — retired automatic post-activity Check-In redirect; new logs route directly to View Log / Today / Details ON; 54/54 tests)*
