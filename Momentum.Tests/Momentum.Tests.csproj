@@ -24,6 +24,13 @@
     <ProjectReference Include="..\Momentum.Domain\Momentum.Domain.csproj" />
     <ProjectReference Include="..\Momentum.Shared\Momentum.Shared.csproj" />
     <ProjectReference Include="..\Momentum.Infrastructure\Momentum.Infrastructure.csproj" />
+    <ProjectReference Include="..\Momentum.API\Momentum.API.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Needed to compile against ASP.NET Core MVC/Identity types (ControllerBase, DefaultHttpContext,
+         UserManager<T>) for AiController tests — this project uses the plain SDK, not Sdk.Web. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 </Project>

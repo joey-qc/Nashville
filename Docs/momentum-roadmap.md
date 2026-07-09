@@ -302,6 +302,16 @@ Generate observations such as:
 - momentum stagnation
 - recovery patterns
 
+### AI Integration
+
+**AI-001 (delivered 2026-07-09):** A minimal **read-only** AI integration API now exists — `GET /api/ai/today`, returning an AI-safe snapshot (date, total points, entry count, and per-entry activity name/points/dimension names/timestamp) of the configured AI user's activity logs for the current local day. Authenticated via a shared `X-Momentum-AI-Key` header rather than JWT, since it's a single server-to-server integration, not a per-end-user endpoint. Notes/journal text, IDs, and user profile data are never exposed. See `Docs/momentum-software-specifications.md` §4.5/§7.2 for the full contract.
+
+This is the foundation the **Behavioral Insights** direction above depends on — v1 deliberately stops at read-only data access for a single configured user. Future direction, not yet started:
+- Additional read-only query endpoints (date ranges, weekly/monthly trends, Check-In Body/Energy/Mood data).
+- Actual AI-generated observations/insights consuming this data (external to the API itself in v1).
+- Multi-user AI access (v1 supports exactly one configured user via `Ai:UserEmail`) if ever needed.
+- Any write capability — explicitly out of scope for the foreseeable future given the sensitivity of write access to personal wellness data.
+
 ---
 
 ## Personalization & Settings

@@ -78,6 +78,7 @@ try
     builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
     builder.Services.AddScoped<IScoreService, ScoreService>();
     builder.Services.AddScoped<ICheckInService, CheckInService>();
+    builder.Services.AddScoped<IAiWellnessQueryService, AiWellnessQueryService>();
 
     // Infrastructure services
     builder.Services.AddScoped<IAuthService, AuthService>();

@@ -6,9 +6,9 @@ This file tracks the current state of the project, what has been completed, and 
 
 ## Current Project Status
 
-**Phase:** CHK-006 complete — automatic post-activity Check-In redirect retired; B/E/M reporting not started  
-**Build Status:** ✅ All projects build clean (0 errors); 54/54 tests pass  
-**Last Updated:** 2026-07-07
+**Phase:** AI-001 complete — read-only Momentum AI API v1 (`GET /api/ai/today`); B/E/M reporting not started  
+**Build Status:** ✅ All projects build clean (0 errors); 71/71 tests pass  
+**Last Updated:** 2026-07-09
 
 ### v2 Migration Deployment Summary
 
@@ -66,6 +66,20 @@ User-facing terminology across all pages is now **"Dimension / Dimensions"** —
 ---
 
 ## Completed Work
+
+### AI-001 — Read-Only Momentum AI API v1 (2026-07-09)
+
+- **Status:** ✅ Complete. New `GET /api/ai/today` endpoint returns an AI-safe snapshot of the configured AI user's activity logs for the current local calendar day.
+- **Build/tests:** ✅ 0 errors; 71/71 tests pass (17 new: 8 `AiWellnessQueryServiceTests`, 9 `AiControllerTests`).
+- **What shipped:**
+  - `Momentum.Shared/AiTodayResponseDto.cs` + `AiTodayEntryDto.cs` — AI-safe DTOs. Response: `Date`, `TotalPoints`, `EntryCount`, `Entries` (each: `LoggedAt`, `ActivityName`, `Points`, `Dimensions` — dimension **names** only). Deliberately excludes `Notes`, `UserId`, `ActivityId`, log `Id`, `CreatedAt`, and any user profile data.
+  - `Momentum.Application/Interfaces/IAiWellnessQueryService.cs` + `Momentum.Application/Services/AiWellnessQueryService.cs` — builds the response from the existing `IActivityLogRepository.GetByDateRangeAsync` (no new repository, no raw SQL). Local-day boundaries computed from `localOffsetMinutes` using the same UTC-offset math as `ScoreService`'s daily-totals pattern; `LoggedAt` is explicitly `DateTime.SpecifyKind(..., Utc)` before returning (same fix as KI-017 — EF returns `Unspecified`, and the API's `UtcDateTimeConverter` would otherwise re-shift it).
+  - `Momentum.API/Controllers/AiController.cs` — `GET /api/ai/today?localOffsetMinutes=`. `[AllowAnonymous]` with respect to JWT (this endpoint doesn't use the bearer pipeline at all); instead requires a valid `X-Momentum-AI-Key` header, compared via `CryptographicOperations.FixedTimeEquals`. Resolves the single configured AI user via `UserManager<ApplicationUser>.FindByEmailAsync(Ai:UserEmail)`. Missing/wrong key → `401`; missing `Ai:ApiKey`/`Ai:UserEmail` config or unresolvable user → `500` (configuration error, not caller error). `localOffsetMinutes` falls back to `Ai:DefaultLocalOffsetMinutes` when the query param is omitted.
+  - `Momentum.API/Program.cs` — `IAiWellnessQueryService`/`AiWellnessQueryService` registered Scoped.
+  - `Momentum.API/appsettings.json` — added `Ai:DefaultLocalOffsetMinutes` (non-secret, default `"0"`). **`Ai:ApiKey` and `Ai:UserEmail` are intentionally NOT in this file** — same convention as `Jwt:Key` — set via App Service environment variables (`Ai__ApiKey`, `Ai__UserEmail`) in production, and via environment variable/user-secrets locally. No secret was committed.
+  - `Momentum.Tests/Momentum.Tests.csproj` — added a `ProjectReference` to `Momentum.API` and a `FrameworkReference` to `Microsoft.AspNetCore.App` so controller-level tests are possible (previously the test project only covered Application/Domain/Infrastructure).
+- **Not implemented (out of scope for v1):** any endpoint beyond `today` (e.g. date-range/trend queries), write access, and actual AI-generated analysis — this is a read-only data foundation only.
+- **Docs:** `Docs/momentum-software-specifications.md` updated (§4.5, §5.3, §6.2, §7.2, §9.1, §11, §12, §13). Functional requirements and design-system docs not updated — no user-facing UI or Blazor-client change.
 
 ### CHK-006 — Retire Automatic Post-Activity Check-In Redirect (2026-07-07)
 
@@ -602,7 +616,10 @@ Full detail: `Docs/momentum-known-issues.md`
 | Password change in Settings | Low | Planned but not implemented |
 | Screen-reader chart descriptions | Low | SVG charts have `role="img"` + `aria-label` but no `<title>` child |
 | Social login (Google/Apple) | Deferred | UI stubs exist on Login page; backend not implemented |
+| AI API v1 — read-only `today` endpoint | Medium | ✅ Complete (AI-001, 2026-07-09). `GET /api/ai/today`; API-key auth; see Completed Work above. |
+| AI API — additional query endpoints (date range, trends, Check-In data) | Low | Future — not started. Would extend `IAiWellnessQueryService` with more read-only methods. |
+| AI API — write capability | Low | Future — not started; deliberately out of scope for v1 (read-only only). |
 
 ---
 
-*Momentum Handoff — Updated 2026-07-07 (CHK-006 — retired automatic post-activity Check-In redirect; new logs route directly to View Log / Today / Details ON; 54/54 tests)*
+*Momentum Handoff — Updated 2026-07-09 (AI-001 — read-only Momentum AI API v1, GET /api/ai/today, API-key auth; 71/71 tests)*

@@ -71,6 +71,12 @@ The application is structured as a **Visual Studio Solution** containing multipl
 - `AuthMessageHandler` intercepts any API 401 response and calls `MarkUserAsLoggedOut()`, which removes the token from `localStorage` and broadcasts logged-out state.
 - **Refresh tokens are not implemented.** Long-term plan documented in `Docs/session-persistence-design-spec.md` §6 — to be implemented before PWA/mobile work.
 
+### 4.5 AI Integration Authentication (AI-001 v1)
+- `GET /api/ai/today` (`AiController`, `Momentum.API`) uses a **shared API key** in the `X-Momentum-AI-Key` request header — separate from JWT Bearer auth, since this is a single server-to-server integration rather than a per-user login session.
+- The configured key is compared against the request header using a fixed-time comparison (`CryptographicOperations.FixedTimeEquals`) to avoid a timing side-channel; a missing or mismatched key returns `401 Unauthorized`.
+- The endpoint resolves a single **configured AI user** via `UserManager<ApplicationUser>.FindByEmailAsync(Ai:UserEmail)` — it does not accept a user identifier from the caller. If the key is valid but `Ai:ApiKey`, `Ai:UserEmail` is unset, or the configured email doesn't resolve to a user, the endpoint returns `500` (treated as a configuration error, not a caller error).
+- No refresh/rotation mechanism exists in v1 — rotating the key means updating the `Ai:ApiKey` environment variable and restarting the API.
+
 ---
 
 ## 5. Data Models
@@ -163,6 +169,7 @@ Key DTOs include:
 - `CheckInDto` — response DTO for a check-in record; includes `Id`, `UserId`, `CheckedInAt`, `BodyScore`/`EnergyScore`/`MoodScore`, `ActivityLogId`, `ActivityName` (display-only — the linked activity's name, null for standalone), and `CreatedAt` (audit-only)
 - `CreateCheckInRequestDto` — `CheckedInAt?` (optional, defaults to server UTC now), `BodyScore`/`EnergyScore`/`MoodScore` (int, `[Range(-5, 5)]`), `ActivityLogId?` (optional)
 - `UpdateCheckInRequestDto` — `CheckedInAt` (required), scores with `[Range(-5, 5)]`, `ActivityLogId?`; pass null ActivityLogId to detach from a log entry
+- `AiTodayResponseDto` / `AiTodayEntryDto` (AI-001) — AI-safe response for `GET /api/ai/today`; see §7.2 for the full shape and the fields deliberately excluded (Notes, UserId, ActivityId, log Id, CreatedAt, user profile data)
 
 ---
 
@@ -183,6 +190,8 @@ Key repositories:
 - `IActivityRepository` / `ActivityRepository`
 - `IActivityLogRepository` / `ActivityLogRepository`
 - `ICheckInRepository` / `CheckInRepository` (CHK-002 Phase 2; `GetByIdAsync`/`GetByDateRangeAsync` eager-load `ActivityLog.Activity` so `CheckInDto.ActivityName` can be projected — Phase 5B)
+
+`IAiWellnessQueryService` / `AiWellnessQueryService` (`Momentum.Application/Services`, AI-001) is **not** a repository — it's an application service that reuses the existing `IActivityLogRepository.GetByDateRangeAsync` (no new repository or raw SQL was added).
 
 ### 6.3 Migrations
 - EF Core migrations are used to manage database schema changes.
@@ -260,6 +269,26 @@ Score fields (`BodyScore`, `EnergyScore`, `MoodScore`) must each be in `[-5, 5]`
 | GET | /api/settings | Get current user's settings and profile |
 | PUT | /api/settings | Update user profile and settings |
 
+#### AI Integration (AI-001 — read-only v1)
+| Method | Route | Description |
+|---|---|---|
+| GET | /api/ai/today?localOffsetMinutes= | AI-safe snapshot of the configured AI user's activity logs for the local-calendar-day (today) |
+
+`GET /api/ai/today` is intentionally **not** part of the JWT bearer pipeline — it is a single-configured-user, server-to-server integration point, not a per-end-user endpoint. It uses its own authentication mechanism (see §4.5) and is registered with `[AllowAnonymous]` so the JWT scheme is never evaluated for it. `localOffsetMinutes` is optional; when omitted, the server falls back to `Ai:DefaultLocalOffsetMinutes` from configuration (default `0`/UTC if that's also unset).
+
+Response shape (`AiTodayResponseDto`, `Momentum.Shared`):
+```
+- Date        : DateOnly       — the resolved local calendar day
+- TotalPoints : int            — sum of PointsRecorded for the day
+- EntryCount  : int            — number of activity log entries for the day
+- Entries     : List<AiTodayEntryDto>
+    - LoggedAt     : DateTime  — UTC instant
+    - ActivityName : string
+    - Points       : int       — PointsRecorded for this entry
+    - Dimensions   : List<string> — dimension names for this entry's saved snapshot
+```
+**Deliberately excluded** from the response: `Notes` (journal/rich-text content), `UserId`, `ActivityId`, `ActivityLog.Id`, `CreatedAt`, and any `ApplicationUser` profile fields. `IAiWellnessQueryService`/`AiWellnessQueryService` (`Momentum.Application`) build this DTO directly from `IActivityLogRepository.GetByDateRangeAsync` — no raw SQL, no new repository method.
+
 ### 7.3 Activity Deletion Logic (Server-Side)
 When a DELETE request is received for an activity:
 1. Query the database for any `ActivityLog` records associated with this activity and user.
@@ -311,6 +340,17 @@ Both pages render charts as **custom inline SVG** — no charting library is imp
 
 ## 9. Configuration & Environment
 
+### 9.1 AI Integration Configuration (AI-001)
+Read by `AiController` from `IConfiguration`:
+
+| Key | Sensitive? | Where set |
+|---|---|---|
+| `Ai:ApiKey` | Yes — shared secret | Environment variable only (`Ai__ApiKey`) — **omitted from `appsettings.json`**, same convention as `Jwt:Key` |
+| `Ai:UserEmail` | Treat as sensitive (identifies a real account) | Environment variable only (`Ai__UserEmail`) — omitted from `appsettings.json` |
+| `Ai:DefaultLocalOffsetMinutes` | No | `appsettings.json` (default `"0"`); overridable via `Ai__DefaultLocalOffsetMinutes` |
+
+If `Ai:ApiKey` or `Ai:UserEmail` is unset (or the configured email doesn't resolve to a user), `GET /api/ai/today` returns `500` rather than silently falling back to any default — there is no built-in fallback user or key.
+
 ### 9.3 Production Configuration
 - Connection strings and secrets are stored as **Azure App Service environment variables** — never hardcoded or committed to source control.
 - Production database is **Azure SQL Database**.
@@ -342,24 +382,26 @@ Both pages render charts as **custom inline SVG** — no charting library is imp
 
 ## 11. Security Requirements
 
-- All API endpoints except `/api/auth/login` and `/api/auth/register` require JWT Bearer authentication.
+- All API endpoints except `/api/auth/login`, `/api/auth/register`, and `GET /api/ai/today` require JWT Bearer authentication. `GET /api/ai/today` instead requires a valid `X-Momentum-AI-Key` header (see §4.5) — it is `[AllowAnonymous]` with respect to the JWT scheme by design, not an oversight.
 - All database queries are automatically filtered by the authenticated user's ID — row-level data isolation is enforced at the repository layer.
 - Passwords are hashed using ASP.NET Core Identity's default PBKDF2 hashing.
 - JWT secrets are stored in configuration and never exposed to the client.
+- The AI API key (`Ai:ApiKey`) is likewise stored only in configuration/environment variables, never committed to source control, and never returned in any response.
 - HTTPS is enforced in production.
-- CORS is configured to allow requests only from the known client origin.
+- CORS is configured to allow requests only from the known client origin. `GET /api/ai/today` is a server-to-server endpoint and is not expected to be called from the Blazor client, but is still subject to the same CORS policy as all other API routes.
 
 ---
 
 ## 12. Testing (Momentum.Tests)
 
-- Unit tests are written using **xUnit**.
+- Unit tests are written using **xUnit**, with **NSubstitute** for mocking dependencies.
 - Key areas to test:
   - Repository methods (data access logic)
   - API controller actions
   - Score calculation logic
   - Activity deletion business rules
   - Authentication flows
+- `Momentum.Tests` references `Momentum.API` and takes a `FrameworkReference` to `Microsoft.AspNetCore.App` (added for AI-001) so controller-level behavior — not just service-level logic — can be unit tested directly (e.g. `AiControllerTests` constructs `AiController` with a `DefaultHttpContext` and asserts on the returned `IActionResult`, without a full `WebApplicationFactory`/HTTP host). `UserManager<ApplicationUser>` is mocked via `Substitute.For<UserManager<ApplicationUser>>(store, null, null, null, null, null, null, null, null)` — its members are virtual, so this is a standard, well-documented NSubstitute pattern.
 
 ---
 
@@ -372,7 +414,7 @@ The following are noted for future development and should be kept in mind when m
 - Mobile application (MAUI Blazor Hybrid)
 - Push notifications and activity reminders
 - Data export (CSV, PDF)
-- AI-generated wellness insights
+- AI-generated wellness insights — **a minimal read-only foundation now exists** (AI-001, `GET /api/ai/today`, §7.2/§4.5); actual AI-generated analysis/insights, additional query endpoints (e.g. date ranges, trends), and any write capability remain future work
 
 ---
 
@@ -383,3 +425,4 @@ The following are noted for future development and should be kept in mind when m
 *Version 1.11 — §8.2b: documented check-in UTC time handling (CheckInService.Map marks timestamps Utc; client sorts/displays in local time) — fixes KI-017 double-shift on non-UTC hosts*
 *Version 1.12 — §8.2b: View Log Details integration (client-side grouping of check-ins by ActivityLogId; `/check-ins?editId`) — CHK-002 Phase 6A; no DTO/API change*
 *Version 1.13 — §8.2b: generic `returnUrl` navigation pattern for check-in add/edit (returns to View Log context) — CHK-002 Phase 6A polish*
+*Version 1.14 — AI-001: §4.5 (AI API-key auth), §5.3 (AiTodayResponseDto/AiTodayEntryDto), §6.2 (AiWellnessQueryService reuses IActivityLogRepository), §7.2 (GET /api/ai/today), §9.1 (Ai:ApiKey/UserEmail/DefaultLocalOffsetMinutes config), §11 (security notes), §12 (Momentum.Tests now references Momentum.API + AspNetCore.App for controller tests), §13 (AI-generated insights foundation) added*
